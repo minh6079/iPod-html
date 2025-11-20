@@ -5,7 +5,7 @@
     <canvas id=c></canvas>
     <script>
         var c = document.getElementById("c"), ctx = c.getContext("2d");
-        c.width = 640; c.height = 710;
+        c.width = window.innerWidth; c.height = window.innerHeight;
         var s = []; for (var i = 0; i < 80; i++)s.push({ x: Math.random() * 320, y: Math.random() * 480, z: Math.random() * 2 });
         function loop() {
             ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, 320, 480);
@@ -17,5 +17,6 @@
         } loop();
     </script>
 </body>
+
 
 </html>
