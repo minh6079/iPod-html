@@ -2,8 +2,9 @@
 <html>
 
 <body style="margin:0;background:#000">
-    <canvas id=c width=640 height=710></canvas>
+    <canvas id=c></canvas>
     <script>
+        c.width = window.innerWidth; c.height = window.innerHeight;
         var ctx = c.getContext("2d"), x = 160, y = 200, dx = 2, dy = -2, p = 120, bricks = [];
         for (var i = 0; i < 6; i++)for (var j = 0; j < 3; j++)bricks.push({ x: 20 + i * 50, y: 20 + j * 15, h: false });
         c.addEventListener("touchmove", function (e) { p = e.touches[0].pageX - 40; });
@@ -25,5 +26,6 @@
         } loop();
     </script>
 </body>
+
 
 </html>
