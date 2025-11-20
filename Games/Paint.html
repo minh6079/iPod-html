@@ -1,20 +1,36 @@
 <!DOCTYPE html>
 <html>
+<body style="margin:0; background:#222; overflow:hidden;">
+<canvas id="c" style="display:block; border:1px solid #555;"></canvas>
+<script>
+var c = document.getElementById("c");
+var ctx = c.getContext("2d");
+c.width = window.innerWidth || 320;
+c.height = window.innerHeight || 480;
 
-<body style="margin:0;background:#222">
-    <canvas id=c style="display:block;margin:auto;border:1px solid #555"></canvas>
-    <script>
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        var ctx = c.getContext("2d"), draw = false;
-        c.addEventListener("touchstart", function (e) { draw = true });
-        c.addEventListener("touchend", function (e) { draw = false });
-        c.addEventListener("touchmove", function (e) {
-            if (!draw) return; var t = e.touches[0];
-            ctx.fillStyle = "#0f0";
-            ctx.fillRect(t.pageX - c.offsetLeft, t.pageY - c.offsetTop, 3, 3);
-        }, false);
-    </script>
+var draw = false;
+
+// Touch input
+c.addEventListener("touchstart", function(e){
+    e.preventDefault();
+    draw = true;
+}, false);
+
+c.addEventListener("touchend", function(e){
+    e.preventDefault();
+    draw = false;
+}, false);
+
+c.addEventListener("touchmove", function(e){
+    e.preventDefault(); // prevent scrolling
+    if(!draw) return;
+    var t = e.touches[0];
+    ctx.fillStyle = "#0f0";
+    ctx.fillRect(t.pageX, t.pageY, 3, 3);
+}, false);
+
+// Optional: prevent pinch zoom
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, false);
+</script>
 </body>
-
-
 </html>
