@@ -1,22 +1,44 @@
 <!DOCTYPE html>
 <html>
+<body style="margin:0; background:#000; overflow:hidden;">
+<canvas id="c"></canvas>
+<script>
+var c = document.getElementById("c");
+var ctx = c.getContext("2d");
+var t = 0;
 
-<body style="margin:0;background:#000;overflow:hidden">
-    <canvas id=c></canvas>
-    <script>
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        var ctx = c.getContext("2d"), t = 0;
-        function loop() {
-            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(0, 0, 320, 240);
-            ctx.strokeStyle = "#0f0"; ctx.beginPath();
-            for (var x = 0; x < 320; x++) {
-                var y = 120 + Math.sin((x + t) / 20) * 50;
-                if (x == 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            }
-            ctx.stroke(); t++; setTimeout(loop, 30);
-        } loop();
-    </script>
+// Fullscreen canvas
+c.width = window.innerWidth || 320;
+c.height = window.innerHeight || 480;
+window.onresize = function() {
+    c.width = window.innerWidth || 320;
+    c.height = window.innerHeight || 480;
+};
+
+// fallback for old Safari
+var requestAnimFrame = window.requestAnimationFrame || 
+                       window.webkitRequestAnimationFrame || 
+                       window.mozRequestAnimationFrame || 
+                       function(f){ setTimeout(f, 30); };
+
+function loop() {
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.strokeStyle = "#0f0";
+    ctx.beginPath();
+    for (var x = 0; x < c.width; x += 2) { // skip every 2 pixels for speed
+        var y = c.height/2 + Math.sin((x + t)/20) * (c.height/4);
+        if (x == 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    t++;
+    requestAnimFrame(loop);
+}
+
+loop();
+</script>
 </body>
-
-
 </html>
