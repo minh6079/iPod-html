@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width">
+    <title>ASCII Bounce</title>
+    <style>
+        body {
+            background: black;
+            color: lime;
+            font: 20px monospace;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <pre id="p"></pre>
+    <script>
+        var x = 10, y = 5, dx = 1, dy = 1, w = 30, h = 10;
+        function frame() {
+            var s = "";
+            for (var j = 0; j < h; j++) {
+                for (var i = 0; i < w; i++) {
+                    s += (i == x && j == y) ? "O" : " ";
+                } s += "\n";
+            }
+            document.getElementById("p").textContent = s;
+            x += dx; y += dy;
+            if (x <= 0 || x >= w - 1) dx = -dx;
+            if (y <= 0 || y >= h - 1) dy = -dy;
+            setTimeout(frame, 100);
+        }
+        frame();
+    </script>
+</body>
+
+</html>

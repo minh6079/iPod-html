@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>Bouncing Ball</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <script>
+        var c = document.getElementById('c'), ctx = c.getContext('2d');
+        c.width = window.innerWidth; c.height = window.innerHeight;
+        var x = 50, y = 50, dx = 2, dy = 3, r = 20;
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(0, 0, c.width, c.height);
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = "#0f0"; ctx.fill();
+            x += dx; y += dy;
+            if (x < r || x > c.width - r) dx = -dx;
+            if (y < r || y > c.height - r) dy = -dy;
+            setTimeout(loop, 16);
+        }
+        loop();
+    </script>
+</body>
+
+</html>

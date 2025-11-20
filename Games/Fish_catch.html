@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#003;overflow:hidden">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), fish = { x: 50, y: 240, dx: 2 }, score = 0;
+        c.addEventListener("touchstart", function (e) {
+            var t = e.touches[0]; var dx = t.pageX - fish.x, dy = t.pageY - fish.y;
+            if (dx * dx + dy * dy < 400) { score++; fish.x = Math.random() * 280; fish.y = Math.random() * 440; }
+        });
+        function loop() {
+            ctx.fillStyle = "#003"; ctx.fillRect(0, 0, 320, 480);
+            ctx.fillStyle = "#0ff"; ctx.beginPath(); ctx.arc(fish.x, fish.y, 10, 0, 6.28); ctx.fill();
+            fish.x += fish.dx; if (fish.x < 0 || fish.x > 320) fish.dx *= -1;
+            ctx.fillStyle = "#fff"; ctx.fillText("Fish:" + score, 10, 20);
+            setTimeout(loop, 33);
+        } loop();
+    </script>
+</body>
+
+</html>

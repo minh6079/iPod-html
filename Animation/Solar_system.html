@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,user-scalable=no">
+    <title>Solar System</title>
+    <style>
+        body {
+            background: black;
+            margin: 0;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <script>
+        var c = document.getElementById("c"), ctx = c.getContext("2d");
+        c.width = 640; c.height = 710;
+        var t = 0;
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, c.width, c.height);
+            ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(160, 240, 10, 0, 6.28); ctx.fill();
+            for (var i = 0; i < 5; i++) {
+                var r = 40 + i * 30, ang = t / (30 + i * 20);
+                ctx.beginPath();
+                ctx.fillStyle = "hsl(" + i * 70 + ",80%,60%)";
+                ctx.arc(160 + Math.cos(ang) * r, 240 + Math.sin(ang) * r, 6, 0, 6.28);
+                ctx.fill();
+            }
+            t++;
+            setTimeout(loop, 33);
+        }
+        loop();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,user-scalable=no">
+    <title>Layered Miner (Touch)</title>
+    <style>
+        body {
+            background: #081020;
+            color: #cfe;
+            padding: 0;
+            margin: 0;
+            font-family: monospace
+        }
+
+        #ui {
+            padding: 6px;
+            background: #071018;
+            border-bottom: 1px solid #0a3040
+        }
+
+        #game {
+            display: block;
+            margin: 0 auto;
+            background: #071018
+        }
+
+        button {
+            font: inherit;
+            padding: 6px;
+            margin: 2px
+        }
+
+        .bar {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #021016;
+            border: 1px solid #0a3040;
+            margin-right: 6px
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui">
+        <span class="bar">Money: $<span id="money">0</span></span>
+        <span class="bar">Stamina: <span id="stam">100</span>/<span id="maxstam">100</span></span>
+        <span class="bar">Pick: <span id="pickLv">1</span></span>
+        <button id="sellAll">Sell Ores</button>
+        <button id="shopBtn">Shop</button>
+        <span style="float:right">Layer: <span id="layerNum">0</span></span>
+    </div>
+    <canvas id="game" width=320 height=480></canvas>
+
+    <!-- Simple modal shop -->
+    <div id="shop"
+        style="display:none;position:fixed;left:10%;top:20%;width:80%;background:#071018;border:2px solid #0a3040;padding:10px;color:#cfe">
+        <h3>Shop</h3>
+        <div id="shopItems"></div>
+        <button id="closeShop">Close</button>
+    </div>
+
+    <script>
+        /* Layered Miner - ES3 / touch friendly */
+        var canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+        var moneyEl = document.getElementById('money'), stamEl = document.getElementById('stam'),
+            maxStamEl = document.getElementById('maxstam'), pickLvEl = document.getElementById('pickLv'),
+            layerNumEl = document.getElementById('layerNum');
+        var sellAllBtn = document.getElementById('sellAll'), shopBtn = document.getElementById('shopBtn');
+        var shopModal = document.getElementById('shop'), shopItems = document.getElementById('shopItems'), closeShop = document.getElementById('closeShop');
+
+        /* game state */
+        var cols = 16, rows = 20, tileSize = 20;
+        canvas.width = cols * tileSize;
+        canvas.height = rows * tileSize;
+
+        var layer = 0; // depth layer (0 top)
+        var money = 0;
+        var stamina = 100, maxStamina = 100;
+        var pickLevel = 1; // 1,2,3...
+        var inventory = { stone: 0, iron: 0, gold: 0 };
+
+        var world = []; // 2D array of tiles (string types)
+        function newLayer() {
+            world = [];
+            for (var y = 0; y < rows; y++) {
+                var row = [];
+                for (var x = 0; x < cols; x++) {
+                    var r = Math.random();
+                    // top rows mostly dirt
+                    if (y < 3) row.push('dirt');
+                    else {
+                        // deeper -> more stone / ores
+                        var depthFactor = (layer + y) / 10;
+                        if (r < 0.03 + depthFactor * 0.02) row.push('gold');
+                        else if (r < 0.09 + depthFactor * 0.05) row.push('iron');
+                        else if (r < 0.9) row.push('stone');
+                        else row.push('dirt');
+                    }
+                }
+                world.push(row);
+            }
+        }
+        newLayer();
+
+        /* draw function */
+        function draw() {
+            // clear
+            ctx.fillStyle = '#071018';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // draw tiles
+            for (var y = 0; y < rows; y++) {
+                for (var x = 0; x < cols; x++) {
+                    var t = world[y][x];
+                    var px = x * tileSize, py = y * tileSize;
+                    if (t == 'dirt') { ctx.fillStyle = '#5d3b1a'; ctx.fillRect(px, py, tileSize, tileSize); }
+                    else if (t == 'stone') { ctx.fillStyle = '#444'; ctx.fillRect(px, py, tileSize, tileSize); }
+                    else if (t == 'iron') {
+                        ctx.fillStyle = '#7a7a7a'; ctx.fillRect(px, py, tileSize, tileSize);
+                        ctx.fillStyle = '#c48'; ctx.fillRect(px + 4, py + 4, tileSize - 8, tileSize - 8);
+                    }
+                    else if (t == 'gold') {
+                        ctx.fillStyle = '#664'; ctx.fillRect(px, py, tileSize, tileSize);
+                        ctx.fillStyle = '#ffcd00'; ctx.fillRect(px + 3, py + 3, tileSize - 6, tileSize - 6);
+                    }
+                    // grid lines
+                    ctx.strokeStyle = '#08181f';
+                    ctx.strokeRect(px, py, tileSize, tileSize);
+                }
+            }
+            // hud inventory
+            ctx.fillStyle = '#cfe';
+            ctx.font = '12px monospace';
+            ctx.fillText('Stone:' + inventory.stone + ' Iron:' + inventory.iron + ' Gold:' + inventory.gold, 6, canvas.height - 6);
+        }
+        draw();
+
+        /* digging logic */
+        function digAt(x, y) {
+            if (stamina <= 0) return;
+            if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+            var t = world[y][x];
+            if (!t) return;
+            // digging cost: dirt cheap, stone costs more, ores cost more
+            var baseCost = (t === 'dirt') ? 2 : (t === 'stone') ? 6 : (t === 'iron') ? 10 : 12;
+            // pick reduces cost (higher level reduces stamina cost)
+            var cost = Math.max(1, baseCost - (pickLevel - 1) * 2);
+            stamina -= cost;
+            if (stamina < 0) stamina = 0;
+
+            // reward: chance to get an ore depending on tile and pick level
+            if (t === 'dirt') { /* no drop */ }
+            else if (t === 'stone') { inventory.stone += 1; }
+            else if (t === 'iron') { inventory.iron += 1 + Math.floor(Math.random() * pickLevel); }
+            else if (t === 'gold') { inventory.gold += 1 + Math.floor(Math.random() * Math.max(1, pickLevel - 1)); }
+
+            // remove tile -> becomes empty (air). For simplicity, turn to dirt after dug.
+            world[y][x] = 'dirt';
+            draw();
+            updateUI();
+        }
+
+        /* touch handling */
+        canvas.addEventListener('touchstart', function (e) {
+            var t = e.touches[0];
+            var rect = canvas.getBoundingClientRect();
+            var cx = t.pageX - rect.left;
+            var cy = t.pageY - rect.top;
+            var tx = Math.floor(cx / tileSize);
+            var ty = Math.floor(cy / tileSize);
+            digAt(tx, ty);
+            e.preventDefault();
+        }, false);
+
+        /* simple sell all */
+        sellAllBtn.onclick = function () {
+            var gain = inventory.stone * 1 + inventory.iron * 8 + inventory.gold * 30;
+            money += gain;
+            inventory.stone = inventory.iron = inventory.gold = 0;
+            updateUI();
+            draw();
+        };
+
+        /* shop */
+        var shopItemsList = [
+            { id: 'stam+20', label: 'Increase Max Stamina +20', cost: 30, apply: function () { maxStamina += 20; stamina += 20; } },
+            { id: 'pick+1', label: 'Upgrade Pickaxe +1', cost: 50, apply: function () { pickLevel += 1; } },
+            { id: 'sell+bonus', label: 'Sell Bonus (1.5x)', cost: 120, apply: function () { /* simple: permanent bonus flag */ window.sellBonus = true; } }
+        ];
+
+        shopBtn.onclick = function () { openShop(); };
+        closeShop.onclick = function () { shopModal.style.display = 'none'; };
+
+        function openShop() {
+            shopItems.innerHTML = '';
+            for (var i = 0; i < shopItemsList.length; i++) {
+                var it = shopItemsList[i];
+                var b = document.createElement('button');
+                b.innerHTML = it.label + ' - $' + it.cost;
+                (function (item, btn) {
+                    btn.onclick = function () {
+                        if (money >= item.cost) {
+                            money -= item.cost;
+                            item.apply();
+                            updateUI();
+                            draw();
+                        } else {
+                            alert('Not enough money');
+                        }
+                    };
+                })(it, b);
+                shopItems.appendChild(b);
+            }
+            shopModal.style.display = 'block';
+        }
+
+        /* layer change: go deeper to new procedurally generated layer */
+        function goDeeper() {
+            layer += 1;
+            layerNumEl.innerHTML = layer;
+            // refill stamina a bit when descending
+            stamina = Math.min(maxStamina, stamina + 30);
+            newLayer();
+            draw();
+            updateUI();
+        }
+
+        /* small UI updater */
+        function updateUI() {
+            moneyEl.innerHTML = money;
+            stamEl.innerHTML = stamina;
+            maxStamEl.innerHTML = maxStamina;
+            pickLvEl.innerHTML = pickLevel;
+            layerNumEl.innerHTML = layer;
+        }
+
+        /* periodic events: auto-sell small auto-convert if player has sellBonus */
+        setInterval(function () {
+            // simple auto-sell tiny ores to show economy: convert small amounts slowly
+            if (window.sellBonus) {
+                var take = Math.min(inventory.stone, 1);
+                inventory.stone -= take;
+                money += take * 1.5;
+            }
+            // regenerate tiny stamina slowly
+            stamina = Math.min(maxStamina, stamina + 1);
+            updateUI();
+        }, 2000);
+
+        /* pinch to go deeper? add a simple button area at bottom-right to descend */
+        canvas.addEventListener('touchend', function (e) {
+            // if player tapped bottom-right corner, go deeper
+            var rect = canvas.getBoundingClientRect();
+            var t = e.changedTouches[0];
+            var cx = t.pageX - rect.left;
+            var cy = t.pageY - rect.top;
+            if (cx > canvas.width - 60 && cy > canvas.height - 40) {
+                goDeeper();
+            }
+        }, false);
+
+        /* draw "descend" hint */
+        function drawHint() {
+            ctx.fillStyle = '#00222a';
+            ctx.fillRect(canvas.width - 60, canvas.height - 40, 60, 40);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '12px monospace';
+            ctx.fillText('Descend', canvas.width - 50, canvas.height - 20);
+        }
+        setInterval(function () { draw(); drawHint(); }, 500);
+
+        updateUI();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#222">
+    <canvas id=c width=640 height=710 style="display:block;margin:auto;border:1px solid #555"></canvas>
+    <script>
+        var ctx = c.getContext("2d"), draw = false;
+        c.addEventListener("touchstart", function (e) { draw = true });
+        c.addEventListener("touchend", function (e) { draw = false });
+        c.addEventListener("touchmove", function (e) {
+            if (!draw) return; var t = e.touches[0];
+            ctx.fillStyle = "#0f0";
+            ctx.fillRect(t.pageX - c.offsetLeft, t.pageY - c.offsetTop, 3, 3);
+        }, false);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), x = 160, y = 200, dx = 2, dy = -2, p = 120, bricks = [];
+        for (var i = 0; i < 6; i++)for (var j = 0; j < 3; j++)bricks.push({ x: 20 + i * 50, y: 20 + j * 15, h: false });
+        c.addEventListener("touchmove", function (e) { p = e.touches[0].pageX - 40; });
+        function loop() {
+            ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 320, 240);
+            ctx.fillStyle = "#0f0"; ctx.fillRect(p, 220, 80, 10);
+            ctx.beginPath(); ctx.arc(x, y, 5, 0, 6.28); ctx.fill();
+            for (var i = 0; i < bricks.length; i++) {
+                var b = bricks[i]; if (!b.h) {
+                    ctx.fillStyle = "#0f0"; ctx.fillRect(b.x, b.y, 40, 10);
+                    if (x > b.x && x < b.x + 40 && y < b.y + 10 && y > b.y) { dy = -dy; b.h = true; }
+                }
+            }
+            x += dx; y += dy;
+            if (x < 5 || x > 315) dx = -dx; if (y < 5) dy = -dy;
+            if (y > 215 && x > p && x < p + 80) dy = -dy;
+            if (y > 240) { x = 160; y = 200; }
+            setTimeout(loop, 16);
+        } loop();
+    </script>
+</body>
+
+</html>

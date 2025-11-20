@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width">
+    <title>Text Scroller</title>
+</head>
+
+<body style="background:black;color:lime;font-family:monospace;overflow:hidden;">
+    <pre id="s"></pre>
+    <script>
+        var msg = "<<< HELLO FROM YOUR IPOD TOUCH 4! >>>   ";
+        var pos = 0;
+        setInterval(function () {
+            pos = (pos + 1) % msg.length;
+            document.getElementById('s').textContent = msg.slice(pos) + msg.slice(0, pos);
+        }, 150);
+    </script>
+</body>
+
+</html>

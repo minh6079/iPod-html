@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Clock</title>
+    <meta name="viewport" content="width=device-width">
+    <style>
+        body {
+            background: black;
+            color: lime;
+            font: 40px monospace;
+            text-align: center;
+            margin-top: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="clock"></div>
+    <script>
+        function tick() {
+            var d = new Date();
+            var t = d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2);
+            document.getElementById('clock').innerHTML = t;
+            setTimeout(tick, 1000);
+        }
+        tick();
+    </script>
+</body>
+
+</html>

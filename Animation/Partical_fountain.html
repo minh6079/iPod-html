@@ -1,0 +1,22 @@
++<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), p = [];
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, 320, 480);
+            if (p.length < 100) p.push({ x: 160, y: 400, dx: (Math.random() - 0.5) * 4, dy: -Math.random() * 4 });
+            for (var i = 0; i < p.length; i++) {
+                var a = p[i]; a.x += a.dx; a.y += a.dy; a.dy += 0.2;
+                ctx.fillStyle = "hsl(" + (i * 4 % 360) + ",80%,60%)";
+                ctx.fillRect(a.x, a.y, 2, 2);
+                if (a.y > 480) p.splice(i, 1);
+            }
+            setTimeout(loop, 33);
+        } loop();
+    </script>
+</body>
+
+</html>

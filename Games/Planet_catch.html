@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000;overflow:hidden">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), planets = [], score = 0;
+        function add() { planets.push({ x: 160, y: 240, r: 5, a: Math.random() * 6.28, s: Math.random() * 0.02 + 0.005 }); }
+        for (var i = 0; i < 5; i++)add();
+        c.addEventListener("touchstart", function (e) {
+            var t = e.touches[0]; for (var i = 0; i < planets.length; i++) {
+                var p = planets[i], dx = t.pageX - p.x, dy = t.pageY - p.y;
+                if (dx * dx + dy * dy < p.r * p.r * 4) { score++; p.r = 0; add(); }
+            }
+        });
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, 320, 480);
+            ctx.fillStyle = "#0f0";
+            for (var i = 0; i < planets.length; i++) {
+                var p = planets[i]; p.a += p.s; p.x = 160 + Math.cos(p.a) * 100; p.y = 240 + Math.sin(p.a) * 100;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill();
+            }
+            ctx.fillText("Score:" + score, 10, 20);
+            setTimeout(loop, 33);
+        }
+        loop();
+    </script>
+</body>
+
+</html>

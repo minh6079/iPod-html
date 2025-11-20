@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width">
+    <title>Color Cycle</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        var hue = 0;
+        setInterval(function () {
+            document.body.style.background = 'hsl(' + hue + ',80%,60%)';
+            hue = (hue + 1) % 360;
+        }, 100);
+    </script>
+</body>
+
+</html>

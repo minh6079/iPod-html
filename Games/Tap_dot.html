@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000;overflow:hidden">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), x = 160, y = 240, score = 0;
+        function moveDot() { x = Math.random() * 300 + 10; y = Math.random() * 460 + 10; }
+        c.addEventListener("touchstart", function (e) {
+            var t = e.touches[0]; var dx = t.pageX - x, dy = t.pageY - y;
+            if (dx * dx + dy * dy < 400) { score++; moveDot(); }
+        });
+        function loop() {
+            ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 320, 480);
+            ctx.fillStyle = "#0f0"; ctx.beginPath(); ctx.arc(x, y, 10, 0, 6.28); ctx.fill();
+            ctx.fillText("Score: " + score, 10, 20);
+            setTimeout(loop, 33);
+        }
+        moveDot(); loop();
+    </script>
+</body>
+
+</html>

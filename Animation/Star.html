@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000;overflow:hidden">
+    <canvas id=c></canvas>
+    <script>
+        var c = document.getElementById("c"), ctx = c.getContext("2d");
+        c.width = 640; c.height = 710;
+        var s = []; for (var i = 0; i < 80; i++)s.push({ x: Math.random() * 320, y: Math.random() * 480, z: Math.random() * 2 });
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, 320, 480);
+            ctx.fillStyle = "#fff"; for (var i = 0; i < s.length; i++) {
+                s[i].y += s[i].z; if (s[i].y > 480) s[i].y = 0;
+                ctx.fillRect(s[i].x, s[i].y, 1, 1);
+            }
+            setTimeout(loop, 30);
+        } loop();
+    </script>
+</body>
+
+</html>

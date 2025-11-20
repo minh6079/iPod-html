@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<body style="margin:0;background:#000;overflow:hidden">
+    <canvas id=c width=640 height=710></canvas>
+    <script>
+        var ctx = c.getContext("2d"), t = 0;
+        function loop() {
+            ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(0, 0, 320, 240);
+            ctx.strokeStyle = "#0f0"; ctx.beginPath();
+            for (var x = 0; x < 320; x++) {
+                var y = 120 + Math.sin((x + t) / 20) * 50;
+                if (x == 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke(); t++; setTimeout(loop, 30);
+        } loop();
+    </script>
+</body>
+
+</html>
