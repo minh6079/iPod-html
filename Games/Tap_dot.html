@@ -1,25 +1,57 @@
 <!DOCTYPE html>
 <html>
+<body style="margin:0; background:#000; overflow:hidden;">
+<canvas id="c"></canvas>
+<script>
+var c = document.getElementById("c");
+var ctx = c.getContext("2d");
+c.width = window.innerWidth || 320;
+c.height = window.innerHeight || 480;
 
-<body style="margin:0;background:#000;overflow:hidden">
-    <canvas id=c></canvas>
-    <script>
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        var ctx = c.getContext("2d"), x = 160, y = 240, score = 0;
-        function moveDot() { x = Math.random() * 300 + 10; y = Math.random() * 460 + 10; }
-        c.addEventListener("touchstart", function (e) {
-            var t = e.touches[0]; var dx = t.pageX - x, dy = t.pageY - y;
-            if (dx * dx + dy * dy < 400) { score++; moveDot(); }
-        });
-        function loop() {
-            ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 320, 480);
-            ctx.fillStyle = "#0f0"; ctx.beginPath(); ctx.arc(x, y, 10, 0, 6.28); ctx.fill();
-            ctx.fillText("Score: " + score, 10, 20);
-            setTimeout(loop, 33);
-        }
-        moveDot(); loop();
-    </script>
+// Dot position and score
+var x = 0, y = 0, score = 0;
+
+// Set font for score
+ctx.font = "16px Arial";
+
+// Move dot to random position
+function moveDot() {
+    x = Math.random() * (c.width - 20) + 10;
+    y = Math.random() * (c.height - 20) + 10;
+}
+
+// Touch input
+c.addEventListener("touchstart", function(e){
+    e.preventDefault(); // prevent scrolling
+    var t = e.touches[0];
+    var dx = t.pageX - x;
+    var dy = t.pageY - y;
+    if(dx*dx + dy*dy < 100*4){ // radius 10
+        score++;
+        moveDot();
+    }
+}, false);
+
+// Game loop
+function loop(){
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    // Draw dot
+    ctx.fillStyle = "#0f0";
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, 2*Math.PI);
+    ctx.fill();
+
+    // Draw score
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Score: " + score, 10, 20);
+
+    setTimeout(loop, 33); // ~30 FPS
+}
+
+moveDot();
+loop();
+</script>
 </body>
-
-
 </html>
