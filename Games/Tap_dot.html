@@ -2,8 +2,9 @@
 <html>
 
 <body style="margin:0;background:#000;overflow:hidden">
-    <canvas id=c width=640 height=710></canvas>
+    <canvas id=c></canvas>
     <script>
+        c.width = window.innerWidth; c.height = window.innerHeight;
         var ctx = c.getContext("2d"), x = 160, y = 240, score = 0;
         function moveDot() { x = Math.random() * 300 + 10; y = Math.random() * 460 + 10; }
         c.addEventListener("touchstart", function (e) {
@@ -19,5 +20,6 @@
         moveDot(); loop();
     </script>
 </body>
+
 
 </html>
