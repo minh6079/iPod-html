@@ -2,8 +2,9 @@
 <html>
 
 <body style="margin:0;background:#222">
-    <canvas id=c width=640 height=710 style="display:block;margin:auto;border:1px solid #555"></canvas>
+    <canvas id=c style="display:block;margin:auto;border:1px solid #555"></canvas>
     <script>
+        c.width = window.innerWidth; c.height = window.innerHeight;
         var ctx = c.getContext("2d"), draw = false;
         c.addEventListener("touchstart", function (e) { draw = true });
         c.addEventListener("touchend", function (e) { draw = false });
@@ -14,5 +15,6 @@
         }, false);
     </script>
 </body>
+
 
 </html>
