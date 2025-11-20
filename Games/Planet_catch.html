@@ -2,8 +2,9 @@
 <html>
 
 <body style="margin:0;background:#000;overflow:hidden">
-    <canvas id=c width=640 height=710></canvas>
+    <canvas id=c></canvas>
     <script>
+        c.width = window.innerWidth; c.height = window.innerHeight;
         var ctx = c.getContext("2d"), planets = [], score = 0;
         function add() { planets.push({ x: 160, y: 240, r: 5, a: Math.random() * 6.28, s: Math.random() * 0.02 + 0.005 }); }
         for (var i = 0; i < 5; i++)add();
@@ -26,5 +27,6 @@
         loop();
     </script>
 </body>
+
 
 </html>
