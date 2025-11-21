@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Games Hub - Single File</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="format-detection" content="telephone=no"/>
+<style>
+/* --- Original pinstripe/menu styling (kept) --- */
+* { border:0; box-sizing:border-box; margin:0; padding:0; }
+body { font-family: Helvetica, Arial; -webkit-text-size-adjust:none; -webkit-user-select:none; width:320px; margin:0 auto; background:#fff url(background.png) repeat-y top center; }
+.panel { position:absolute; left:50%; margin-left:-160px; width:320px; }
+fieldset { background:#fff; border:1px solid #999; margin:8px; border-radius:9px; }
+a.fsa { display:block; padding:12px 14px 10px 14px; color:#586c90; font-weight:bold; text-decoration:none; text-shadow: rgba(255,255,255,0.75) 1px 1px 0; border-radius:9px; }
+a.fsa:active, a.fsa:focus { background:#eee; outline:0; }
+.fsad label { font-weight:bold; }
+#gameCanvas { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:100; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+#exitBtn { display:none; position:fixed; left:8px; top:8px; z-index:101; background:rgba(255,255,255,0.9); color:#000; padding:6px 10px; border-radius:6px; font-weight:bold; box-shadow:0 1px 2px rgba(0,0,0,0.2); -webkit-user-select:none; }
+.scoreBadge { position:fixed; right:8px; top:8px; z-index:101; background:rgba(0,0,0,0.6); color:#fff; padding:6px 8px; border-radius:6px; font-weight:bold; font-size:14px; display:none; }
+#controls { display:none; position:fixed; bottom:8px; width:100%; text-align:center; z-index:200; -webkit-user-select:none; }
+#controls button{ width:76px; height:76px; font-size:28px; margin:0 8px; border-radius:8px; }
+</style>
+</head>
+<body class="pinstripe">
+
+<div class="panel" id="menuPanel">
+  <fieldset><a href="#" class="fsa" onclick="startGame('snake');return false;"><div class="fsad"><label>Snake</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('breakout');return false;"><div class="fsad"><label>Breakout</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('shooter');return false;"><div class="fsad"><label>Space Shooter</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('platformer');return false;"><div class="fsad"><label>Platformer</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('tapdot');return false;"><div class="fsad"><label>Tap Dot</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('bouncingball');return false;"><div class="fsad"><label>Bouncing Ball</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('flappy');return false;"><div class="fsad"><label>Flappy Clone</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('pong');return false;"><div class="fsad"><label>Pong</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('paint');return false;"><div class="fsad"><label>Paint</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('catchgame');return false;"><div class="fsad"><label>Catch Game</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('mini_minecraft');return false;"><div class="fsad"><label>Mini Sandbox</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('racing');return false;"><div class="fsad"><label>Top-down Racing</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('towerdef');return false;"><div class="fsad"><label>Tower Defense (mini)</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('spaceinv');return false;"><div class="fsad"><label>Space Invaders</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('fruitninja');return false;"><div class="fsad"><label>Fruit Slice</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('powder');return false;"><div class="fsad"><label>Powder (lite)</label></div></a></fieldset>
+  <fieldset><a href="#" class="fsa" onclick="startGame('asteroids');return false;"><div class="fsad"><label>Asteroids</label></div></a></fieldset>
+</div>
+
+<!-- Game canvas and UI -->
+<canvas id="gameCanvas"></canvas>
+<button id="exitBtn" onclick="stopGame();">Exit</button>
+<div id="scoreBadge" class="scoreBadge"></div>
+
+<!-- Platformer controls (left / jump / right) -->
+<div id="controls">
+  <button id="btnLeft">◀</button>
+  <button id="btnJump">▲</button>
+  <button id="btnRight">▶</button>
+</div>
+
+<script>
+/* -------------- Core manager (Option A) -------------- */
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+var rafId = null;
+var activeGame = null;
+var menuPanel = document.getElementById('menuPanel');
+var exitBtn = document.getElementById('exitBtn');
+var scoreBadge = document.getElementById('scoreBadge');
+var controlsDiv = document.getElementById('controls');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (activeGame && typeof activeGame.onResize === 'function') activeGame.onResize(canvas, ctx);
+}
+window.addEventListener('resize', resizeCanvas, false);
+resizeCanvas();
+
+// prevent scroll and double-tap zoom
+function preventDefaultTouch(e){ e.preventDefault(); }
+function setupDoubleTapPrevention(){
+    var last=0;
+    function onEnd(e){ var now=(new Date()).getTime(); if(now-last<=300) e.preventDefault(); last=now; }
+    document.addEventListener('touchend', onEnd, false);
+    return function(){ document.removeEventListener('touchend', onEnd, false); };
+}
+var removeDoubleTap = setupDoubleTapPrevention();
+
+function enableTouchBlock(){ document.addEventListener('touchmove', preventDefaultTouch, { passive:false }); }
+function disableTouchBlock(){ document.removeEventListener('touchmove', preventDefaultTouch); }
+
+function stopGame(){
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    if (activeGame && typeof activeGame.stop === 'function') {
+        try { activeGame.stop(); } catch(e) { /* ignore */ }
+    }
+    activeGame = null;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    canvas.style.display = 'none';
+    exitBtn.style.display = 'none';
+    scoreBadge.style.display = 'none';
+    controlsDiv.style.display = 'none';
+    menuPanel.style.display = 'block';
+    disableTouchBlock();
+}
+
+function startRenderLoop(frameFn){
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    function loop(){ frameFn(); rafId = requestAnimationFrame(loop); }
+    rafId = requestAnimationFrame(loop);
+}
+
+function updateScoreBadge(text){
+    if (!text) { scoreBadge.style.display = 'none'; return; }
+    scoreBadge.style.display = 'block';
+    scoreBadge.innerHTML = text;
+}
+
+function startGame(name){
+    // ensure previous cleaned
+    stopGame();
+    menuPanel.style.display = 'none';
+    canvas.style.display = 'block';
+    exitBtn.style.display = 'block';
+    updateScoreBadge('');
+    enableTouchBlock();
+    // start registry
+    if (gameRegistry[name]) {
+        activeGame = gameRegistry[name];
+        activeGame.init(canvas, ctx, startRenderLoop, stopGame, updateScoreBadge);
+    } else {
+        ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#fff'; ctx.fillText('Game not found: '+name, 10, 20);
+    }
+}
+
+/* -------------- Game registry -------------- */
+var gameRegistry = {};
+
+/* ---------- helper: requestAnimationFrame fallback ---------- */
+if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = function(cb){ return setTimeout(cb, 1000/30); };
+}
+if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = function(id){ clearTimeout(id); };
+}
+
+/* ---------- 1: Snake ---------- */
+gameRegistry.snake = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.s = Math.max(12, Math.floor(Math.min(canvas.width, canvas.height)/20));
+        state.x = state.s * 5; state.y = state.s * 5;
+        state.dx = state.s; state.dy = 0;
+        state.tail = []; state.len = 3;
+        state.food = { x: state.s*10, y: state.s*7};
+        state.score = 0;
+        state.onTouch = function(e){
+            var t = e.touches ? e.touches[0] : e;
+            var cx = canvas.width/2, cy = canvas.height/2;
+            var dxs = t.clientX - cx, dys = t.clientY - cy;
+            if (Math.abs(dxs) > Math.abs(dys)) { state.dx = dxs>0?state.s:-state.s; state.dy = 0; } else { state.dy = dys>0?state.s:-state.s; state.dx = 0; }
+        };
+        canvas.addEventListener('touchstart', state.onTouch, false);
+        function frame(){
+            state.x += state.dx; state.y += state.dy;
+            // wrap
+            if (state.x < 0) state.x = canvas.width - state.s;
+            if (state.x >= canvas.width) state.x = 0;
+            if (state.y < 0) state.y = canvas.height - state.s;
+            if (state.y >= canvas.height) state.y = 0;
+            if (Math.abs(state.x - state.food.x) < state.s && Math.abs(state.y - state.food.y) < state.s) {
+                state.len++; state.score++;
+                state.food.x = Math.floor(Math.random() * Math.floor(canvas.width/state.s)) * state.s;
+                state.food.y = Math.floor(Math.random() * Math.floor(canvas.height/state.s)) * state.s;
+                updateScore('Score: ' + state.score);
+            }
+            state.tail.push({x:state.x,y:state.y});
+            while (state.tail.length > state.len) state.tail.shift();
+            for (var i=0;i<state.tail.length-1;i++){ if (state.tail[i].x === state.x && state.tail[i].y === state.y) { state.len = 3; state.tail=[]; state.score = 0; updateScore(''); } }
+            // draw
+            ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#0f0'; for(i=0;i<state.tail.length;i++) ctx.fillRect(state.tail[i].x, state.tail[i].y, state.s-1, state.s-1);
+            ctx.fillStyle = '#f00'; ctx.fillRect(state.food.x, state.food.y, state.s-1, state.s-1);
+        }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
+        state.onResize = function(){ state.s = Math.max(12, Math.floor(Math.min(canvas.width, canvas.height)/20)); };
+        startLoop(frame);
+    }
+    return { init: init, stop: function(){ } };
+})();
+
+/* ---------- 2: Breakout ---------- */
+gameRegistry.breakout = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore) {
+        state.pw = Math.max(40, Math.floor(canvas.width * 0.25));
+        state.ph = 12; state.px = (canvas.width - state.pw)/2;
+        state.bx = canvas.width/2; state.by = canvas.height/2; state.br = 8; state.vx = 4; state.vy = 4;
+        state.rows = 4; state.cols = Math.max(4, Math.floor(canvas.width / 40));
+        state.bricks = []; state.score = 0; updateScore('');
+        for(var r=0;r<state.rows;r++){ state.bricks[r]=[]; for(var c=0;c<state.cols;c++) state.bricks[r][c]=1; }
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - state.pw/2; if(state.px<0) state.px=0; if(state.px+state.pw>canvas.width) state.px=canvas.width-state.pw; };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        function frame(){
+            state.bx+=state.vx; state.by+=state.vy;
+            if(state.bx<state.br||state.bx>canvas.width-state.br) state.vx=-state.vx;
+            if(state.by<state.br) state.vy=-state.vy;
+            if(state.by>canvas.height-state.ph && state.bx>state.px && state.bx<state.px+state.pw) state.vy=-Math.abs(state.vy);
+            if(state.by>canvas.height) { state.bx=canvas.width/2; state.by=canvas.height/2; state.vx=4; state.vy=4; }
+            var bw = canvas.width / state.cols; var bh = 18;
+            for(var r=0;r<state.rows;r++){ for(var c=0;c<state.cols;c++){
+                if(state.bricks[r][c]) {
+                    var rx=c*bw, ry=r*bh;
+                    if(state.bx>rx && state.bx<rx+bw && state.by>ry && state.by<ry+bh){
+                        state.bricks[r][c]=0; state.vy=-state.vy; state.score++; updateScore('Score: '+state.score);
+                    }
+                }
+            }}
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0ff'; ctx.beginPath(); ctx.arc(state.bx,state.by,state.br,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.fillRect(state.px, canvas.height-state.ph, state.pw, state.ph);
+            ctx.fillStyle='#f00'; for(r=0;r<state.rows;r++){ for(c=0;c<state.cols;c++){ if(state.bricks[r][c]) ctx.fillRect(c*bw, r*bh, bw-2, bh-2); } }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); };
+        state.onResize = function(){ state.pw = Math.max(40, Math.floor(canvas.width * 0.25)); state.px = (canvas.width - state.pw)/2; };
+        startLoop(frame);
+    }
+    return { init: init, stop: function(){} };
+})();
+
+/* ---------- 3: Shooter (Space) ---------- */
+gameRegistry.shooter = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.px = Math.floor(canvas.width/2)-10; state.py = canvas.height - 40; state.shots=[]; state.en=[];
+        for(var i=0;i<6;i++) state.en.push({x:Math.random()*(canvas.width-20), y:Math.random()*120});
+        state.score=0; updateScore('');
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - 10; if(state.px<0)state.px=0; if(state.px+20>canvas.width)state.px=canvas.width-20; };
+        state.onShoot = function(){ state.shots.push({x:state.px+9, y:state.py}); };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        canvas.addEventListener('touchstart', state.onShoot, false);
+        function frame(){
+            for(var i=state.shots.length-1;i>=0;i--){ state.shots[i].y -= 6; if(state.shots[i].y<0) state.shots.splice(i,1); }
+            for(i=0;i<state.en.length;i++){ state.en[i].y += 0.6; if(state.en[i].y > canvas.height) state.en[i].y = -20; }
+            for(i=state.en.length-1;i>=0;i--){ for(var j=state.shots.length-1;j>=0;j--){ var dx=Math.abs(state.shots[j].x - state.en[i].x), dy=Math.abs(state.shots[j].y - state.en[i].y); if(dx<12 && dy<12){ state.en[i].y=-20; state.shots.splice(j,1); state.score++; updateScore('Score: '+state.score); break; } } }
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0f0'; ctx.fillRect(state.px,state.py,20,20);
+            ctx.fillStyle='#ff0'; for(i=0;i<state.shots.length;i++) ctx.fillRect(state.shots[i].x, state.shots[i].y, 3,10);
+            ctx.fillStyle='#f00'; for(i=0;i<state.en.length;i++) ctx.fillRect(state.en[i].x, state.en[i].y, 16,16);
+        }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 4: Platformer (with controls) ---------- */
+gameRegistry.platformer = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        // show controls
+        controlsDiv.style.display = 'block';
+        var leftBtn = document.getElementById('btnLeft'), rightBtn = document.getElementById('btnRight'), jumpBtn = document.getElementById('btnJump');
+        var left=false, right=false, jump=false;
+        // player
+        var player = { x:40, y:canvas.height-80, vx:0, vy:0, w:18, h:18, onGround:false };
+        var platforms = [{x:0,y:canvas.height-50,w:canvas.width,h:50},{x:100,y:canvas.height-120,w:80,h:10},{x:220,y:canvas.height-180,w:70,h:10}];
+
+        // bind buttons
+        function bindBtn(btn, downFn, upFn){
+            btn.addEventListener('touchstart', function(e){ e.preventDefault(); downFn(); }, false);
+            btn.addEventListener('touchend', function(e){ e.preventDefault(); upFn(); }, false);
+        }
+        bindBtn(leftBtn, function(){ left=true; }, function(){ left=false; });
+        bindBtn(rightBtn, function(){ right=true; }, function(){ right=false; });
+        bindBtn(jumpBtn, function(){ jump=true; }, function(){ jump=false; });
+
+        function frame(){
+            // horizontal
+            if (left) player.vx = -2.8; else if (right) player.vx = 2.8; else player.vx = 0;
+            // jump
+            if (jump && player.onGround) { player.vy = -7.5; player.onGround = false; }
+            // physics
+            player.vy += 0.4; player.y += player.vy; player.x += player.vx;
+            // bounds
+            if (player.x < 0) player.x = 0; if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+            // platform collisions
+            player.onGround = false;
+            for(var i=0;i<platforms.length;i++){
+                var p = platforms[i];
+                if (player.x + player.w > p.x && player.x < p.x + p.w && player.y + player.h > p.y && player.y + player.h < p.y + p.h + 10 && player.vy >= 0) {
+                    player.y = p.y - player.h; player.vy = 0; player.onGround = true;
+                }
+            }
+            // draw
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0f0'; ctx.fillRect(player.x, player.y, player.w, player.h);
+            ctx.fillStyle='#fff'; for(i=0;i<platforms.length;i++){ var p2 = platforms[i]; ctx.fillRect(p2.x, p2.y, p2.w, p2.h); }
+        }
+
+        state.stop = function(){
+            // remove button listeners by replacing nodes
+            leftBtn.parentNode.replaceChild(leftBtn.cloneNode(true), leftBtn);
+            rightBtn.parentNode.replaceChild(rightBtn.cloneNode(true), rightBtn);
+            jumpBtn.parentNode.replaceChild(jumpBtn.cloneNode(true), jumpBtn);
+            controlsDiv.style.display = 'none';
+        };
+        state.onResize = function(){ /* nothing heavy */ };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 5: Tap Dot ---------- */
+gameRegistry.tapdot = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.r = Math.max(12, Math.floor(Math.min(canvas.width,canvas.height)/24));
+        state.x = Math.floor(Math.random()*(canvas.width-state.r*2))+state.r;
+        state.y = Math.floor(Math.random()*(canvas.height-state.r*2))+state.r;
+        state.score = 0;
+        state.onTouch = function(e){ var t=e.touches?e.touches[0]:e; var dx=t.clientX-state.x, dy=t.clientY-state.y; if(dx*dx+dy*dy<=state.r*state.r){ state.score++; updateScore('Score: '+state.score); state.x = Math.floor(Math.random()*(canvas.width-state.r*2))+state.r; state.y = Math.floor(Math.random()*(canvas.height-state.r*2))+state.r; } };
+        canvas.addEventListener('touchstart', state.onTouch, false);
+        function frame(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f00'; ctx.beginPath(); ctx.arc(state.x,state.y,state.r,0,Math.PI*2); ctx.fill(); }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 6: Bouncing Ball ---------- */
+gameRegistry.bouncingball = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop){
+        state.x = Math.floor(canvas.width/4); state.y = Math.floor(canvas.height/4); state.vx = 3; state.vy = 4; state.r = Math.max(8, Math.floor(Math.min(canvas.width,canvas.height)/40));
+        function frame(){ state.x += state.vx; state.y += state.vy; if(state.x<state.r||state.x>canvas.width-state.r) state.vx=-state.vx; if(state.y<state.r||state.y>canvas.height-state.r) state.vy=-state.vy; ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(state.x,state.y,state.r,0,Math.PI*2); ctx.fill(); }
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 7: Flappy ---------- */
+gameRegistry.flappy = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.x = 60; state.y = Math.floor(canvas.height/2); state.vy = 0; state.pipes = []; state.frame = 0; state.score = 0;
+        updateScore('');
+        state.onTap = function(){ state.vy = -8; };
+        canvas.addEventListener('touchstart', state.onTap, false);
+        function frame(){
+            state.vy += 0.5; state.y += state.vy; state.frame++;
+            if (state.frame % 90 === 0) { var topH = 40 + Math.floor(Math.random()*(canvas.height-180)); state.pipes.push({x:canvas.width, top:topH, gap:90}); }
+            for(var i=state.pipes.length-1;i>=0;i--){ state.pipes[i].x -= 2; if(state.pipes[i].x + 20 < 0) { state.pipes.splice(i,1); state.score++; updateScore('Score: '+state.score); } }
+            for(i=0;i<state.pipes.length;i++){ var p=state.pipes[i]; if(state.x+18>p.x && state.x<p.x+20 && (state.y < p.top || state.y+18 > p.top + p.gap)){ state.y = Math.floor(canvas.height/2); state.vy=0; state.pipes=[]; state.score=0; updateScore(''); } }
+            if(state.y<0) state.y=0; if(state.y+18>canvas.height) { state.y = Math.floor(canvas.height/2); state.vy = 0; state.pipes=[]; state.score=0; updateScore(''); }
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#ff0'; ctx.fillRect(state.x,state.y,18,18);
+            ctx.fillStyle='#0f0'; for(i=0;i<state.pipes.length;i++){ var pp=state.pipes[i]; ctx.fillRect(pp.x, 0, 20, pp.top); ctx.fillRect(pp.x, pp.top+pp.gap, 20, canvas.height); }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTap, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 8: Pong ---------- */
+gameRegistry.pong = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.pw = Math.max(60, Math.floor(canvas.width * 0.2)); state.px = (canvas.width - state.pw)/2; state.py = canvas.height - 30;
+        state.bx = canvas.width/2; state.by = canvas.height/2; state.vx = 3; state.vy = 3; state.score = 0;
+        updateScore('');
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - state.pw/2; if(state.px<0)state.px=0; if(state.px+state.pw>canvas.width) state.px=canvas.width-state.pw; };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        function frame(){ state.bx += state.vx; state.by += state.vy; if(state.bx<0||state.bx>canvas.width) state.vx=-state.vx; if(state.by<0) state.vy=-state.vy; if(state.by>canvas.height){ state.bx=canvas.width/2; state.by=canvas.height/2; state.score=0; updateScore(''); } if(state.by+8>state.py && state.bx>state.px && state.bx<state.px+state.pw){ state.vy = -Math.abs(state.vy); state.score++; updateScore('Score: '+state.score);} ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillRect(state.px,state.py,state.pw,12); ctx.fillStyle='#f00'; ctx.fillRect(state.bx,state.by,8,8); }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 9: Paint ---------- */
+gameRegistry.paint = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop){
+        ctx.lineWidth = 3; ctx.lineCap='round'; ctx.strokeStyle='#000';
+        state.painting=false;
+        state.onStart = function(e){ state.painting=true; var t=e.touches?e.touches[0]:e; ctx.beginPath(); ctx.moveTo(t.clientX, t.clientY); };
+        state.onMove = function(e){ if(!state.painting) return; var t=e.touches?e.touches[0]:e; ctx.lineTo(t.clientX, t.clientY); ctx.stroke(); };
+        state.onEnd = function(){ state.painting=false; };
+        canvas.addEventListener('touchstart', state.onStart, false);
+        canvas.addEventListener('touchmove', state.onMove, false);
+        canvas.addEventListener('touchend', state.onEnd, false);
+        function frame(){ /* idle */ }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onStart, false); canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchend', state.onEnd, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- 10: Catch Game ---------- */
+gameRegistry.catchgame = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.px = Math.floor(canvas.width/2)-20; state.py = canvas.height - 40; state.objs=[]; state.score = 0; updateScore('');
+        state.spawnTimer = setInterval(function(){ state.objs.push({ x: Math.random()*(canvas.width-12), y: -10, vy: 2 + Math.random()*2 }); }, 600);
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - 20; if(state.px<0)state.px=0; if(state.px+40>canvas.width)state.px=canvas.width-40; };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        function frame(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#0f0'; ctx.fillRect(state.px,state.py,40,12); for(var i=state.objs.length-1;i>=0;i--){ var o=state.objs[i]; o.y += o.vy; ctx.fillStyle='#f00'; ctx.fillRect(o.x,o.y,12,12); if(o.y + 12 > state.py && o.x > state.px && o.x < state.px + 40){ state.objs.splice(i,1); state.score++; updateScore('Score: '+state.score); } else if (o.y > canvas.height + 20) state.objs.splice(i,1); } }
+        state.stop = function(){ clearInterval(state.spawnTimer); canvas.removeEventListener('touchmove', state.onMove, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Mini Minecraft-like (very small) ---------- */
+gameRegistry.mini_minecraft = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var gridW = Math.floor(canvas.width/20), gridH = Math.floor(canvas.height/20);
+        state.grid = []; for(var y=0;y<gridH;y++){ state.grid[y]=[]; for(var x=0;x<gridW;x++){ state.grid[y][x] = (y>gridH/2)?1:0; } }
+        state.brush = 1; updateScore('');
+        state.onTouch = function(e){
+            var t = e.touches?e.touches[0]:e;
+            var gx = Math.floor(t.clientX / (canvas.width/gridW));
+            var gy = Math.floor(t.clientY / (canvas.height/gridH));
+            if (gx>=0 && gx<gridW && gy>=0 && gy<gridH) {
+                state.grid[gy][gx] = state.brush;
+            }
+        };
+        canvas.addEventListener('touchstart', state.onTouch, false);
+        function frame(){
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            var cellW = canvas.width / gridW, cellH = canvas.height / gridH;
+            for(var y=0;y<gridH;y++){ for(var x=0;x<gridW;x++){ if(state.grid[y][x]){ ctx.fillStyle='#6b8'; ctx.fillRect(x*cellW, y*cellH, cellW-1, cellH-1); } } }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Top-down Racing (simple) ---------- */
+gameRegistry.racing = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.carX = canvas.width/2; state.carY = canvas.height - 60; state.speed = 3; state.obstacles = []; state.score = 0; updateScore('');
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.carX = t.clientX; if(state.carX<20) state.carX=20; if(state.carX>canvas.width-20) state.carX=canvas.width-20; };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        state.spawnTimer = setInterval(function(){ state.obstacles.push({x: Math.random()*(canvas.width-20), y: -10, vy: 2 + Math.random()*2}); }, 700);
+        function frame(){
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            // road
+            ctx.fillStyle='#333'; ctx.fillRect(30,0, canvas.width-60, canvas.height);
+            // car
+            ctx.fillStyle='#0f0'; ctx.fillRect(state.carX-10, state.carY, 20, 30);
+            // obstacles
+            for(var i=state.obstacles.length-1;i>=0;i--){ var o=state.obstacles[i]; o.y += o.vy; ctx.fillStyle='#f00'; ctx.fillRect(o.x,o.y,20,20); if(o.y > canvas.height){ state.obstacles.splice(i,1); state.score++; updateScore('Score: '+state.score); } else if (Math.abs(o.x-state.carX)<20 && Math.abs(o.y-state.carY)<20){ state.obstacles=[]; state.score=0; updateScore(''); } }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); clearInterval(state.spawnTimer); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Tower Defense (mini) ---------- */
+gameRegistry.towerdef = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.path = [{x:0,y:canvas.height/2},{x:canvas.width,y:canvas.height/2}];
+        state.towers = []; state.enemies = []; state.spawn=0; state.score=0; updateScore('');
+        state.onTap = function(e){ var t=e.touches?e.touches[0]:e; state.towers.push({x:t.clientX, y:t.clientY, r:60}); };
+        canvas.addEventListener('touchstart', state.onTap, false);
+        state.spawnTimer = setInterval(function(){ state.enemies.push({x: -10, y: canvas.height/2, hp: 1, vx: 1.2}); }, 900);
+        function frame(){
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            // draw path
+            ctx.strokeStyle='#444'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(state.path[0].x,state.path[0].y); ctx.lineTo(state.path[1].x,state.path[1].y); ctx.stroke();
+            // enemies
+            for(var i=state.enemies.length-1;i>=0;i--){ var e = state.enemies[i]; e.x += e.vx; ctx.fillStyle='#f00'; ctx.fillRect(e.x,e.y-8,16,16); if(e.x > canvas.width+10){ state.enemies.splice(i,1); } }
+            // towers fire
+            for(i=0;i<state.towers.length;i++){ var tr=state.towers[i]; ctx.fillStyle='#6cf'; ctx.beginPath(); ctx.arc(tr.x,tr.y,6,0,Math.PI*2); ctx.fill();
+                for(var j=state.enemies.length-1;j>=0;j--){ var en=state.enemies[j]; var dx = en.x - tr.x, dy=en.y - tr.y; if(dx*dx+dy*dy < tr.r*tr.r){ en.hp -= 0.05; if(en.hp <= 0){ state.enemies.splice(j,1); state.score++; updateScore('Score: '+state.score); } } }
+            }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTap, false); clearInterval(state.spawnTimer); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Space Invaders ---------- */
+gameRegistry.spaceinv = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.px = canvas.width/2 - 12; state.py = canvas.height - 40; state.aliens = []; state.shots = []; state.score=0; updateScore('');
+        for(var r=0;r<3;r++){ for(var c=0;c<6;c++){ state.aliens.push({x:40+c*40, y:40+r*30}); } }
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - 12; if(state.px<0) state.px=0; if(state.px+24>canvas.width) state.px=canvas.width-24; };
+        state.onShoot = function(){ state.shots.push({x: state.px+12, y: state.py}); };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        canvas.addEventListener('touchstart', state.onShoot, false);
+        function frame(){
+            for(var i=state.shots.length-1;i>=0;i--){ state.shots[i].y -= 6; if(state.shots[i].y < 0) state.shots.splice(i,1); }
+            for(i=state.aliens.length-1;i>=0;i--){ for(var j=state.shots.length-1;j>=0;j--){ var dx=Math.abs(state.shots[j].x - state.aliens[i].x), dy=Math.abs(state.shots[j].y - state.aliens[i].y); if(dx<12 && dy<12){ state.aliens.splice(i,1); state.shots.splice(j,1); state.score++; updateScore('Score: '+state.score); break; } } }
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#0f0'; ctx.fillRect(state.px,state.py,24,16);
+            ctx.fillStyle='#f00'; for(i=0;i<state.aliens.length;i++) ctx.fillRect(state.aliens[i].x, state.aliens[i].y, 18, 12);
+            ctx.fillStyle='#ff0'; for(i=0;i<state.shots.length;i++) ctx.fillRect(state.shots[i].x, state.shots[i].y, 3, 10);
+        }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Fruit Ninja (swipe to slice) ---------- */
+gameRegistry.fruitninja = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.objects = []; state.score = 0; updateScore('');
+        state.spawnTimer = setInterval(function(){ state.objects.push({x:20+Math.random()*(canvas.width-40), y:canvas.height+10, vy: -6 - Math.random()*4, kind:'fruit'}); }, 700);
+        state.onSwipe = function(e){
+            // simple: any touchstart slices fruits near point
+            var t = e.touches?e.touches[0]:e;
+            for(var i=state.objects.length-1;i>=0;i--){ var o=state.objects[i]; var dx = o.x - t.clientX, dy = o.y - t.clientY; if(dx*dx+dy*dy < 400){ state.objects.splice(i,1); state.score++; updateScore('Score: '+state.score); } }
+        };
+        canvas.addEventListener('touchstart', state.onSwipe, false);
+        function frame(){ for(var i=state.objects.length-1;i>=0;i--){ var o=state.objects[i]; o.y += o.vy; o.vy += 0.25; if(o.y > canvas.height+50) state.objects.splice(i,1); } ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f60'; for(i=0;i<state.objects.length;i++) ctx.beginPath(), ctx.arc(state.objects[i].x, state.objects[i].y, 12,0,Math.PI*2), ctx.fill(); }
+        state.stop = function(){ clearInterval(state.spawnTimer); canvas.removeEventListener('touchstart', state.onSwipe, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Powder (very lite) ---------- */
+gameRegistry.powder = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop){
+        var W = Math.floor(canvas.width/6), H = Math.floor(canvas.height/6);
+        state.grid = []; for(var y=0;y<H;y++){ state.grid[y]=[]; for(var x=0;x<W;x++){ state.grid[y][x]=0; } }
+        state.onTouch = function(e){ var t=e.touches?e.touches[0]:e; var gx=Math.floor(t.clientX/(canvas.width/W)), gy=Math.floor(t.clientY/(canvas.height/H)); if(gx>=0&&gx<W&&gy>=0&&gy<H) state.grid[gy][gx]=1; };
+        canvas.addEventListener('touchstart', state.onTouch, false);
+        function frame(){
+            // simple falling particles
+            for(var y=H-2;y>=0;y--){ for(var x=0;x<W;x++){ if(state.grid[y][x]===1 && state.grid[y+1][x]===0){ state.grid[y+1][x]=1; state.grid[y][x]=0; } } }
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            var cw = canvas.width/W, ch = canvas.height/H;
+            ctx.fillStyle='#ff8'; for(y=0;y<H;y++){ for(x=0;x<W;x++){ if(state.grid[y][x]) ctx.fillRect(x*cw,y*ch,cw-1,ch-1); } }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Asteroids (simple) ---------- */
+gameRegistry.asteroids = (function(){
+    var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.ship = {x:canvas.width/2, y:canvas.height/2, angle:0};
+        state.asteroids = []; state.bullets = []; state.score=0; updateScore('');
+        for(var i=0;i<6;i++) state.asteroids.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, vx:(Math.random()-0.5)*2, vy:(Math.random()-0.5)*2, r:20});
+        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.ship.x = t.clientX; state.ship.y = t.clientY; };
+        canvas.addEventListener('touchmove', state.onMove, false);
+        state.onShoot = function(){ state.bullets.push({x:state.ship.x, y:state.ship.y, vy:-4}); };
+        canvas.addEventListener('touchstart', state.onShoot, false);
+        function frame(){
+            for(var i=0;i<state.asteroids.length;i++){ var a=state.asteroids[i]; a.x+=a.vx; a.y+=a.vy; if(a.x<0) a.x=canvas.width; if(a.x>canvas.width) a.x=0; if(a.y<0) a.y=canvas.height; if(a.y>canvas.height) a.y=0;}
+            for(i=state.bullets.length-1;i>=0;i--){ state.bullets[i].y += state.bullets[i].vy; if(state.bullets[i].y<0) state.bullets.splice(i,1); }
+            // collisions
+            for(i=state.asteroids.length-1;i>=0;i--){ for(var j=state.bullets.length-1;j>=0;j--){ var a=state.asteroids[i], b=state.bullets[j]; if(Math.abs(a.x-b.x)<a.r && Math.abs(a.y-b.y)<a.r){ state.asteroids.splice(i,1); state.bullets.splice(j,1); state.score++; updateScore('Score: '+state.score); break; } } }
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillRect(state.ship.x-6, state.ship.y-6, 12, 12);
+            ctx.fillStyle='#888'; for(i=0;i<state.asteroids.length;i++){ var a=state.asteroids[i]; ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fill(); }
+            ctx.fillStyle='#ff0'; for(i=0;i<state.bullets.length;i++){ ctx.fillRect(state.bullets[i].x, state.bullets[i].y, 3,6); }
+        }
+        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} };
+})();
+
+/* ---------- Wiring: exit and cleanup ---------- */
+var exitBtn = document.getElementById('exitBtn');
+exitBtn.addEventListener('click', function(){ stopGame(); }, false);
+window.addEventListener('pagehide', function(){ stopGame(); }, false);
+window.addEventListener('beforeunload', function(){ stopGame(); }, false);
+window.addEventListener('unload', function(){ if (removeDoubleTap) removeDoubleTap(); }, false);
+
+</script>
+</body>
+</html>
