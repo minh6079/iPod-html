@@ -208,13 +208,6 @@ div.fsd, label {
 <button id="exitBtn" onclick="stopGame();">Exit</button>
 <div id="scoreBadge" class="scoreBadge"></div>
 
-<!-- Platformer controls (left / jump / right) -->
-<div id="controls">
-  <button id="btnLeft">◀</button>
-  <button id="btnJump">▲</button>
-  <button id="btnRight">▶</button>
-</div>
-
 <script>
 /* -------------- Core manager (Option A) -------------- */
 var canvas = document.getElementById('gameCanvas');
@@ -413,91 +406,6 @@ gameRegistry.shooter = (function(){
     return { init:init, stop:function(){} };
 })();
 
-/* ---------- 4: Platformer (with controls) ---------- */
-gameRegistry.platformer = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        // show controls
-        controlsDiv.style.display = 'block';
-        var leftBtn = document.getElementById('btnLeft'), rightBtn = document.getElementById('btnRight'), jumpBtn = document.getElementById('btnJump');
-        var left=false, right=false, jump=false;
-        // player
-        var player = { x:40, y:canvas.height-80, vx:0, vy:0, w:18, h:18, onGround:false };
-        var platforms = [{x:0,y:canvas.height-50,w:canvas.width,h:50},{x:100,y:canvas.height-120,w:80,h:10},{x:220,y:canvas.height-180,w:70,h:10}];
-
-        // bind buttons
-        function bindBtn(btn, downFn, upFn){
-            btn.addEventListener('touchstart', function(e){ e.preventDefault(); downFn(); }, false);
-            btn.addEventListener('touchend', function(e){ e.preventDefault(); upFn(); }, false);
-        }
-        bindBtn(leftBtn, function(){ left=true; }, function(){ left=false; });
-        bindBtn(rightBtn, function(){ right=true; }, function(){ right=false; });
-        bindBtn(jumpBtn, function(){ jump=true; }, function(){ jump=false; });
-
-        function frame(){
-            // horizontal
-            if (left) player.vx = -2.8; else if (right) player.vx = 2.8; else player.vx = 0;
-            // jump
-            if (jump && player.onGround) { player.vy = -7.5; player.onGround = false; }
-            // physics
-            player.vy += 0.4; player.y += player.vy; player.x += player.vx;
-            // bounds
-            if (player.x < 0) player.x = 0; if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
-            // platform collisions
-            player.onGround = false;
-            for(var i=0;i<platforms.length;i++){
-                var p = platforms[i];
-                if (player.x + player.w > p.x && player.x < p.x + p.w && player.y + player.h > p.y && player.y + player.h < p.y + p.h + 10 && player.vy >= 0) {
-                    player.y = p.y - player.h; player.vy = 0; player.onGround = true;
-                }
-            }
-            // draw
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle='#0f0'; ctx.fillRect(player.x, player.y, player.w, player.h);
-            ctx.fillStyle='#fff'; for(i=0;i<platforms.length;i++){ var p2 = platforms[i]; ctx.fillRect(p2.x, p2.y, p2.w, p2.h); }
-        }
-
-        state.stop = function(){
-            // remove button listeners by replacing nodes
-            leftBtn.parentNode.replaceChild(leftBtn.cloneNode(true), leftBtn);
-            rightBtn.parentNode.replaceChild(rightBtn.cloneNode(true), rightBtn);
-            jumpBtn.parentNode.replaceChild(jumpBtn.cloneNode(true), jumpBtn);
-            controlsDiv.style.display = 'none';
-        };
-        state.onResize = function(){ /* nothing heavy */ };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
-/* ---------- 5: Tap Dot ---------- */
-gameRegistry.tapdot = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        state.r = Math.max(12, Math.floor(Math.min(canvas.width,canvas.height)/24));
-        state.x = Math.floor(Math.random()*(canvas.width-state.r*2))+state.r;
-        state.y = Math.floor(Math.random()*(canvas.height-state.r*2))+state.r;
-        state.score = 0;
-        state.onTouch = function(e){ var t=e.touches?e.touches[0]:e; var dx=t.clientX-state.x, dy=t.clientY-state.y; if(dx*dx+dy*dy<=state.r*state.r){ state.score++; updateScore('Score: '+state.score); state.x = Math.floor(Math.random()*(canvas.width-state.r*2))+state.r; state.y = Math.floor(Math.random()*(canvas.height-state.r*2))+state.r; } };
-        canvas.addEventListener('touchstart', state.onTouch, false);
-        function frame(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f00'; ctx.beginPath(); ctx.arc(state.x,state.y,state.r,0,Math.PI*2); ctx.fill(); }
-        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
-/* ---------- 6: Bouncing Ball ---------- */
-gameRegistry.bouncingball = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop){
-        state.x = Math.floor(canvas.width/4); state.y = Math.floor(canvas.height/4); state.vx = 3; state.vy = 4; state.r = Math.max(8, Math.floor(Math.min(canvas.width,canvas.height)/40));
-        function frame(){ state.x += state.vx; state.y += state.vy; if(state.x<state.r||state.x>canvas.width-state.r) state.vx=-state.vx; if(state.y<state.r||state.y>canvas.height-state.r) state.vy=-state.vy; ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(state.x,state.y,state.r,0,Math.PI*2); ctx.fill(); }
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
 /* ---------- 7: Flappy ---------- */
 gameRegistry.flappy = (function(){
     var state={};
@@ -520,23 +428,7 @@ gameRegistry.flappy = (function(){
     }
     return { init:init, stop:function(){} };
 })();
-
-/* ---------- 8: Pong ---------- */
-gameRegistry.pong = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        state.pw = Math.max(60, Math.floor(canvas.width * 0.2)); state.px = (canvas.width - state.pw)/2; state.py = canvas.height - 30;
-        state.bx = canvas.width/2; state.by = canvas.height/2; state.vx = 3; state.vy = 3; state.score = 0;
-        updateScore('');
-        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - state.pw/2; if(state.px<0)state.px=0; if(state.px+state.pw>canvas.width) state.px=canvas.width-state.pw; };
-        canvas.addEventListener('touchmove', state.onMove, false);
-        function frame(){ state.bx += state.vx; state.by += state.vy; if(state.bx<0||state.bx>canvas.width) state.vx=-state.vx; if(state.by<0) state.vy=-state.vy; if(state.by>canvas.height){ state.bx=canvas.width/2; state.by=canvas.height/2; state.score=0; updateScore(''); } if(state.by+8>state.py && state.bx>state.px && state.bx<state.px+state.pw){ state.vy = -Math.abs(state.vy); state.score++; updateScore('Score: '+state.score);} ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillRect(state.px,state.py,state.pw,12); ctx.fillStyle='#f00'; ctx.fillRect(state.bx,state.by,8,8); }
-        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
+	
 /* ---------- 9: Paint ---------- */
 gameRegistry.paint = (function(){
     var state={};
@@ -571,33 +463,6 @@ gameRegistry.catchgame = (function(){
     return { init:init, stop:function(){} };
 })();
 
-/* ---------- Mini Minecraft-like (very small) ---------- */
-gameRegistry.mini_minecraft = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        var gridW = Math.floor(canvas.width/20), gridH = Math.floor(canvas.height/20);
-        state.grid = []; for(var y=0;y<gridH;y++){ state.grid[y]=[]; for(var x=0;x<gridW;x++){ state.grid[y][x] = (y>gridH/2)?1:0; } }
-        state.brush = 1; updateScore('');
-        state.onTouch = function(e){
-            var t = e.touches?e.touches[0]:e;
-            var gx = Math.floor(t.clientX / (canvas.width/gridW));
-            var gy = Math.floor(t.clientY / (canvas.height/gridH));
-            if (gx>=0 && gx<gridW && gy>=0 && gy<gridH) {
-                state.grid[gy][gx] = state.brush;
-            }
-        };
-        canvas.addEventListener('touchstart', state.onTouch, false);
-        function frame(){
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            var cellW = canvas.width / gridW, cellH = canvas.height / gridH;
-            for(var y=0;y<gridH;y++){ for(var x=0;x<gridW;x++){ if(state.grid[y][x]){ ctx.fillStyle='#6b8'; ctx.fillRect(x*cellW, y*cellH, cellW-1, cellH-1); } } }
-        }
-        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTouch, false); };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
 /* ---------- Top-down Racing (simple) ---------- */
 gameRegistry.racing = (function(){
     var state={};
@@ -616,56 +481,6 @@ gameRegistry.racing = (function(){
             for(var i=state.obstacles.length-1;i>=0;i--){ var o=state.obstacles[i]; o.y += o.vy; ctx.fillStyle='#f00'; ctx.fillRect(o.x,o.y,20,20); if(o.y > canvas.height){ state.obstacles.splice(i,1); state.score++; updateScore('Score: '+state.score); } else if (Math.abs(o.x-state.carX)<20 && Math.abs(o.y-state.carY)<20){ state.obstacles=[]; state.score=0; updateScore(''); } }
         }
         state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); clearInterval(state.spawnTimer); };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
-/* ---------- Tower Defense (mini) ---------- */
-gameRegistry.towerdef = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        state.path = [{x:0,y:canvas.height/2},{x:canvas.width,y:canvas.height/2}];
-        state.towers = []; state.enemies = []; state.spawn=0; state.score=0; updateScore('');
-        state.onTap = function(e){ var t=e.touches?e.touches[0]:e; state.towers.push({x:t.clientX, y:t.clientY, r:60}); };
-        canvas.addEventListener('touchstart', state.onTap, false);
-        state.spawnTimer = setInterval(function(){ state.enemies.push({x: -10, y: canvas.height/2, hp: 1, vx: 1.2}); }, 900);
-        function frame(){
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            // draw path
-            ctx.strokeStyle='#444'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(state.path[0].x,state.path[0].y); ctx.lineTo(state.path[1].x,state.path[1].y); ctx.stroke();
-            // enemies
-            for(var i=state.enemies.length-1;i>=0;i--){ var e = state.enemies[i]; e.x += e.vx; ctx.fillStyle='#f00'; ctx.fillRect(e.x,e.y-8,16,16); if(e.x > canvas.width+10){ state.enemies.splice(i,1); } }
-            // towers fire
-            for(i=0;i<state.towers.length;i++){ var tr=state.towers[i]; ctx.fillStyle='#6cf'; ctx.beginPath(); ctx.arc(tr.x,tr.y,6,0,Math.PI*2); ctx.fill();
-                for(var j=state.enemies.length-1;j>=0;j--){ var en=state.enemies[j]; var dx = en.x - tr.x, dy=en.y - tr.y; if(dx*dx+dy*dy < tr.r*tr.r){ en.hp -= 0.05; if(en.hp <= 0){ state.enemies.splice(j,1); state.score++; updateScore('Score: '+state.score); } } }
-            }
-        }
-        state.stop = function(){ canvas.removeEventListener('touchstart', state.onTap, false); clearInterval(state.spawnTimer); };
-        startLoop(frame);
-    }
-    return { init:init, stop:function(){} };
-})();
-
-/* ---------- Space Invaders ---------- */
-gameRegistry.spaceinv = (function(){
-    var state={};
-    function init(canvas, ctx, startLoop, stopAll, updateScore){
-        state.px = canvas.width/2 - 12; state.py = canvas.height - 40; state.aliens = []; state.shots = []; state.score=0; updateScore('');
-        for(var r=0;r<3;r++){ for(var c=0;c<6;c++){ state.aliens.push({x:40+c*40, y:40+r*30}); } }
-        state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - 12; if(state.px<0) state.px=0; if(state.px+24>canvas.width) state.px=canvas.width-24; };
-        state.onShoot = function(){ state.shots.push({x: state.px+12, y: state.py}); };
-        canvas.addEventListener('touchmove', state.onMove, false);
-        canvas.addEventListener('touchstart', state.onShoot, false);
-        function frame(){
-            for(var i=state.shots.length-1;i>=0;i--){ state.shots[i].y -= 6; if(state.shots[i].y < 0) state.shots.splice(i,1); }
-            for(i=state.aliens.length-1;i>=0;i--){ for(var j=state.shots.length-1;j>=0;j--){ var dx=Math.abs(state.shots[j].x - state.aliens[i].x), dy=Math.abs(state.shots[j].y - state.aliens[i].y); if(dx<12 && dy<12){ state.aliens.splice(i,1); state.shots.splice(j,1); state.score++; updateScore('Score: '+state.score); break; } } }
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle='#0f0'; ctx.fillRect(state.px,state.py,24,16);
-            ctx.fillStyle='#f00'; for(i=0;i<state.aliens.length;i++) ctx.fillRect(state.aliens[i].x, state.aliens[i].y, 18, 12);
-            ctx.fillStyle='#ff0'; for(i=0;i<state.shots.length;i++) ctx.fillRect(state.shots[i].x, state.shots[i].y, 3, 10);
-        }
-        state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
         startLoop(frame);
     }
     return { init:init, stop:function(){} };
