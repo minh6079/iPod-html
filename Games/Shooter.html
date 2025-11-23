@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+    </style>
+    <title>Canvas Game</title>
+</head>
+
+<body>
+    <canvas></canvas>
+
+    <script>
+        // Polyfills for Safari 6
+        if (!Date.now) Date.now = function() { return new Date().getTime(); };
+        if (!Math.hypot) Math.hypot = function(a, b) { return Math.sqrt(a * a + b * b); };
+        window.requestAnimationFrame = window.requestAnimationFrame || 
+                                       window.webkitRequestAnimationFrame || 
+                                       function(cb){ return setTimeout(cb, 1000/60); };
+        window.cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || clearTimeout;
+
+        window.onload = function() {
+            var canvas = document.querySelector("canvas");
+            var ctx = canvas.getContext("2d");
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            var projetiles = [];
+            var enemies = [];
+            var particles = [];
+
+            var maxEnemy = 10;
+            var enemyTimer = 0;
+            var enemyInterval = 50;
+            var timeStamp = 0;
+            var gameLoop;
+
+            // ES5 Constructor for Player
+            function Player(x, y, radius, velocity, move) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.velocity = velocity;
+                this.speed = 0.4;
+                this.color = "#fff";
+                this.move = move;
+            }
+
+            Player.prototype.draw = function() {
+                ctx.beginPath();
+                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.closePath();
+            };
+
+            Player.prototype.update = function(delta) {
+                if (this.move && this.velocity) {
+                    this.x += this.velocity.x * this.speed * delta;
+                    this.y += this.velocity.y * this.speed * delta;
+                }
+            };
+
+            // Projectile inherits Player
+            function Projectile(x, y, radius, velocity, move) {
+                Player.call(this, x, y, radius, velocity, move);
+            }
+            Projectile.prototype = Object.create(Player.prototype);
+            Projectile.prototype.constructor = Projectile;
+
+            // Enemy inherits Player
+            function Enemy(x, y, radius) {
+                Player.call(this, x, y, radius, {x:1, y:1}, true);
+                this.color = "hsl(" + (Math.random() * 350) + ",60%,50%)";
+                this.speed = (Math.random() * 0.1) + this.radius / 500;
+                this.pushForce = 20;
+                this.angle = 0;
+                this.shakeMode = true;
+            }
+            Enemy.prototype = Object.create(Player.prototype);
+            Enemy.prototype.constructor = Enemy;
+
+            Enemy.prototype.update = function(delta) {
+                // Shake
+                if (this.shakeMode) {
+                    this.x += Math.random() < 0.5 ? -1 : 1;
+                    this.y += Math.random() < 0.5 ? -1 : 1;
+                }
+
+                // Move toward player (center)
+                this.angle = Math.atan2(canvas.height/2 - this.y, canvas.width/2 - this.x);
+                this.velocity = {x: Math.cos(this.angle), y: Math.sin(this.angle)};
+                this.x += this.velocity.x * this.speed * delta;
+                this.y += this.velocity.y * this.speed * delta;
+            };
+
+            Enemy.prototype.push = function(velocity) {
+                this.x += velocity.x * this.pushForce;
+                this.y += velocity.y * this.pushForce;
+            };
+
+            // Particle
+            function Particle(x, y, color, velocity, expand) {
+                this.x = x;
+                this.y = y;
+                this.alpha = 1;
+                this.radius = 4 + Math.random() * 2;
+                this.velocity = velocity;
+                this.color = "hsl(" + Math.random()*60 + ",50%," + (Math.random()*20) + "%)";
+                this.speed = 0.3;
+                this.scale = 1;
+                this.expand = expand;
+            }
+
+            Particle.prototype.update = function(delta) {
+                if (!this.expand) {
+                    this.x += (Math.random() < 0.5 ? -1 : 1) * this.speed * delta;
+                    this.y += (Math.random() < 0.5 ? -1 : 1) * this.speed * delta;
+                } else {
+                    this.x += -this.velocity.x * (Math.random() < 0.5 ? -1 : 1) * this.speed * delta;
+                    this.y += -this.velocity.y * (Math.random() < 0.5 ? -1 : 1) * this.speed * delta;
+                }
+                this.alpha -= 0.02;
+            };
+
+            Particle.prototype.draw = function() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.globalCompositeOperation = "screen";
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha;
+                ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.restore();
+            };
+
+            var player = new Player(canvas.width/2, canvas.height/2, 20, false);
+
+            function createParticles(x, y, color, velocity, num, expand) {
+                for (var i = 0; i < num; i++) {
+                    particles.push(new Particle(x, y, color, velocity, expand));
+                }
+            }
+
+            function touchHandler(e) {
+                e.preventDefault();
+                var touchX, touchY;
+                var isClick = !e.touches;
+
+                if (isClick) {
+                    touchX = e.clientX;
+                    touchY = e.clientY;
+                } else {
+                    touchX = e.touches[0].clientX;
+                    touchY = e.touches[0].clientY;
+                }
+
+                var angle = Math.atan2(touchY - canvas.height/2, touchX - canvas.width/2);
+                var velocity = {x: Math.cos(angle), y: Math.sin(angle)};
+                projetiles.push(new Projectile(canvas.width/2, canvas.height/2, 5, velocity, true));
+            }
+
+            canvas.addEventListener("touchstart", touchHandler);
+            canvas.addEventListener("click", touchHandler);
+
+            function animate() {
+                ctx.fillStyle = "rgba(0,0,0,0.1)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                var timePassed = Date.now() - timeStamp;
+                timeStamp = Date.now();
+                var deltaTime = (1 / timePassed / 1000);
+
+                // Spawn enemies
+                if (enemies.length < maxEnemy) {
+                    var radius = 10 + Math.random()*20;
+                    var randomizer = Math.random() < 0.5 ? 1 : -1;
+                    var x = randomizer === -1 ? Math.random() * canvas.width + canvas.width : 0;
+                    var y = Math.random() * canvas.height;
+
+                    if (enemyTimer > enemyInterval) {
+                        enemies.push(new Enemy(x, y, radius));
+                        enemyTimer = 0;
+                    } else {
+                        enemyTimer++;
+                    }
+                }
+
+                player.draw();
+
+                // Projectiles
+                for (var i=projetiles.length-1; i>=0; i--) {
+                    var proj = projetiles[i];
+                    if (proj.x < 0 || proj.x > canvas.width || proj.y < 0 || proj.y > canvas.height) {
+                        projetiles.splice(i, 1);
+                        continue;
+                    }
+
+                    for (var j=enemies.length-1; j>=0; j--) {
+                        var enemy = enemies[j];
+                        var dis = Math.hypot(enemy.x - proj.x, enemy.y - proj.y);
+                        var angle = Math.atan2(canvas.height/2 - enemy.y, canvas.width/2 - enemy.x);
+                        var velocity = {x: Math.random()*Math.cos(angle), y: Math.random()*Math.sin(angle)};
+
+                        if (dis - enemy.radius - proj.radius < 2) {
+                            if (enemy.radius > 15) {
+                                enemy.radius -= 4;
+                                enemy.push({x:-velocity.x, y:-velocity.y});
+                                createParticles(enemy.x, enemy.y, enemy.color, {x: Math.cos(angle), y: Math.sin(angle)}, 20, true);
+                            } else {
+                                enemies.splice(j,1);
+                                createParticles(enemy.x, enemy.y, enemy.color, velocity, 20, false);
+                            }
+                            projetiles.splice(i,1);
+                            break;
+                        }
+                    }
+
+                    proj.draw();
+                    proj.update(timePassed);
+                }
+
+                // Particles
+                for (var i=particles.length-1; i>=0; i--) {
+                    var p = particles[i];
+                    p.update(timePassed);
+                    p.draw();
+                    if (p.alpha <= 0) particles.splice(i,1);
+                }
+
+                // Enemies
+                for (var i=enemies.length-1; i>=0; i--) {
+                    var enemy = enemies[i];
+                    var playerDis = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                    if (playerDis - player.radius - enemy.radius < 2) {
+                        enemies.splice(i,1);
+                    } else {
+                        enemy.update(timePassed);
+                        enemy.draw();
+                    }
+                }
+
+                gameLoop = requestAnimationFrame(animate);
+            }
+
+            window.addEventListener("resize", function() {
+                player.x = window.innerWidth / 2;
+                player.y = window.innerHeight / 2;
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            animate();
+        };
+    </script>
+</body>
+</html>
