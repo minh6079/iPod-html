@@ -28,6 +28,10 @@
 </div>
 
 <script>
+// Touch input
+canvas.addEventListener("touchstart", function(e){
+    e.preventDefault(); // prevent scrolling
+
 // MiniCraft ES5 - single-file, ES5 compatible, touch controls
 (function(){
   var canvas = document.getElementById('c');
