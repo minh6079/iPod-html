@@ -127,25 +127,13 @@
   }
 
   // draw single cube (faces only, no lighting aside from simple shading)
-  function drawCube(x,y,z,type){
-    // lazy init textures (works with local files in same folder)
-    if(!window._mc_textures){
-      window._mc_textures = {imgs:{}, loaded:0, total:3};
-      var map = {top:'grass_top.png', side:'grass_side.png', dirt:'dirt.png'};
-      for(var k in map){ (function(key,src){
-        var im = new Image();
-        im.onload = function(){ window._mc_textures.loaded++; };
-        im.onerror = function(){ /* ignore, fallback to color */ };
-        im.src = src;
-        window._mc_textures.imgs[key] = im;
-      })(k,map[k]); }
-    }
-
-    // compute cube vertices and project as before
+  function drawCube(x,y,z, color){
+    // cube centered at integer grid, size 1
     var vs = [
       {x:x, y:y, z:z}, {x:x+1, y:y, z:z}, {x:x+1, y:y+1, z:z}, {x:x, y:y+1, z:z}, // front
       {x:x, y:y, z:z+1}, {x:x+1, y:y, z:z+1}, {x:x+1, y:y+1, z:z+1}, {x:x, y:y+1, z:z+1}
     ];
+    // faces (indices, and a simple normal indicator for shading)
     var faces = [
       {idx:[0,1,2,3], n:[0,0,-1]}, // front
       {idx:[5,4,7,6], n:[0,0,1]}, // back
@@ -154,6 +142,7 @@
       {idx:[3,2,6,7], n:[0,1,0]}, // top
       {idx:[4,5,1,0], n:[0,-1,0]}  // bottom
     ];
+    // compute projected points
     var pvs = [];
     for(var i=0;i<vs.length;i++){
       var p = projectPoint(vs[i].x - 0.5, vs[i].y - 0.5, vs[i].z - 0.5);
@@ -161,63 +150,33 @@
       pvs.push(p);
     }
     if(!pvs) return null;
+    // face depth for painter's algorithm
     var faceList = [];
     for(var f=0;f<faces.length;f++){
       var id = faces[f].idx;
       var depth = (pvs[id[0]].z + pvs[id[1]].z + pvs[id[2]].z + pvs[id[3]].z)/4;
+      // backface culling: compute 2D cross for projected triangle
       var a = pvs[id[0]], b = pvs[id[1]], c = pvs[id[2]];
       var cross = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
-      if(cross < 0) continue;
+      if(cross < 0) continue; // don't draw backfacing
       faceList.push({face:faces[f], id:id, depth:depth});
     }
+    // sort faces by depth desc
     faceList.sort(function(a,b){return b.depth - a.depth;});
-
-    // select images map
-    var imgs = window._mc_textures ? window._mc_textures.imgs : {};
-
     for(var fi=0; fi<faceList.length; fi++){
       var id = faceList[fi].id;
-      // polygon path
       ctx.beginPath();
       ctx.moveTo(pvs[id[0]].x, pvs[id[0]].y);
       ctx.lineTo(pvs[id[1]].x, pvs[id[1]].y);
       ctx.lineTo(pvs[id[2]].x, pvs[id[2]].y);
       ctx.lineTo(pvs[id[3]].x, pvs[id[3]].y);
       ctx.closePath();
-
-      // choose texture for this face
-      var texImg = null;
-      // top face (index where normal Y == 1)
-      if(faceList[fi].face.n[1] === 1){ texImg = imgs.top; }
-      else if(faceList[fi].face.n[1] === -1){ texImg = imgs.dirt; }
-      else { texImg = imgs.side; }
-
-      if(texImg && texImg.complete && texImg.width > 0){
-        // draw texture scaled to face bounding box, but clip to polygon so it fits
-        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for(var pi=0; pi<id.length; pi++){ var pv = pvs[id[pi]]; if(pv.x<minX) minX = pv.x; if(pv.x>maxX) maxX = pv.x; if(pv.y<minY) minY = pv.y; if(pv.y>maxY) maxY = pv.y; }
-        var w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
-        ctx.save();
-        ctx.clip();
-        try{
-          // draw whole image stretched into bounding rect
-          ctx.drawImage(texImg, minX, minY, w, h);
-        }catch(e){
-          // fallback to color fill if drawImage fails
-          var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
-          var col = shadeColor(BLOCK_COLORS[type] || '#888888', shade);
-          ctx.fillStyle = col; ctx.fill();
-        }
-        ctx.restore();
-        // subtle outline
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
-      } else {
-        // fallback: colored face as before
-        var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
-        var col = shadeColor(BLOCK_COLORS[type] || '#888888', shade);
-        ctx.fillStyle = col; ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
-      }
+      // shading based on face normal y component and depth
+      var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
+      var col = shadeColor(color, shade);
+      ctx.fillStyle = col;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
     }
   }
 
@@ -253,7 +212,7 @@
     }
     blocks.sort(function(a,b){return b.depth - a.depth;});
     for(var i=0;i<blocks.length;i++){
-      drawCube(blocks[i].x, blocks[i].y, blocks[i].z, blocks[i].t);
+      drawCube(blocks[i].x, blocks[i].y, blocks[i].z, BLOCK_COLORS[blocks[i].t]);
     }
   }
 
