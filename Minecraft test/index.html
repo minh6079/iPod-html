@@ -1,398 +1,226 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>MiniCraft ES5 (iPod-friendly) — Fixed</title>
+<html> 
+<head> 
+<title>Minecraft test</title> 
 <style>
-  html,body{height:100%;margin:0;background:#202020;-webkit-user-select:none;-webkit-touch-callout:none}
-  canvas{display:block}
-  .ui{position:fixed;left:0;right:0;bottom:0;top:0;pointer-events:none}
-  .joy{position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:auto}
-  .joy .stick{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(255,255,255,0.18)}
-  .joy.left{left:8px;bottom:8px}
-  .joy.right{right:8px;bottom:8px}
-  .jumpBtn{position:absolute;right:20px;bottom:160px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.15);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:auto}
-  .jumpBtn:active{background:rgba(255,255,255,0.25);} 
-  .hud{position:fixed;left:8px;top:8px;color:#fff;font-family:monospace;font-size:12px;pointer-events:none}
-</style>
-</head>
-<body>
-<canvas id="c"></canvas>
-<div class="ui">
-  <div class="joy left" id="joyLeft"><div class="stick" id="stickLeft"></div></div>
-  <div class="joy right" id="joyRight"><div class="stick" id="stickRight"></div></div>
-  <div class="jumpBtn" id="jumpBtn">JUMP</div>
-  <div class="hud" id="hud">Loading...</div>
+* {
+    border: 0;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    /*font-family: inherit;*/
+    font-size: 100%;
+    font-style: inherit;
+    font-weight: inherit;
+    margin: 0;
+    outline: 0;
+    padding: 0;
+    text-decoration: none;
+    vertical-align: baseline;
+}
+
+a {
+    color: inherit;
+}
+
+.panel {
+    position: absolute;
+    left: 50%;
+    margin-left: -160px;
+    display: block;
+    width: 320px;
+}
+
+body {
+    font-family: Helvetica, Arial;
+    -webkit-text-size-adjust: none;
+    -webkit-user-select: none;
+    margin: 0 auto;
+    width: 320px;
+}
+
+body.pinstripe {
+    background: #c7ced5 url(pinstripes.png);
+}
+
+a {
+    color: blue;
+    text-underline-style: dotted;
+}
+
+strong {
+    font-weight: bold
+}
+
+
+em {
+    font-style: italic;
+}
+
+
+
+fieldset div hr {
+    border-top: 1px dashed #999999;
+}
+
+fieldset {
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    -moz-border-radius: 9px;
+    -webkit-border-radius: 9px;
+    font-size: 100%;
+    margin: 8px;
+}
+
+
+.panel label.lbl {
+    display: block;
+    margin: 13px 0 -4px 24px;
+    line-height: 24px;
+    font-size: inherit;
+    font-weight: bold;
+    color: #4d4d70;
+    text-shadow: rgba(255, 255, 255, 0.75) 1px 1px 0;
+}
+
+div.fsd {
+    border-bottom: 1px solid #999999;
+}
+
+/* XXX: should be a.left:nth-last-child(2) */
+div.fsd:last-child {
+    border-bottom: 0;
+}
+
+a.fsa,
+div.fsd {
+    /* XXX: small differences due to font bugs */
+    padding: 12px 14px 10px 14px;
+}
+
+
+div.fsd > p {
+    margin: 10px 0;
+}
+
+
+div.fsd {
+    text-align: left;
+}
+
+div.fsd > p:first-child {
+    margin-top: 0;
+}
+
+div.fsd > p:last-child {
+    margin-bottom: 0;
+}
+
+a.fsa {
+    color: inherit;
+    display: block;
+}
+
+/* Chevrons {{{ */
+
+a.fsa {
+    background-repeat: no-repeat;
+    background-image: url(chevron.png);
+}
+
+/* Horizontal */
+
+
+a.fsa {
+    background-position: 275px center;
+}
+
+
+/* }}} */
+
+div.fsad {
+    display: inline-block;
+}
+
+
+div.fsad {
+    width: 221px;
+}
+
+
+div.fsad label {
+    font-weight: bold;
+}
+
+
+body.pinstripe {
+	padding:0;
+	background:#fff url(background.png) repeat-y top center;
+}
+@media screen and (max-device-width: 480px) {
+	body.pinstripe { background: #c7ced5 url(pinstripes.png); }
+	.panel { background:transparent }
+}
+
+a.fsa:first-child {
+    -moz-border-radius-topleft: 9px;
+    -webkit-border-top-left-radius: 9px;
+    -moz-border-radius-topright: 9px;
+    -webkit-border-top-right-radius: 9px;
+}
+
+a.fsa:last-child {
+    -moz-border-radius-bottomleft: 9px;
+    -webkit-border-bottom-left-radius: 9px;
+    -moz-border-radius-bottomright: 9px;
+    -webkit-border-bottom-right-radius: 9px;
+}
+
+div.fsd, label {
+	-webkit-user-select: none;
+}
+</style> 
+ 
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/> 
+<meta name="format-detection" content="telephone=no" /> 
+ 
+<style type="text/css"> 
+ 
+/* All */
+ 
+.question {
+        font-weight: bold;
+}
+      
+a.panel {
+        color: #586c90;
+        font-weight: bold;
+        text-shadow: rgba(255, 255, 255, 0.75) 1px 1px 0;
+}
+ 
+.hidden {
+        display: none;
+}
+ 
+</style> 
+
+</head> 
+<body class="pinstripe"> 
+<div class="panel"> 
+<fieldset> 
+        <a href="minecraft_test.html" class="fsa">  
+                <div class="fsad"><label>Minecraft</label></div> 
+        </a> 
+</fieldset>
+<fieldset> 
+        <a href="superflat.html" class="fsa">  
+                <div class="fsad"><label>Superflat</label></div> 
+        </a> 
+</fieldset> 
+ 
+ 
 </div>
-
-<script>
-(function(){
-  // DOM elements
-  var canvas = document.getElementById('c');
-  var hud = document.getElementById('hud');
-  var joyLeft = document.getElementById('joyLeft');
-  var stickLeft = document.getElementById('stickLeft');
-  var joyRight = document.getElementById('joyRight');
-  var stickRight = document.getElementById('stickRight');
-  var jumpBtn = document.getElementById('jumpBtn');
-  var ctx = canvas.getContext('2d');
-
-  // Resize
-  var W, H, DPR = window.devicePixelRatio || 1;
-  function resize(){
-    W = Math.max(320, Math.min(window.innerWidth, 768));
-    H = Math.max(240, Math.min(window.innerHeight, 1024));
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-  }
-  window.addEventListener('resize', resize, false);
-  resize();
-
-  // RAF polyfill
-  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(cb){ return setTimeout(cb, 1000/30); };
-
-  // World
-  var WORLD_W = 20, WORLD_D = 20, WORLD_H = 10;
-  var voxels = new Uint8Array(WORLD_W * WORLD_D * WORLD_H);
-  function idx(x,z,y){ return (x*WORLD_D + z)*WORLD_H + y; }
-  function createWorld(){
-    var seed = 1337;
-    function noise(nx,nz){ var v = Math.sin((nx*12.9898 + nz*78.233 + seed)*0.0001) * 43758.5453; return v - Math.floor(v); }
-    for(var x=0;x<WORLD_W;x++){
-      for(var z=0;z<WORLD_D;z++){
-        var h = Math.floor(2 + noise(x*0.3,z*0.3)*4 + Math.sin(x*0.5)*1.5);
-        h = Math.max(1, Math.min(WORLD_H-1, h));
-        for(var y=0;y<=h;y++){
-          var t = 1;
-          if(y === h) t = 2;
-          if(y === 0) t = 3;
-          voxels[idx(x,z,y)] = t;
-        }
-      }
-    }
-    // simple tree
-    var tx = 10, tz = 10, ty = 6;
-    for(var yy = ty; yy < ty + 3 && yy < WORLD_H; yy++) voxels[idx(tx,tz,yy)] = 4;
-    for(var ox = -2; ox <= 2; ox++){
-      for(var oz = -2; oz <= 2; oz++){
-        var bx = tx + ox, bz = tz + oz, by = ty + 2;
-        if(bx >= 0 && bx < WORLD_W && bz >= 0 && bz < WORLD_D) voxels[idx(bx,bz,by)] = 5;
-      }
-    }
-  }
-  createWorld();
-
-  // player (declare early so helpers can use it)
-  var player = { x: WORLD_W/2, y: 6, z: WORLD_D/2, rotY: 0, pitch: -0.2 };
-  var vy = 0;
-  var onGround = false;
-
-  // helper to check solidity
-  function isSolid(x,y,z){
-    if(x<0||x>=WORLD_W||z<0||z>=WORLD_D||y<0||y>=WORLD_H) return false;
-    return voxels[idx(x,z,y)] !== 0;
-  }
-
-  // place player on top of ground at spawn
-  (function placePlayerOnGround(){
-    var sx = Math.floor(player.x), sz = Math.floor(player.z);
-    // find highest solid block at sx,sz
-    for(var y=WORLD_H-1; y>=0; y--){
-      if(isSolid(sx,y,sz)){
-        player.y = y + 1; onGround = true; vy = 0; break;
-      }
-    }
-  })();
-
-  var BLOCK_COLORS = {0:null,1:'#8B5A2B',2:'#5DBB3A',3:'#222222',4:'#6B3E1A',5:'#289200'};
-
-
-
-  var fov = Math.PI/3;
-  function clear(){ ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,W,H); }
-
-  function projectPoint(px, py, pz){
-    var cx = px - player.x;
-    var cy = py - player.y;
-    var cz = pz - player.z;
-    var ry = player.rotY;
-    var cr = Math.cos(ry);
-    var sr = Math.sin(ry);
-    var rx = cr*cx - sr*cz;
-    var rz = sr*cx + cr*cz;
-    var pitch = player.pitch;
-    var cp = Math.cos(pitch);
-    var sp = Math.sin(pitch);
-    var forward = cp*rz - sp*cy;
-    if(forward <= 0.01) return null;
-    var up = sp*rz + cp*cy;
-    var scale = (H/2) / Math.tan(fov/2);
-    var sx = (W/2) + (rx / forward) * scale;
-    var sy = (H/2) - (up / forward) * scale;
-    return { x: sx, y: sy, z: forward };
-  }
-
-  // textures (optional)
-  var TEXTURES = (function(){
-    var t = { imgs: {}, loaded: 0 };
-    var map = { top: 'grass_top.png', side: 'grass_side.png', dirt: 'dirt.png' };
-    for(var k in map){ (function(key, src){ var im = new Image(); im.onload = function(){ t.loaded++; }; im.onerror = function(){}; im.src = src; t.imgs[key] = im; })(k, map[k]); }
-    return t;
-  })();
-
-  function drawCube(x,y,z,type){
-    var vs = [
-      {x:x,y:y,z:z},{x:x+1,y:y,z:z},{x:x+1,y:y+1,z:z},{x:x,y:y+1,z:z},
-      {x:x,y:y,z:z+1},{x:x+1,y:y,z:z+1},{x:x+1,y:y+1,z:z+1},{x:x,y:y+1,z:z+1}
-    ];
-    var faces = [
-      { idx:[0,1,2,3], n:[0,0,-1] },
-      { idx:[5,4,7,6], n:[0,0,1] },
-      { idx:[4,0,3,7], n:[-1,0,0] },
-      { idx:[1,5,6,2], n:[1,0,0] },
-      { idx:[3,2,6,7], n:[0,1,0] },
-      { idx:[4,5,1,0], n:[0,-1,0] }
-    ];
-    var pvs = [];
-    for(var i=0;i<vs.length;i++){
-      var p = projectPoint(vs[i].x - 0.5, vs[i].y - 0.5, vs[i].z - 0.5);
-      if(!p){ pvs = null; break; }
-      pvs.push(p);
-    }
-    if(!pvs) return;
-    var faceList = [];
-    for(var f=0; f<faces.length; f++){
-      var id = faces[f].idx;
-      var depth = (pvs[id[0]].z + pvs[id[1]].z + pvs[id[2]].z + pvs[id[3]].z) / 4;
-      var a = pvs[id[0]], b = pvs[id[1]], c = pvs[id[2]];
-      var cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-      if(cross > 0) continue; // fix winding: cull faces with opposite winding
-      faceList.push({ face: faces[f], id: id, depth: depth });
-    }
-    faceList.sort(function(a,b){ return b.depth - a.depth; });
-
-    var imgs = TEXTURES.imgs;
-    for(var fi=0; fi<faceList.length; fi++){
-      var id = faceList[fi].id;
-      ctx.beginPath();
-      ctx.moveTo(pvs[id[0]].x, pvs[id[0]].y);
-      ctx.lineTo(pvs[id[1]].x, pvs[id[1]].y);
-      ctx.lineTo(pvs[id[2]].x, pvs[id[2]].y);
-      ctx.lineTo(pvs[id[3]].x, pvs[id[3]].y);
-      ctx.closePath();
-
-      var tex = null;
-      if(faceList[fi].face.n[1] === 1) tex = imgs.top;
-      else if(faceList[fi].face.n[1] === -1) tex = imgs.dirt;
-      else tex = imgs.side;
-
-      if(tex && tex.complete && tex.width > 0){
-        var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-        for(var pi=0; pi<id.length; pi++){
-          var pv = pvs[id[pi]];
-          if(pv.x < minX) minX = pv.x; if(pv.x > maxX) maxX = pv.x;
-          if(pv.y < minY) minY = pv.y; if(pv.y > maxY) maxY = pv.y;
-        }
-        var w = Math.max(1, maxX - minX);
-        var h = Math.max(1, maxY - minY);
-        ctx.save();
-        ctx.clip();
-        try{ ctx.drawImage(tex, minX, minY, w, h); }catch(e){ ctx.fillStyle = shadeColor(BLOCK_COLORS[type] || '#888888', 1); ctx.fill(); }
-        ctx.restore();
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
-      } else {
-        var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
-        ctx.fillStyle = shadeColor(BLOCK_COLORS[type] || '#888888', shade);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-    }
-  }
-
-  function shadeColor(hex,m){
-    var r = parseInt(hex.substr(1,2),16);
-    var g = parseInt(hex.substr(3,2),16);
-    var b = parseInt(hex.substr(5,2),16);
-    r = Math.max(0, Math.min(255, Math.floor(r * m)));
-    g = Math.max(0, Math.min(255, Math.floor(g * m)));
-    b = Math.max(0, Math.min(255, Math.floor(b * m)));
-    return '#'+toHex(r)+toHex(g)+toHex(b);
-  }
-  function toHex(n){ var s = n.toString(16); return s.length==1? '0'+s : s; }
-
-  // Render loop
-  function render(){
-    clear();
-    ctx.fillStyle = '#8ED6FF'; ctx.fillRect(0, H/2, W, H/2);
-    var range = 12;
-    var blocks = [];
-    for(var x = Math.max(0, Math.floor(player.x - range)); x < Math.min(WORLD_W, Math.ceil(player.x + range)); x++){
-      for(var z = Math.max(0, Math.floor(player.z - range)); z < Math.min(WORLD_D, Math.ceil(player.z + range)); z++){
-        for(var y = 0; y < WORLD_H; y++){
-          var t = voxels[idx(x,z,y)];
-          if(!t) continue;
-          var p = projectPoint(x+0.5, y+0.5, z+0.5);
-          if(!p) continue;
-          blocks.push({ x:x, y:y, z:z, t:t, depth:p.z });
-        }
-      }
-    }
-    blocks.sort(function(a,b){ return b.depth - a.depth; });
-    for(var i=0;i<blocks.length;i++) drawCube(blocks[i].x, blocks[i].y, blocks[i].z, blocks[i].t);
-  }
-
-  // Movement & physics
-  var move = { forward:0, right:0, jump:false };
-  function canMoveTo(nx,ny,nz){
-    // AABB collision: check blocks overlapping player's bounding box
-    // player approx width 0.6, height 1.8
-    var halfWidth = 0.3;
-    var minX = Math.floor(nx - halfWidth);
-    var maxX = Math.floor(nx + halfWidth);
-    var minZ = Math.floor(nz - halfWidth);
-    var maxZ = Math.floor(nz + halfWidth);
-    var minY = Math.floor(ny);
-    var maxY = Math.floor(ny + 1.8);
-    // outside world check
-    if(minX < 0 || maxX >= WORLD_W || minZ < 0 || maxZ >= WORLD_D || minY < 0) return false;
-    for(var x=minX; x<=maxX; x++){
-      for(var z=minZ; z<=maxZ; z++){
-        for(var y=minY; y<=maxY && y < WORLD_H; y++){
-          if(voxels[idx(x,z,y)]) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  function update(dt){
-    // simple ground check: if there's no solid below, we're falling
-    var footX = Math.floor(player.x), footZ = Math.floor(player.z), footY = Math.floor(player.y) - 1;
-    if(!isSolid(footX, footY, footZ)){
-      onGround = false;
-    } else {
-      onGround = true;
-    }
-    var speed = 2.6;
-    var dx = (move.right) * speed * dt;
-    var dz = (move.forward) * speed * dt;
-    var cr = Math.cos(player.rotY), sr = Math.sin(player.rotY);
-    var movx = cr*dx - sr*dz;
-    var movz = sr*dx + cr*dz;
-    var nx = player.x + movx;
-    var nz = player.z + movz;
-
-    vy -= 9.8 * dt;
-    var ny = player.y + vy * dt;
-    if(vy < -30) vy = -30;
-
-    if(canMoveTo(nx, ny, nz)){
-      player.x = nx; player.z = nz; player.y = ny; onGround = false;
-    } else {
-      if(canMoveTo(nx, player.y, nz)){
-        player.x = nx; player.z = nz;
-      }
-      if(!canMoveTo(player.x, ny, player.z)){
-        vy = 0; onGround = true; player.y = Math.round(player.y);
-      }
-    }
-
-    if(move.jump && onGround){ vy = 5; onGround = false; }
-  }
-
-  // Joysticks
-  var centerLeft = { x:0, y:0 }, centerRight = { x:0, y:0 };
-  var activeLeft = false, activeRight = false;
-  function updateCenters(){
-    var rL = joyLeft.getBoundingClientRect();
-    centerLeft.x = rL.left + rL.width/2; centerLeft.y = rL.top + rL.height/2;
-    var rR = joyRight.getBoundingClientRect();
-    centerRight.x = rR.left + rR.width/2; centerRight.y = rR.top + rR.height/2;
-  }
-  updateCenters();
-  window.addEventListener('orientationchange', updateCenters, false);
-
-  joyLeft.addEventListener('touchstart', function(e){ e.preventDefault(); activeLeft = true; }, false);
-  joyLeft.addEventListener('touchmove', function(e){
-    e.preventDefault(); if(!activeLeft) return;
-    var t = e.touches[0];
-    var dx = t.clientX - centerLeft.x;
-    var dy = t.clientY - centerLeft.y;
-    var max = 40;
-    var mag = Math.sqrt(dx*dx + dy*dy);
-    if(mag > max){ dx = dx/mag*max; dy = dy/mag*max; }
-    stickLeft.style.webkitTransform = stickLeft.style.transform = 'translate('+dx+'px,'+dy+'px)';
-    move.forward = -dy/max; move.right = dx/max;
-  }, false);
-  joyLeft.addEventListener('touchend', function(e){ e.preventDefault(); activeLeft = false; stickLeft.style.webkitTransform = stickLeft.style.transform = 'translate(0,0)'; move.forward = move.right = 0; }, false);
-
-  joyRight.addEventListener('touchstart', function(e){ e.preventDefault(); activeRight = true; }, false);
-  joyRight.addEventListener('touchmove', function(e){
-    e.preventDefault(); if(!activeRight) return;
-    var t = e.touches[0];
-    var dx = t.clientX - centerRight.x;
-    var dy = t.clientY - centerRight.y;
-    var sens = 600;
-    player.rotY += dx / sens;
-    player.pitch = Math.max(-1.2, Math.min(1.2, player.pitch + dy / sens));
-  }, false);
-  joyRight.addEventListener('touchend', function(e){ e.preventDefault(); activeRight = false; stickRight.style.webkitTransform = stickRight.style.transform = 'translate(0,0)'; }, false);
-
-  // Jump button
-  jumpBtn.addEventListener('touchstart', function(e){ e.preventDefault(); if(onGround){ vy = 5; onGround = false; } }, false);
-
-  // Interact (unused UI hooks available)
-  function interact(type){
-    var steps = 30, stepSize = 0.4;
-    var px = player.x, py = player.y, pz = player.z;
-    var dirx = Math.sin(player.rotY), dirz = Math.cos(player.rotY) * -1, diry = Math.tan(-player.pitch);
-    var found = null;
-    for(var i=0;i<steps;i++){
-      var t = i * stepSize;
-      var bx = Math.floor(px + dirx * t);
-      var by = Math.floor(py + diry * t);
-      var bz = Math.floor(pz + dirz * t);
-      if(bx<0||bx>=WORLD_W||bz<0||bz>=WORLD_D||by<0||by>=WORLD_H) continue;
-      if(voxels[idx(bx,bz,by)]){ found = { x: bx, y: by, z: bz }; break; }
-    }
-    if(type === 'break' && found) voxels[idx(found.x,found.z,found.y)] = 0;
-    if(type === 'place'){
-      if(found){
-        var nx = found.x + (dirx>0?1:(dirx<0?-1:0));
-        var nz = found.z + (dirz>0?1:(dirz<0?-1:0));
-        var ny = found.y;
-        if(nx>=0&&nx<WORLD_W&&nz>=0&&nz<WORLD_D&&ny>=0&&ny<WORLD_H) voxels[idx(nx,nz,ny)] = 1;
-      } else {
-        var px2 = Math.floor(px + dirx*2);
-        var pz2 = Math.floor(pz + dirz*2);
-        var py2 = Math.floor(py);
-        if(px2>=0&&px2<WORLD_W&&pz2>=0&&pz2<WORLD_D) voxels[idx(px2,pz2,py2)] = 1;
-      }
-    }
-  }
-
-  // Keyboard for testing
-  window.addEventListener('keydown', function(e){ if(e.keyCode===87) move.forward = 1; if(e.keyCode===83) move.forward = -1; if(e.keyCode===65) move.right = -1; if(e.keyCode===68) move.right = 1; if(e.keyCode===32) move.jump = true; }, false);
-  window.addEventListener('keyup', function(e){ if(e.keyCode===87||e.keyCode===83) move.forward = 0; if(e.keyCode===65||e.keyCode===68) move.right = 0; if(e.keyCode===32) move.jump = false; }, false);
-
-  // Main loop
-  var last = Date.now();
-  function loop(){
-    var now = Date.now();
-    var dt = Math.min(0.05, (now - last) / 1000);
-    last = now;
-    update(dt);
-    render();
-    hud.textContent = 'pos: '+player.x.toFixed(2)+','+player.y.toFixed(2)+','+player.z.toFixed(2)+' rot: '+player.rotY.toFixed(2);
-    raf(loop);
-  }
-  raf(loop);
-
-})();
-</script>
-</body>
+</body> 
 </html>
