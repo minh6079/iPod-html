@@ -3,37 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>MiniCraft ES5 (iPod-friendly)</title>
+<title>MiniCraft ES5 (iPod-friendly) — Fixed</title>
 <style>
   html,body{height:100%;margin:0;background:#202020;-webkit-user-select:none;-webkit-touch-callout:none}
   canvas{display:block}
-  /* simple on-screen controls */
   .ui{position:fixed;left:0;right:0;bottom:0;top:0;pointer-events:none}
-  .joy{position:absolute;left:8px;bottom:8px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:auto}
-  .joy .stick{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(255,255,255,0.12)}
-  .btns{position:absolute;right:8px;bottom:32px;pointer-events:auto}
-  .btn{width:54px;height:54px;border-radius:12px;margin:8px;background:rgba(255,255,255,0.08);display:inline-block;text-align:center;line-height:54px;font-weight:bold;color:#fff;font-family:Arial}
+  .joy{position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:auto}
+  .joy .stick{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(255,255,255,0.18)}
+  .joy.left{left:8px;bottom:8px}
+  .joy.right{right:8px;bottom:8px}
+  .jumpBtn{position:absolute;right:20px;bottom:160px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.15);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:auto}
+  .jumpBtn:active{background:rgba(255,255,255,0.25);} 
   .hud{position:fixed;left:8px;top:8px;color:#fff;font-family:monospace;font-size:12px;pointer-events:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div class="ui">
-  <div class="joy" id="joy"><div class="stick" id="stick"></div></div>
-  <div class="btns">
-    <div class="btn" id="btnBreak">-</div>
-    <div class="btn" id="btnPlace">+</div>
-  </div>
+  <div class="joy left" id="joyLeft"><div class="stick" id="stickLeft"></div></div>
+  <div class="joy right" id="joyRight"><div class="stick" id="stickRight"></div></div>
+  <div class="jumpBtn" id="jumpBtn">JUMP</div>
   <div class="hud" id="hud">Loading...</div>
 </div>
 
 <script>
-// MiniCraft ES5 - single-file, ES5 compatible, touch controls
 (function(){
+  // DOM elements
   var canvas = document.getElementById('c');
+  var hud = document.getElementById('hud');
+  var joyLeft = document.getElementById('joyLeft');
+  var stickLeft = document.getElementById('stickLeft');
+  var joyRight = document.getElementById('joyRight');
+  var stickRight = document.getElementById('stickRight');
+  var jumpBtn = document.getElementById('jumpBtn');
   var ctx = canvas.getContext('2d');
-  var W, H, DPR = window.devicePixelRatio || 1;
 
+  // Resize
+  var W, H, DPR = window.devicePixelRatio || 1;
   function resize(){
     W = Math.max(320, Math.min(window.innerWidth, 768));
     H = Math.max(240, Math.min(window.innerHeight, 1024));
@@ -46,123 +52,111 @@
   window.addEventListener('resize', resize, false);
   resize();
 
-  // Polyfill requestAnimationFrame for older iOS
-  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(cb){return setTimeout(cb, 1000/30);};
-  var caf = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || clearTimeout;
+  // RAF polyfill
+  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(cb){ return setTimeout(cb, 1000/30); };
 
-  // Simple world: small voxel grid (width x depth x height)
+  // World
   var WORLD_W = 20, WORLD_D = 20, WORLD_H = 10;
-  var voxels = []; // 3D array [x][z][y]
-
+  var voxels = new Uint8Array(WORLD_W * WORLD_D * WORLD_H);
   function idx(x,z,y){ return (x*WORLD_D + z)*WORLD_H + y; }
-
   function createWorld(){
-    voxels = new Uint8Array(WORLD_W * WORLD_D * WORLD_H);
-    // simple heightmap using seeded sin/cos noise-esque function
     var seed = 1337;
-    function noise(nx,nz){
-      var v = Math.sin((nx*12.9898 + nz*78.233 + seed)*0.0001) * 43758.5453;
-      return v - Math.floor(v);
-    }
+    function noise(nx,nz){ var v = Math.sin((nx*12.9898 + nz*78.233 + seed)*0.0001) * 43758.5453; return v - Math.floor(v); }
     for(var x=0;x<WORLD_W;x++){
       for(var z=0;z<WORLD_D;z++){
         var h = Math.floor(2 + noise(x*0.3,z*0.3)*4 + Math.sin(x*0.5)*1.5);
         h = Math.max(1, Math.min(WORLD_H-1, h));
         for(var y=0;y<=h;y++){
-          var t = 1; // dirt
-          if(y === h) t = 2; // grass
-          if(y === 0) t = 3; // bedrock
+          var t = 1;
+          if(y === h) t = 2;
+          if(y === 0) t = 3;
           voxels[idx(x,z,y)] = t;
         }
       }
     }
-    // add a simple tree
-    var tx = 10, tz = 10; var ty = 6;
-    for(var yy=ty; yy<ty+3 && yy<WORLD_H; yy++) voxels[idx(tx,tz,yy)] = 4; // trunk
-    for(var ox=-2; ox<=2; ox++) for(var oz=-2; oz<=2; oz++){
-      var bx = tx+ox, bz=tz+oz, by=ty+2;
-      if(bx>=0 && bx<WORLD_W && bz>=0 && bz<WORLD_D) voxels[idx(bx,bz,by)] = 5; // leaves
+    // simple tree
+    var tx = 10, tz = 10, ty = 6;
+    for(var yy = ty; yy < ty + 3 && yy < WORLD_H; yy++) voxels[idx(tx,tz,yy)] = 4;
+    for(var ox = -2; ox <= 2; ox++){
+      for(var oz = -2; oz <= 2; oz++){
+        var bx = tx + ox, bz = tz + oz, by = ty + 2;
+        if(bx >= 0 && bx < WORLD_W && bz >= 0 && bz < WORLD_D) voxels[idx(bx,bz,by)] = 5;
+      }
     }
   }
   createWorld();
 
-  // simple block colors
-  var BLOCK_COLORS = {
-    0: null,
-    1: '#8B5A2B', // dirt
-    2: '#5DBB3A', // grass
-    3: '#222222', // bedrock
-    4: '#6B3E1A', // wood
-    5: '#289200'  // leaves
-  };
+  var BLOCK_COLORS = {0:null,1:'#8B5A2B',2:'#5DBB3A',3:'#222222',4:'#6B3E1A',5:'#289200'};
 
-  // camera / player
-  var player = { x: WORLD_W/2, y: 6, z: WORLD_D/2, rotY: 0, pitch: -0.2, speed: 0 };
+  // player
+  var player = { x: WORLD_W/2, y: 6, z: WORLD_D/2, rotY: 0, pitch: -0.2 };
+  var vy = 0;
+  var onGround = false;
 
-  // projection settings
-  var fov = Math.PI/3; var near = 0.1, far = 50;
-
+  var fov = Math.PI/3;
   function clear(){ ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,W,H); }
 
-  // Simple 3D transform math (no Float32Array to keep ES5 simple)
   function projectPoint(px, py, pz){
-    // translate by camera
     var cx = px - player.x;
     var cy = py - player.y;
     var cz = pz - player.z;
-    // rotate Y
-    var ry = player.rotY; var cr = Math.cos(ry), sr = Math.sin(ry);
+    var ry = player.rotY;
+    var cr = Math.cos(ry);
+    var sr = Math.sin(ry);
     var rx = cr*cx - sr*cz;
     var rz = sr*cx + cr*cz;
-    // rotate X (pitch)
-    var pitch = player.pitch; var cp = Math.cos(pitch), sp = Math.sin(pitch);
-    var ry2 = cp*rz - sp*cy; // forward
-    var uy = sp*rz + cp*cy; // up
-    // perspective
-    if(ry2 <= 0.01) return null; // behind camera
+    var pitch = player.pitch;
+    var cp = Math.cos(pitch);
+    var sp = Math.sin(pitch);
+    var forward = cp*rz - sp*cy;
+    if(forward <= 0.01) return null;
+    var up = sp*rz + cp*cy;
     var scale = (H/2) / Math.tan(fov/2);
-    var sx = (W/2) + (rx / ry2) * scale;
-    var sy = (H/2) - (uy / ry2) * scale;
-    return {x:sx, y:sy, z:ry2};
+    var sx = (W/2) + (rx / forward) * scale;
+    var sy = (H/2) - (up / forward) * scale;
+    return { x: sx, y: sy, z: forward };
   }
 
-  // draw single cube (faces only, no lighting aside from simple shading)
-  function drawCube(x,y,z, color){
-    // cube centered at integer grid, size 1
+  // textures (optional)
+  var TEXTURES = (function(){
+    var t = { imgs: {}, loaded: 0 };
+    var map = { top: 'grass_top.png', side: 'grass_side.png', dirt: 'dirt.png' };
+    for(var k in map){ (function(key, src){ var im = new Image(); im.onload = function(){ t.loaded++; }; im.onerror = function(){}; im.src = src; t.imgs[key] = im; })(k, map[k]); }
+    return t;
+  })();
+
+  function drawCube(x,y,z,type){
     var vs = [
-      {x:x, y:y, z:z}, {x:x+1, y:y, z:z}, {x:x+1, y:y+1, z:z}, {x:x, y:y+1, z:z}, // front
-      {x:x, y:y, z:z+1}, {x:x+1, y:y, z:z+1}, {x:x+1, y:y+1, z:z+1}, {x:x, y:y+1, z:z+1}
+      {x:x,y:y,z:z},{x:x+1,y:y,z:z},{x:x+1,y:y+1,z:z},{x:x,y:y+1,z:z},
+      {x:x,y:y,z:z+1},{x:x+1,y:y,z:z+1},{x:x+1,y:y+1,z:z+1},{x:x,y:y+1,z:z+1}
     ];
-    // faces (indices, and a simple normal indicator for shading)
     var faces = [
-      {idx:[0,1,2,3], n:[0,0,-1]}, // front
-      {idx:[5,4,7,6], n:[0,0,1]}, // back
-      {idx:[4,0,3,7], n:[-1,0,0]}, // left
-      {idx:[1,5,6,2], n:[1,0,0]}, // right
-      {idx:[3,2,6,7], n:[0,1,0]}, // top
-      {idx:[4,5,1,0], n:[0,-1,0]}  // bottom
+      { idx:[0,1,2,3], n:[0,0,-1] },
+      { idx:[5,4,7,6], n:[0,0,1] },
+      { idx:[4,0,3,7], n:[-1,0,0] },
+      { idx:[1,5,6,2], n:[1,0,0] },
+      { idx:[3,2,6,7], n:[0,1,0] },
+      { idx:[4,5,1,0], n:[0,-1,0] }
     ];
-    // compute projected points
     var pvs = [];
     for(var i=0;i<vs.length;i++){
       var p = projectPoint(vs[i].x - 0.5, vs[i].y - 0.5, vs[i].z - 0.5);
       if(!p){ pvs = null; break; }
       pvs.push(p);
     }
-    if(!pvs) return null;
-    // face depth for painter's algorithm
+    if(!pvs) return;
     var faceList = [];
-    for(var f=0;f<faces.length;f++){
+    for(var f=0; f<faces.length; f++){
       var id = faces[f].idx;
-      var depth = (pvs[id[0]].z + pvs[id[1]].z + pvs[id[2]].z + pvs[id[3]].z)/4;
-      // backface culling: compute 2D cross for projected triangle
+      var depth = (pvs[id[0]].z + pvs[id[1]].z + pvs[id[2]].z + pvs[id[3]].z) / 4;
       var a = pvs[id[0]], b = pvs[id[1]], c = pvs[id[2]];
-      var cross = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
-      if(cross < 0) continue; // don't draw backfacing
-      faceList.push({face:faces[f], id:id, depth:depth});
+      var cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      if(cross < 0) continue;
+      faceList.push({ face: faces[f], id: id, depth: depth });
     }
-    // sort faces by depth desc
-    faceList.sort(function(a,b){return b.depth - a.depth;});
+    faceList.sort(function(a,b){ return b.depth - a.depth; });
+
+    var imgs = TEXTURES.imgs;
     for(var fi=0; fi<faceList.length; fi++){
       var id = faceList[fi].id;
       ctx.beginPath();
@@ -171,189 +165,193 @@
       ctx.lineTo(pvs[id[2]].x, pvs[id[2]].y);
       ctx.lineTo(pvs[id[3]].x, pvs[id[3]].y);
       ctx.closePath();
-      // shading based on face normal y component and depth
-      var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
-      var col = shadeColor(color, shade);
-      ctx.fillStyle = col;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+
+      var tex = null;
+      if(faceList[fi].face.n[1] === 1) tex = imgs.top;
+      else if(faceList[fi].face.n[1] === -1) tex = imgs.dirt;
+      else tex = imgs.side;
+
+      if(tex && tex.complete && tex.width > 0){
+        var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+        for(var pi=0; pi<id.length; pi++){
+          var pv = pvs[id[pi]];
+          if(pv.x < minX) minX = pv.x; if(pv.x > maxX) maxX = pv.x;
+          if(pv.y < minY) minY = pv.y; if(pv.y > maxY) maxY = pv.y;
+        }
+        var w = Math.max(1, maxX - minX);
+        var h = Math.max(1, maxY - minY);
+        ctx.save();
+        ctx.clip();
+        try{ ctx.drawImage(tex, minX, minY, w, h); }catch(e){ ctx.fillStyle = shadeColor(BLOCK_COLORS[type] || '#888888', 1); ctx.fill(); }
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+      } else {
+        var shade = 1 - Math.min(0.7, (faceList[fi].face.n[1]*0.3 + faceList[fi].depth*0.03));
+        ctx.fillStyle = shadeColor(BLOCK_COLORS[type] || '#888888', shade);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+      }
     }
   }
 
-  function shadeColor(hex, m){
-    // hex like #rrggbb
-    var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
-    r = Math.max(0, Math.min(255, Math.floor(r * m))); g = Math.max(0, Math.min(255, Math.floor(g*m))); b = Math.max(0, Math.min(255, Math.floor(b*m)));
+  function shadeColor(hex,m){
+    var r = parseInt(hex.substr(1,2),16);
+    var g = parseInt(hex.substr(3,2),16);
+    var b = parseInt(hex.substr(5,2),16);
+    r = Math.max(0, Math.min(255, Math.floor(r * m)));
+    g = Math.max(0, Math.min(255, Math.floor(g * m)));
+    b = Math.max(0, Math.min(255, Math.floor(b * m)));
     return '#'+toHex(r)+toHex(g)+toHex(b);
   }
   function toHex(n){ var s = n.toString(16); return s.length==1? '0'+s : s; }
 
-  // main render: draw only a subset of world around player (for performance)
+  // Render loop
   function render(){
     clear();
-    // sky and ground baseline
-    ctx.fillStyle = '#8ED6FF';
-    ctx.fillRect(0, H/2, W, H/2);
-    // iterate blocks in simple depth order (furthest first) for painter's simplicity
+    ctx.fillStyle = '#8ED6FF'; ctx.fillRect(0, H/2, W, H/2);
     var range = 12;
     var blocks = [];
-    for(var x = Math.max(0, Math.floor(player.x-range)); x<Math.min(WORLD_W, Math.ceil(player.x+range)); x++){
-      for(var z = Math.max(0, Math.floor(player.z-range)); z<Math.min(WORLD_D, Math.ceil(player.z+range)); z++){
-        for(var y=0;y<WORLD_H;y++){
+    for(var x = Math.max(0, Math.floor(player.x - range)); x < Math.min(WORLD_W, Math.ceil(player.x + range)); x++){
+      for(var z = Math.max(0, Math.floor(player.z - range)); z < Math.min(WORLD_D, Math.ceil(player.z + range)); z++){
+        for(var y = 0; y < WORLD_H; y++){
           var t = voxels[idx(x,z,y)];
           if(!t) continue;
-          // compute center depth to sort
-          var cx = x+0.5, cy = y+0.5, cz = z+0.5;
-          var p = projectPoint(cx, cy, cz);
+          var p = projectPoint(x+0.5, y+0.5, z+0.5);
           if(!p) continue;
-          blocks.push({x:x,y:y,z:z,t:t,depth:p.z});
+          blocks.push({ x:x, y:y, z:z, t:t, depth:p.z });
         }
       }
     }
-    blocks.sort(function(a,b){return b.depth - a.depth;});
-    for(var i=0;i<blocks.length;i++){
-      drawCube(blocks[i].x, blocks[i].y, blocks[i].z, BLOCK_COLORS[blocks[i].t]);
-    }
+    blocks.sort(function(a,b){ return b.depth - a.depth; });
+    for(var i=0;i<blocks.length;i++) drawCube(blocks[i].x, blocks[i].y, blocks[i].z, blocks[i].t);
   }
 
-  // simple movement & collision
-  function canMoveTo(nx, ny, nz){
-    // collide against blocks occupying player's feet (use player's x,z floor)
+  // Movement & physics
+  var move = { forward:0, right:0, jump:false };
+  function canMoveTo(nx,ny,nz){
     var px = Math.floor(nx), pz = Math.floor(nz), py = Math.floor(ny);
-    if(px<0||px>=WORLD_W||pz<0||pz>=WORLD_D) return false;
-    // check blocks at player's feet and head
-    for(var y=py; y<py+2 && y<WORLD_H; y++){
+    if(px < 0 || px >= WORLD_W || pz < 0 || pz >= WORLD_D) return false;
+    for(var y=py; y<py+2 && y < WORLD_H; y++){
       if(voxels[idx(px,pz,y)]) return false;
     }
     return true;
   }
 
-  // simple physics (no gravity depth heavy)
-  var vy = 0, onGround = false;
-
-  // controls
-  var move = {forward:0, right:0, jump:false};
-
   function update(dt){
-    // rotate smoothing handled externally
-    var speed = 2.6; // units per second
+    var speed = 2.6;
     var dx = (move.right) * speed * dt;
-    var dz = (move.forward) * speed * dt * -1; // forward is -z in camera coords
-    // transform movement by camera rotY
+    var dz = (move.forward) * speed * dt;
     var cr = Math.cos(player.rotY), sr = Math.sin(player.rotY);
     var movx = cr*dx - sr*dz;
     var movz = sr*dx + cr*dz;
     var nx = player.x + movx;
     var nz = player.z + movz;
-    // gravity
+
     vy -= 9.8 * dt;
     var ny = player.y + vy * dt;
     if(vy < -30) vy = -30;
-    // check collisions
+
     if(canMoveTo(nx, ny, nz)){
       player.x = nx; player.z = nz; player.y = ny; onGround = false;
     } else {
-      // simple step resolution: try horizontal without vertical
-      if(canMoveTo(nx, player.y, nz)) { player.x = nx; player.z = nz; }
-      // if hitting ground, reset vy
+      if(canMoveTo(nx, player.y, nz)){
+        player.x = nx; player.z = nz;
+      }
       if(!canMoveTo(player.x, ny, player.z)){
-        vy = 0; onGround = true; // snap to nearest integer y
-        player.y = Math.round(player.y);
+        vy = 0; onGround = true; player.y = Math.round(player.y);
       }
     }
+
     if(move.jump && onGround){ vy = 5; onGround = false; }
   }
 
-  // input: touch look (drag on right half), joystick left for movement
-  var hud = document.getElementById('hud');
-  // virtual joystick
-  var joy = document.getElementById('joy');
-  var stick = document.getElementById('stick');
-  var joyRect = null; var joyCenter = {x:0,y:0}; var activeJoy = false;
+  // Joysticks
+  var centerLeft = { x:0, y:0 }, centerRight = { x:0, y:0 };
+  var activeLeft = false, activeRight = false;
+  function updateCenters(){
+    var rL = joyLeft.getBoundingClientRect();
+    centerLeft.x = rL.left + rL.width/2; centerLeft.y = rL.top + rL.height/2;
+    var rR = joyRight.getBoundingClientRect();
+    centerRight.x = rR.left + rR.width/2; centerRight.y = rR.top + rR.height/2;
+  }
+  updateCenters();
+  window.addEventListener('orientationchange', updateCenters, false);
 
-  function updateJoyRect(){ joyRect = joy.getBoundingClientRect(); joyCenter.x = joyRect.left + joyRect.width/2; joyCenter.y = joyRect.top + joyRect.height/2; }
-  updateJoyRect(); window.addEventListener('orientationchange', updateJoyRect, false);
-
-  joy.addEventListener('touchstart', function(e){ e.preventDefault(); activeJoy = true; }, false);
-  joy.addEventListener('touchmove', function(e){ e.preventDefault(); if(!activeJoy) return; var t = e.touches[0]; var dx = t.clientX - joyCenter.x, dy = t.clientY - joyCenter.y; var max = 40; var mag = Math.sqrt(dx*dx+dy*dy); if(mag>max){ dx = dx/mag*max; dy = dy/mag*max; }
-    stick.style.webkitTransform = stick.style.transform = 'translate('+dx+'px,'+dy+'px)';
-    // map to movement: dy negative = forward
+  joyLeft.addEventListener('touchstart', function(e){ e.preventDefault(); activeLeft = true; }, false);
+  joyLeft.addEventListener('touchmove', function(e){
+    e.preventDefault(); if(!activeLeft) return;
+    var t = e.touches[0];
+    var dx = t.clientX - centerLeft.x;
+    var dy = t.clientY - centerLeft.y;
+    var max = 40;
+    var mag = Math.sqrt(dx*dx + dy*dy);
+    if(mag > max){ dx = dx/mag*max; dy = dy/mag*max; }
+    stickLeft.style.webkitTransform = stickLeft.style.transform = 'translate('+dx+'px,'+dy+'px)';
     move.forward = -dy/max; move.right = dx/max;
   }, false);
-  joy.addEventListener('touchend', function(e){ e.preventDefault(); activeJoy = false; stick.style.webkitTransform = stick.style.transform = 'translate(0,0)'; move.forward = move.right = 0; }, false);
+  joyLeft.addEventListener('touchend', function(e){ e.preventDefault(); activeLeft = false; stickLeft.style.webkitTransform = stickLeft.style.transform = 'translate(0,0)'; move.forward = move.right = 0; }, false);
 
-  // look: drag on right half
-  var lookActive = false; var lastTouch = null;
-  canvas.addEventListener('touchstart', function(e){
-    if(e.touches.length==1){
-      var t = e.touches[0];
-      if(t.clientX > window.innerWidth/2){ lookActive = true; lastTouch = {x:t.clientX,y:t.clientY}; }
-    }
+  joyRight.addEventListener('touchstart', function(e){ e.preventDefault(); activeRight = true; }, false);
+  joyRight.addEventListener('touchmove', function(e){
+    e.preventDefault(); if(!activeRight) return;
+    var t = e.touches[0];
+    var dx = t.clientX - centerRight.x;
+    var dy = t.clientY - centerRight.y;
+    var sens = 600;
+    player.rotY += dx / sens;
+    player.pitch = Math.max(-1.2, Math.min(1.2, player.pitch + dy / sens));
   }, false);
-  canvas.addEventListener('touchmove', function(e){ if(lookActive && e.touches.length==1){ var t=e.touches[0]; var dx = (t.clientX - lastTouch.x)/200; var dy = (t.clientY - lastTouch.y)/300; player.rotY -= dx; player.pitch = Math.max(-1.2, Math.min(1.2, player.pitch - dy)); lastTouch = {x:t.clientX,y:t.clientY}; } }, false);
-  canvas.addEventListener('touchend', function(e){ lookActive = false; lastTouch = null; }, false);
+  joyRight.addEventListener('touchend', function(e){ e.preventDefault(); activeRight = false; stickRight.style.webkitTransform = stickRight.style.transform = 'translate(0,0)'; }, false);
 
-  // buttons
-  document.getElementById('btnBreak').addEventListener('touchstart', function(e){ e.preventDefault(); interact('break'); }, false);
-  document.getElementById('btnPlace').addEventListener('touchstart', function(e){ e.preventDefault(); interact('place'); }, false);
+  // Jump button
+  jumpBtn.addEventListener('touchstart', function(e){ e.preventDefault(); if(onGround){ vy = 5; onGround = false; } }, false);
 
+  // Interact (unused UI hooks available)
   function interact(type){
-    // raycast forward from player to find targeted block
-    var steps = 30; var stepSize = 0.4; var px = player.x, py = player.y, pz = player.z;
-    var dirx = Math.sin(player.rotY), dirz = Math.cos(player.rotY)*-1; // approximate forward vector
-    var diry = Math.tan(-player.pitch);
+    var steps = 30, stepSize = 0.4;
+    var px = player.x, py = player.y, pz = player.z;
+    var dirx = Math.sin(player.rotY), dirz = Math.cos(player.rotY) * -1, diry = Math.tan(-player.pitch);
     var found = null;
     for(var i=0;i<steps;i++){
-      var t = i*stepSize;
+      var t = i * stepSize;
       var bx = Math.floor(px + dirx * t);
       var by = Math.floor(py + diry * t);
       var bz = Math.floor(pz + dirz * t);
       if(bx<0||bx>=WORLD_W||bz<0||bz>=WORLD_D||by<0||by>=WORLD_H) continue;
-      if(voxels[idx(bx,bz,by)]){ found = {x:bx,y:by,z:bz}; break; }
+      if(voxels[idx(bx,bz,by)]){ found = { x: bx, y: by, z: bz }; break; }
     }
-    if(type==='break' && found){ voxels[idx(found.x,found.z,found.y)] = 0; }
-    if(type==='place'){
-      if(found){ // place adjacent block in front of hit (simple)
+    if(type === 'break' && found) voxels[idx(found.x,found.z,found.y)] = 0;
+    if(type === 'place'){
+      if(found){
         var nx = found.x + (dirx>0?1:(dirx<0?-1:0));
         var nz = found.z + (dirz>0?1:(dirz<0?-1:0));
         var ny = found.y;
         if(nx>=0&&nx<WORLD_W&&nz>=0&&nz<WORLD_D&&ny>=0&&ny<WORLD_H) voxels[idx(nx,nz,ny)] = 1;
       } else {
-        // place in front of player
-        var px2 = Math.floor(px + dirx*2); var pz2 = Math.floor(pz + dirz*2); var py2 = Math.floor(py);
+        var px2 = Math.floor(px + dirx*2);
+        var pz2 = Math.floor(pz + dirz*2);
+        var py2 = Math.floor(py);
         if(px2>=0&&px2<WORLD_W&&pz2>=0&&pz2<WORLD_D) voxels[idx(px2,pz2,py2)] = 1;
       }
     }
   }
 
-  // main loop
+  // Keyboard for testing
+  window.addEventListener('keydown', function(e){ if(e.keyCode===87) move.forward = 1; if(e.keyCode===83) move.forward = -1; if(e.keyCode===65) move.right = -1; if(e.keyCode===68) move.right = 1; if(e.keyCode===32) move.jump = true; }, false);
+  window.addEventListener('keyup', function(e){ if(e.keyCode===87||e.keyCode===83) move.forward = 0; if(e.keyCode===65||e.keyCode===68) move.right = 0; if(e.keyCode===32) move.jump = false; }, false);
+
+  // Main loop
   var last = Date.now();
   function loop(){
-    var now = Date.now(); var dt = Math.min(0.05, (now-last)/1000); last = now;
+    var now = Date.now();
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
     update(dt);
     render();
-    // hud
-    hud.textContent = 'pos: '+player.x.toFixed(2)+','+player.y.toFixed(2)+','+player.z.toFixed(2) + ' rot: '+player.rotY.toFixed(2);
+    hud.textContent = 'pos: '+player.x.toFixed(2)+','+player.y.toFixed(2)+','+player.z.toFixed(2)+' rot: '+player.rotY.toFixed(2);
     raf(loop);
   }
   raf(loop);
-
-  // expose simple debug for keyboard (desktop testing)
-  window.addEventListener('keydown', function(e){
-    if(e.keyCode===87) move.forward = 1; // w
-    if(e.keyCode===83) move.forward = -1; // s
-    if(e.keyCode===65) move.right = -1; // a
-    if(e.keyCode===68) move.right = 1; // d
-    if(e.keyCode===32) move.jump = true; // space
-  }, false);
-  window.addEventListener('keyup', function(e){
-    if(e.keyCode===87||e.keyCode===83) move.forward = 0;
-    if(e.keyCode===65||e.keyCode===68) move.right = 0;
-    if(e.keyCode===32) move.jump = false;
-  }, false);
-
-  // friendly note: make rendering cheaper on slow devices
-  // You can lower WORLD_H or range variable above, or reduce DPR by setting DPR=1 manually
 
 })();
 </script>
