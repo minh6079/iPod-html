@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>fruitninja</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<style>
+body { margin:0; overflow:hidden; background:#000; font-family:Helvetica, Arial; }
+canvas { display:block; }
+#exitBtn { position:absolute; top:10px; left:10px; z-index:10; }
+#scoreBadge { position:absolute; top:40px; left:10px; color:#0ff; font-weight:bold; z-index:10; }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<a href="index.html" id="exitLink" style="position:absolute;top:10px;left:10px;z-index:10;color:#0ff;font-weight:bold;text-decoration:none;">Back</a>
+<div id="scoreBadge"></div>
+
+<script>
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+var rafId = null;
+
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize', resizeCanvas, false);
+resizeCanvas();
+
+var activeGame = null;
+var scoreBadge = document.getElementById('scoreBadge');
+
+function startRenderLoop(frameFn){ function loop(){ frameFn(); rafId=requestAnimationFrame(loop); } rafId=requestAnimationFrame(loop); }
+function stopGame(){ if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; } ctx.clearRect(0,0,canvas.width,canvas.height); }
+function updateScoreBadge(text){ scoreBadge.innerHTML = text || ''; }
+
+var gameRegistry = {};
+
+/* ---------- GAME CODE ---------- */
+gameRegistry.fruitninja = (function(){ var state={};
+    function init(canvas, ctx, startLoop, stopAll, updateScore){
+        state.objects = []; state.score = 0; updateScore('');
+        state.spawnTimer = setInterval(function(){ state.objects.push({x:20+Math.random()*(canvas.width-40), y:canvas.height+10, vy: -6 - Math.random()*4, kind:'fruit'}); }, 700);
+        state.onSwipe = function(e){
+            // simple: any touchstart slices fruits near point
+            var t = e.touches?e.touches[0]:e;
+            for(var i=state.objects.length-1;i>=0;i--){ var o=state.objects[i]; var dx = o.x - t.clientX, dy = o.y - t.clientY; if(dx*dx+dy*dy < 400){ state.objects.splice(i,1); state.score++; updateScore('Score: '+state.score); } }
+        };
+        canvas.addEventListener('touchstart', state.onSwipe, false);
+        function frame(){ for(var i=state.objects.length-1;i>=0;i--){ var o=state.objects[i]; o.y += o.vy; o.vy += 0.25; if(o.y > canvas.height+50) state.objects.splice(i,1); } ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f60'; for(i=0;i<state.objects.length;i++) ctx.beginPath(), ctx.arc(state.objects[i].x, state.objects[i].y, 12,0,Math.PI*2), ctx.fill(); }
+        state.stop = function(){ clearInterval(state.spawnTimer); canvas.removeEventListener('touchstart', state.onSwipe, false); };
+        startLoop(frame);
+    }
+    return { init:init, stop:function(){} }; })();
+
+/* Start the game automatically */
+if(gameRegistry.fruitninja){ activeGame = gameRegistry.fruitninja; activeGame.init(canvas, ctx, startRenderLoop, stopGame, updateScoreBadge); }
+</script>
+
+</body>
+</html>
