@@ -204,15 +204,8 @@ div.fsd, label {
 
 <!-- Game canvas and UI -->
 <canvas id="gameCanvas"></canvas>
-<button id="exitBtn" onclick="stopGame();">Exit</button>
 <div id="scoreBadge" class="scoreBadge"></div>
 
-<!-- Platformer controls (left / jump / right) -->
-<div id="controls">
-  <button id="btnLeft">◀</button>
-  <button id="btnJump">▲</button>
-  <button id="btnRight">▶</button>
-</div>
 
 <script>
 /* -------------- Core manager (Option A) -------------- */
@@ -221,7 +214,6 @@ var ctx = canvas.getContext('2d');
 var rafId = null;
 var activeGame = null;
 var menuPanel = document.getElementById('menuPanel');
-var exitBtn = document.getElementById('exitBtn');
 var scoreBadge = document.getElementById('scoreBadge');
 var controlsDiv = document.getElementById('controls');
 
@@ -254,7 +246,6 @@ function stopGame(){
     activeGame = null;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     canvas.style.display = 'none';
-    exitBtn.style.display = 'none';
     scoreBadge.style.display = 'none';
     controlsDiv.style.display = 'none';
     menuPanel.style.display = 'block';
@@ -278,7 +269,6 @@ function startGame(name){
     stopGame();
     menuPanel.style.display = 'none';
     canvas.style.display = 'block';
-    exitBtn.style.display = 'block';
     updateScoreBadge('');
     enableTouchBlock();
     // start registry
@@ -493,8 +483,6 @@ gameRegistry.asteroids = (function(){
 })();
 
 /* ---------- Wiring: exit and cleanup ---------- */
-var exitBtn = document.getElementById('exitBtn');
-exitBtn.addEventListener('click', function(){ stopGame(); }, false);
 window.addEventListener('pagehide', function(){ stopGame(); }, false);
 window.addEventListener('beforeunload', function(){ stopGame(); }, false);
 window.addEventListener('unload', function(){ if (removeDoubleTap) removeDoubleTap(); }, false);
