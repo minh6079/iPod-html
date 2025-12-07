@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Test</title>
+<title>Test - fixed</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <meta name="format-detection" content="telephone=no"/>
 <style>
@@ -14,7 +14,6 @@
     -moz-box-sizing: border-box;
     -ms-box-sizing: border-box;
     -webkit-box-sizing: border-box;
-    /*font-family: inherit;*/
     font-size: 100%;
     font-style: inherit;
     font-weight: inherit;
@@ -25,9 +24,7 @@
     vertical-align: baseline;
 }
 
-a {
-    color: inherit;
-}
+a { color: inherit; }
 
 .panel {
     position: absolute;
@@ -49,25 +46,12 @@ body.pinstripe {
     background: #c7ced5 url(pinstripes.png);
 }
 
-a {
-    color: blue;
-    text-underline-style: dotted;
-}
+a { color: blue; text-underline-style: dotted; }
 
-strong {
-    font-weight: bold
-}
+strong { font-weight: bold; }
+em { font-style: italic; }
 
-
-em {
-    font-style: italic;
-}
-
-
-
-fieldset div hr {
-    border-top: 1px dashed #999999;
-}
+fieldset div hr { border-top: 1px dashed #999999; }
 
 fieldset {
     background-color: #ffffff;
@@ -77,7 +61,6 @@ fieldset {
     font-size: 100%;
     margin: 8px;
 }
-
 
 .panel label.lbl {
     display: block;
@@ -89,83 +72,26 @@ fieldset {
     text-shadow: rgba(255, 255, 255, 0.75) 1px 1px 0;
 }
 
-div.fsd {
-    border-bottom: 1px solid #999999;
-}
+div.fsd { border-bottom: 1px solid #999999; }
+div.fsd:last-child { border-bottom: 0; }
+a.fsa, div.fsd { padding: 12px 14px 10px 14px; }
+div.fsd > p { margin: 10px 0; }
+div.fsd { text-align: left; }
+div.fsd > p:first-child { margin-top: 0; }
+div.fsd > p:last-child { margin-bottom: 0; }
+a.fsa { color: inherit; display: block; }
 
-/* XXX: should be a.left:nth-last-child(2) */
-div.fsd:last-child {
-    border-bottom: 0;
-}
+/* Chevrons */
+a.fsa { background-repeat: no-repeat; background-image: url(chevron.png); background-position: 275px center; }
 
-a.fsa,
-div.fsd {
-    /* XXX: small differences due to font bugs */
-    padding: 12px 14px 10px 14px;
-}
+div.fsad { display: inline-block; }
+div.fsad { width: 221px; }
+div.fsad label { font-weight: bold; }
 
-
-div.fsd > p {
-    margin: 10px 0;
-}
-
-
-div.fsd {
-    text-align: left;
-}
-
-div.fsd > p:first-child {
-    margin-top: 0;
-}
-
-div.fsd > p:last-child {
-    margin-bottom: 0;
-}
-
-a.fsa {
-    color: inherit;
-    display: block;
-}
-
-/* Chevrons {{{ */
-
-a.fsa {
-    background-repeat: no-repeat;
-    background-image: url(chevron.png);
-}
-
-/* Horizontal */
-
-
-a.fsa {
-    background-position: 275px center;
-}
-
-
-/* }}} */
-
-div.fsad {
-    display: inline-block;
-}
-
-
-div.fsad {
-    width: 221px;
-}
-
-
-div.fsad label {
-    font-weight: bold;
-}
-
-
-body.pinstripe {
-	padding:0;
-	background:#fff url(background.png) repeat-y top center;
-}
+body.pinstripe { padding:0; background:#fff url(background.png) repeat-y top center; }
 @media screen and (max-device-width: 480px) {
-	body.pinstripe { background: #c7ced5 url(pinstripes.png); }
-	.panel { background:transparent }
+    body.pinstripe { background: #c7ced5 url(pinstripes.png); }
+    .panel { background:transparent }
 }
 
 a.fsa:first-child {
@@ -182,15 +108,29 @@ a.fsa:last-child {
     -webkit-border-bottom-right-radius: 9px;
 }
 
-div.fsd, label {
-	-webkit-user-select: none;
+div.fsd, label { -webkit-user-select: none; }
+
+/* small additions */
+#gameCanvas { display: none; width: 100%; height: 100%; }
+.scoreBadge {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+    z-index: 1000;
 }
-</style> 
+#controls { display:none; position:fixed; left:10px; bottom:10px; z-index:1000; }
+</style>
 </head>
 <body class="pinstripe">
 
 <div class="panel" id="menuPanel">
-<fieldset><a href="index.html" class="fsa"><div class="fsad"><label>Back</label></div></a></fieldset>
+  <fieldset><a href="index.html" class="fsa"><div class="fsad"><label>Back</label></div></a></fieldset>
   <fieldset><a href="#" class="fsa" onclick="startGame('breakout');return false;"><div class="fsad"><label>Breakout</label></div></a></fieldset>
   <fieldset><a href="#" class="fsa" onclick="startGame('shooter');return false;"><div class="fsad"><label>Space Shooter</label></div></a></fieldset>
   <fieldset><a href="#" class="fsa" onclick="startGame('flappy');return false;"><div class="fsad"><label>Flappy Clone</label></div></a></fieldset>
@@ -205,7 +145,8 @@ div.fsd, label {
 <!-- Game canvas and UI -->
 <canvas id="gameCanvas"></canvas>
 <div id="scoreBadge" class="scoreBadge"></div>
-
+<!-- Added missing controls div so code won't blow up when accessing it -->
+<div id="controls"></div>
 
 <script>
 /* -------------- Core manager (Option A) -------------- */
@@ -215,12 +156,15 @@ var rafId = null;
 var activeGame = null;
 var menuPanel = document.getElementById('menuPanel');
 var scoreBadge = document.getElementById('scoreBadge');
-var controlsDiv = document.getElementById('controls');
+var controlsDiv = document.getElementById('controls'); // now exists
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (activeGame && typeof activeGame.onResize === 'function') activeGame.onResize(canvas, ctx);
+    // call instance onResize if available
+    if (activeGame && typeof activeGame.onResize === 'function') {
+        try { activeGame.onResize(canvas, ctx); } catch(e){ /* ignore */ }
+    }
 }
 window.addEventListener('resize', resizeCanvas, false);
 resizeCanvas();
@@ -241,24 +185,25 @@ function disableTouchBlock(){ document.removeEventListener('touchmove', preventD
 function stopGame(){
     if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
     if (activeGame && typeof activeGame.stop === 'function') {
-        try { activeGame.stop(); } catch(e) { /* ignore */ }
+        try { activeGame.stop(); } catch(e) { console.warn('stop error', e); }
     }
     activeGame = null;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     canvas.style.display = 'none';
-    scoreBadge.style.display = 'none';
-    controlsDiv.style.display = 'none';
-    menuPanel.style.display = 'block';
+    if (scoreBadge) scoreBadge.style.display = 'none';
+    if (controlsDiv) controlsDiv.style.display = 'none';
+    if (menuPanel) menuPanel.style.display = 'block';
     disableTouchBlock();
 }
 
 function startRenderLoop(frameFn){
     if (rafId !== null) cancelAnimationFrame(rafId);
-    function loop(){ frameFn(); rafId = requestAnimationFrame(loop); }
+    function loop(){ try { frameFn(); } catch(e){ console.error('frame error', e); } rafId = requestAnimationFrame(loop); }
     rafId = requestAnimationFrame(loop);
 }
 
 function updateScoreBadge(text){
+    if (!scoreBadge) return;
     if (!text) { scoreBadge.style.display = 'none'; return; }
     scoreBadge.style.display = 'block';
     scoreBadge.innerHTML = text;
@@ -267,14 +212,26 @@ function updateScoreBadge(text){
 function startGame(name){
     // ensure previous cleaned
     stopGame();
-    menuPanel.style.display = 'none';
+    if (menuPanel) menuPanel.style.display = 'none';
     canvas.style.display = 'block';
     updateScoreBadge('');
     enableTouchBlock();
     // start registry
     if (gameRegistry[name]) {
+        // set activeGame to the module object
         activeGame = gameRegistry[name];
-        activeGame.init(canvas, ctx, startRenderLoop, stopGame, updateScoreBadge);
+        // call init - modules will expose onResize/stop after init
+        try {
+            if (typeof activeGame.init === 'function') {
+                activeGame.init(canvas, ctx, startRenderLoop, stopGame, updateScoreBadge);
+            } else {
+                throw new Error('module missing init');
+            }
+        } catch (e) {
+            console.error('game init error', e);
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='#fff'; ctx.fillText('Game init failed: '+name, 10, 20);
+        }
     } else {
         ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.fillStyle='#fff'; ctx.fillText('Game not found: '+name, 10, 20);
@@ -292,10 +249,16 @@ if (!window.cancelAnimationFrame) {
     window.cancelAnimationFrame = function(id){ clearTimeout(id); };
 }
 
+/* ---------- Module pattern: each module exposes its runtime API (onResize, stop) ---------- */
+
 /* ---------- Breakout ---------- */
 gameRegistry.breakout = (function(){
-    var state={};
+    var module = {
+        init: null,
+        stop: function(){}
+    };
     function init(canvas, ctx, startLoop, stopAll, updateScore) {
+        var state={};
         state.pw = Math.max(40, Math.floor(canvas.width * 0.25));
         state.ph = 12; state.px = (canvas.width - state.pw)/2;
         state.bx = canvas.width/2; state.by = canvas.height/2; state.br = 8; state.vx = 4; state.vy = 4;
@@ -322,19 +285,26 @@ gameRegistry.breakout = (function(){
             ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
             ctx.fillStyle='#0ff'; ctx.beginPath(); ctx.arc(state.bx,state.by,state.br,0,Math.PI*2); ctx.fill();
             ctx.fillStyle='#fff'; ctx.fillRect(state.px, canvas.height-state.ph, state.pw, state.ph);
-            ctx.fillStyle='#f00'; for(r=0;r<state.rows;r++){ for(c=0;c<state.cols;c++){ if(state.bricks[r][c]) ctx.fillRect(c*bw, r*bh, bw-2, bh-2); } }
+            ctx.fillStyle='#f00'; for(var rr=0;rr<state.rows;rr++){ for(var cc=0;cc<state.cols;cc++){ if(state.bricks[rr][cc]) ctx.fillRect(cc*bw, rr*bh, bw-2, bh-2); } }
         }
         state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); };
         state.onResize = function(){ state.pw = Math.max(40, Math.floor(canvas.width * 0.25)); state.px = (canvas.width - state.pw)/2; };
+
+        // expose API onto module so start/resize can call them
+        module.onResize = state.onResize;
+        module.stop = state.stop;
+
         startLoop(frame);
     }
-    return { init: init, stop: function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Shooter ---------- */
 gameRegistry.shooter = (function(){
-    var state={};
+    var module = { init: null, stop: function(){ } };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state = {};
         state.px = Math.floor(canvas.width/2)-10; state.py = canvas.height - 40; state.shots=[]; state.en=[];
         for(var i=0;i<6;i++) state.en.push({x:Math.random()*(canvas.width-20), y:Math.random()*120});
         state.score=0; updateScore('');
@@ -352,15 +322,22 @@ gameRegistry.shooter = (function(){
             ctx.fillStyle='#f00'; for(i=0;i<state.en.length;i++) ctx.fillRect(state.en[i].x, state.en[i].y, 16,16);
         }
         state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
+        state.onResize = function(){ /* nothing special for shooter */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Flappy ---------- */
 gameRegistry.flappy = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state={};
         state.x = 60; state.y = Math.floor(canvas.height/2); state.vy = 0; state.pipes = []; state.frame = 0; state.score = 0;
         updateScore('');
         state.onTap = function(){ state.vy = -8; };
@@ -375,16 +352,23 @@ gameRegistry.flappy = (function(){
             ctx.fillStyle='#0f0'; for(i=0;i<state.pipes.length;i++){ var pp=state.pipes[i]; ctx.fillRect(pp.x, 0, 20, pp.top); ctx.fillRect(pp.x, pp.top+pp.gap, 20, canvas.height); }
         }
         state.stop = function(){ canvas.removeEventListener('touchstart', state.onTap, false); };
+        state.onResize = function(){ /* nothing needed */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Paint ---------- */
 gameRegistry.paint = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop){
         ctx.lineWidth = 3; ctx.lineCap='round'; ctx.strokeStyle='#32A956';
+        var state = {};
         state.painting=false;
         state.onStart = function(e){ state.painting=true; var t=e.touches?e.touches[0]:e; ctx.beginPath(); ctx.moveTo(t.clientX, t.clientY); };
         state.onMove = function(e){ if(!state.painting) return; var t=e.touches?e.touches[0]:e; ctx.lineTo(t.clientX, t.clientY); ctx.stroke(); };
@@ -394,30 +378,44 @@ gameRegistry.paint = (function(){
         canvas.addEventListener('touchend', state.onEnd, false);
         function frame(){ /* idle */ }
         state.stop = function(){ canvas.removeEventListener('touchstart', state.onStart, false); canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchend', state.onEnd, false); };
+        state.onResize = function(){ /* nothing special */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Catch Game ---------- */
 gameRegistry.catchgame = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state={};
         state.px = Math.floor(canvas.width/2)-20; state.py = canvas.height - 40; state.objs=[]; state.score = 0; updateScore('');
         state.spawnTimer = setInterval(function(){ state.objs.push({ x: Math.random()*(canvas.width-12), y: -10, vy: 2 + Math.random()*2 }); }, 600);
         state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.px = t.clientX - 20; if(state.px<0)state.px=0; if(state.px+40>canvas.width)state.px=canvas.width-40; };
         canvas.addEventListener('touchmove', state.onMove, false);
         function frame(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#0f0'; ctx.fillRect(state.px,state.py,40,12); for(var i=state.objs.length-1;i>=0;i--){ var o=state.objs[i]; o.y += o.vy; ctx.fillStyle='#f00'; ctx.fillRect(o.x,o.y,12,12); if(o.y + 12 > state.py && o.x > state.px && o.x < state.px + 40){ state.objs.splice(i,1); state.score++; updateScore('Score: '+state.score); } else if (o.y > canvas.height + 20) state.objs.splice(i,1); } }
         state.stop = function(){ clearInterval(state.spawnTimer); canvas.removeEventListener('touchmove', state.onMove, false); };
+        state.onResize = function(){ /* nothing */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Top-down Racing ---------- */
 gameRegistry.racing = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state={};
         state.carX = canvas.width/2; state.carY = canvas.height - 60; state.speed = 3; state.obstacles = []; state.score = 0; updateScore('');
         state.onMove = function(e){ var t=e.touches?e.touches[0]:e; state.carX = t.clientX; if(state.carX<20) state.carX=20; if(state.carX>canvas.width-20) state.carX=canvas.width-20; };
         canvas.addEventListener('touchmove', state.onMove, false);
@@ -432,15 +430,22 @@ gameRegistry.racing = (function(){
             for(var i=state.obstacles.length-1;i>=0;i--){ var o=state.obstacles[i]; o.y += o.vy; ctx.fillStyle='#f00'; ctx.fillRect(o.x,o.y,20,20); if(o.y > canvas.height){ state.obstacles.splice(i,1); state.score++; updateScore('Score: '+state.score); } else if (Math.abs(o.x-state.carX)<20 && Math.abs(o.y-state.carY)<20){ state.obstacles=[]; state.score=0; updateScore(''); } }
         }
         state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); clearInterval(state.spawnTimer); };
+        state.onResize = function(){ /* nothing */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Fruit Ninja ---------- */
 gameRegistry.fruitninja = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state={};
         state.objects = []; state.score = 0; updateScore('');
         state.spawnTimer = setInterval(function(){ state.objects.push({x:20+Math.random()*(canvas.width-40), y:canvas.height+10, vy: -6 - Math.random()*4, kind:'fruit'}); }, 700);
         state.onSwipe = function(e){
@@ -451,15 +456,22 @@ gameRegistry.fruitninja = (function(){
         canvas.addEventListener('touchstart', state.onSwipe, false);
         function frame(){ for(var i=state.objects.length-1;i>=0;i--){ var o=state.objects[i]; o.y += o.vy; o.vy += 0.25; if(o.y > canvas.height+50) state.objects.splice(i,1); } ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f60'; for(i=0;i<state.objects.length;i++) ctx.beginPath(), ctx.arc(state.objects[i].x, state.objects[i].y, 12,0,Math.PI*2), ctx.fill(); }
         state.stop = function(){ clearInterval(state.spawnTimer); canvas.removeEventListener('touchstart', state.onSwipe, false); };
+        state.onResize = function(){ /* nothing */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Asteroids ---------- */
 gameRegistry.asteroids = (function(){
-    var state={};
+    var module = { init: null, stop: function(){} };
     function init(canvas, ctx, startLoop, stopAll, updateScore){
+        var state={};
         state.ship = {x:canvas.width/2, y:canvas.height/2, angle:0};
         state.asteroids = []; state.bullets = []; state.score=0; updateScore('');
         for(var i=0;i<6;i++) state.asteroids.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, vx:(Math.random()-0.5)*2, vy:(Math.random()-0.5)*2, r:20});
@@ -477,9 +489,15 @@ gameRegistry.asteroids = (function(){
             ctx.fillStyle='#ff0'; for(i=0;i<state.bullets.length;i++){ ctx.fillRect(state.bullets[i].x, state.bullets[i].y, 3,6); }
         }
         state.stop = function(){ canvas.removeEventListener('touchmove', state.onMove, false); canvas.removeEventListener('touchstart', state.onShoot, false); };
+        state.onResize = function(){ /* nothing */ };
+
+        module.stop = state.stop;
+        module.onResize = state.onResize;
+
         startLoop(frame);
     }
-    return { init:init, stop:function(){} };
+    module.init = init;
+    return module;
 })();
 
 /* ---------- Wiring: exit and cleanup ---------- */
