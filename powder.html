@@ -56,56 +56,63 @@ button:active { background:#555; }
 <button id="resetBtn">Reset</button>
 
 <script>
-// Setup
-var canvas = document.getElementById('canvas');
+// --- Setup ---
+var canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
 var ctx = canvas.getContext('2d');
-var pixelSize = 10;
-var cols, rows;
+
+var pixelSize = 10, cols, rows;
 var grid = [];
 var metalActive=false, stoneActive=false, sandActive=false, waterActive=false;
 var drawing=false;
 
-// Buttons
-var metalBtn=document.getElementById('metalBtn');
-var stoneBtn=document.getElementById('stoneBtn');
-var sandBtn=document.getElementById('sandBtn');
-var waterBtn=document.getElementById('waterBtn');
-var resetBtn=document.getElementById('resetBtn');
+// --- Create Buttons dynamically ---
+var buttonGridHeight = 100;
 
+// Reset button top-left
+var resetBtn = document.createElement('button');
+resetBtn.innerHTML = 'Reset';
+resetBtn.style.position = 'fixed';
+resetBtn.style.top = '10px';
+resetBtn.style.left = '10px';
+resetBtn.style.width = '60px';
+resetBtn.style.height = '30px';
+resetBtn.style.background='#222';
+resetBtn.style.color='#fff';
+resetBtn.style.border='1px solid #444';
+document.body.appendChild(resetBtn);
+
+// 2x2 element buttons grid bottom-center
+var buttonGrid = document.createElement('div');
+buttonGrid.style.position = 'fixed';
+buttonGrid.style.bottom = '10px';
+buttonGrid.style.left = '50%';
+buttonGrid.style.width = '220px';
+buttonGrid.style.height = buttonGridHeight + 'px';
+buttonGrid.style.marginLeft = '-110px';
+document.body.appendChild(buttonGrid);
+
+var elements = ['Metal','Stone','Sand','Water'];
+var buttons = {};
+
+for(var i=0;i<elements.length;i++){
+    var btn = document.createElement('button');
+    btn.innerHTML = elements[i];
+    btn.style.width='100px';
+    btn.style.height='40px';
+    btn.style.margin='10px';
+    btn.style.background='#666';
+    btn.style.color='#fff';
+    btn.style.border='1px solid #444';
+    buttonGrid.appendChild(btn);
+    buttons[elements[i].toLowerCase()] = btn;
+}
+
+// --- Functions ---
 function clearActive(){
-  metalBtn.style.background='#666';
-  stoneBtn.style.background='#666';
-  sandBtn.style.background='#666';
-  waterBtn.style.background='#666';
+  for(var key in buttons){ buttons[key].style.background='#666'; }
 }
-metalBtn.onclick=function(){ metalActive=!metalActive; stoneActive=sandActive=waterActive=false; clearActive(); if(metalActive) metalBtn.style.background='#32A956'; };
-stoneBtn.onclick=function(){ stoneActive=!stoneActive; metalActive=sandActive=waterActive=false; clearActive(); if(stoneActive) stoneBtn.style.background='#32A956'; };
-sandBtn.onclick=function(){ sandActive=!sandActive; metalActive=stoneActive=waterActive=false; clearActive(); if(sandActive) sandBtn.style.background='#32A956'; };
-waterBtn.onclick=function(){ waterActive=!waterActive; metalActive=stoneActive=sandActive=false; clearActive(); if(waterActive) waterBtn.style.background='#32A956'; };
-resetBtn.onclick=function(){
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  metalActive=stoneActive=sandActive=waterActive=false; clearActive();
-  for(var y=0;y<rows;y++){ for(var x=0;x<cols;x++) grid[y][x]=0; }
-};
-
-// Resize canvas above buttons
-function resize(){
-  var buttonGridHeight = 100; // 2x2 buttons
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight - buttonGridHeight - 20;
-  cols = Math.floor(canvas.width/pixelSize);
-  rows = Math.floor(canvas.height/pixelSize);
-  grid=[];
-  for(var y=0;y<rows;y++){ grid[y]=[]; for(var x=0;x<cols;x++) grid[y][x]=0; }
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-window.addEventListener('resize',resize,false);
-resize();
-
-// Draw pixel
 function drawPixel(x,y,color){ ctx.fillStyle=color; ctx.fillRect(x*pixelSize,y*pixelSize,pixelSize,pixelSize); }
-
-// Place element with bounds check
 function placeElement(mouseX,mouseY){
   var rect = canvas.getBoundingClientRect();
   var x = Math.floor((mouseX - rect.left)/pixelSize);
@@ -118,33 +125,55 @@ function placeElement(mouseX,mouseY){
   else if(waterActive){ grid[y][x]=4; drawPixel(x,y,'#3498db'); }
 }
 
-// Mouse
+// --- Resize Canvas ---
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - buttonGridHeight - 20;
+  cols = Math.floor(canvas.width/pixelSize);
+  rows = Math.floor(canvas.height/pixelSize);
+  grid=[];
+  for(var y=0;y<rows;y++){ grid[y]=[]; for(var x=0;x<cols;x++) grid[y][x]=0; }
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+window.addEventListener('resize',resize,false);
+resize();
+
+// --- Mouse & Touch ---
 canvas.addEventListener('mousedown',function(e){ drawing=true; placeElement(e.clientX,e.clientY); }, false);
 canvas.addEventListener('mousemove',function(e){ if(drawing) placeElement(e.clientX,e.clientY); }, false);
 canvas.addEventListener('mouseup',function(){ drawing=false; }, false);
 canvas.addEventListener('mouseleave',function(){ drawing=false; }, false);
 
-// Touch
 canvas.addEventListener('touchstart',function(e){ drawing=true; for(var i=0;i<e.touches.length;i++) placeElement(e.touches[i].clientX,e.touches[i].clientY); e.preventDefault(); }, false);
 canvas.addEventListener('touchmove',function(e){ if(drawing){ for(var i=0;i<e.touches.length;i++) placeElement(e.touches[i].clientX,e.touches[i].clientY); } e.preventDefault(); }, false);
 canvas.addEventListener('touchend',function(e){ drawing=false; e.preventDefault(); }, false);
 canvas.addEventListener('touchcancel',function(e){ drawing=false; e.preventDefault(); }, false);
 
-// Prevent scrolling
-document.body.addEventListener('touchmove', function(e){ e.preventDefault(); }, false);
+document.body.addEventListener('touchmove',function(e){ e.preventDefault(); }, false);
 
-// Simulation update
+// --- Button Clicks ---
+buttons.metal.onclick=function(){ metalActive=!metalActive; stoneActive=sandActive=waterActive=false; clearActive(); if(metalActive) this.style.background='#32A956'; };
+buttons.stone.onclick=function(){ stoneActive=!stoneActive; metalActive=sandActive=waterActive=false; clearActive(); if(stoneActive) this.style.background='#32A956'; };
+buttons.sand.onclick=function(){ sandActive=!sandActive; metalActive=stoneActive=waterActive=false; clearActive(); if(sandActive) this.style.background='#32A956'; };
+buttons.water.onclick=function(){ waterActive=!waterActive; metalActive=stoneActive=sandActive=false; clearActive(); if(waterActive) this.style.background='#32A956'; };
+
+resetBtn.onclick=function(){
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  metalActive=stoneActive=sandActive=waterActive=false; clearActive();
+  for(var y=0;y<rows;y++){ for(var x=0;x<cols;x++) grid[y][x]=0; }
+};
+
+// --- Simulation Update ---
 function update(){
   for(var y=rows-2;y>=0;y--){
     for(var x=0;x<cols;x++){
       var cell=grid[y][x];
-      if(cell===2){ // stone
-        if(y+1<rows && grid[y+1][x]===0){ grid[y+1][x]=2; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x,y+1,'#888'); }
-      } else if(cell===3){ // sand
+      if(cell===2){ if(y+1<rows && grid[y+1][x]===0){ grid[y+1][x]=2; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x,y+1,'#888'); } }
+      else if(cell===3){
         if(y+1<rows && grid[y+1][x]===0){ grid[y+1][x]=3; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x,y+1,'#CBBD93'); }
         else if(y+1<rows && x-1>=0 && grid[y+1][x-1]===0){ grid[y+1][x-1]=3; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x-1,y+1,'#CBBD93'); }
         else if(y+1<rows && x+1<cols && grid[y+1][x+1]===0){ grid[y+1][x+1]=3; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x+1,y+1,'#CBBD93'); }
-      } else if(cell===4){ // water
+      } else if(cell===4){
         if(y+1<rows && grid[y+1][x]===0){ grid[y+1][x]=4; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x,y+1,'#3498db'); }
         else if(y+1<rows && x-1>=0 && grid[y+1][x-1]===0){ grid[y+1][x-1]=4; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x-1,y+1,'#3498db'); }
         else if(y+1<rows && x+1<cols && grid[y+1][x+1]===0){ grid[y+1][x+1]=4; grid[y][x]=0; drawPixel(x,y,'#000'); drawPixel(x+1,y+1,'#3498db'); }
