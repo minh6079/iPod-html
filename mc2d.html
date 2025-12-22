@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2D Minecraft</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #87CEEB;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: pixelated;
+        }
+        
+        #ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+        }
+        
+        #inventory {
+            display: flex;
+            gap: 4px;
+            pointer-events: auto;
+        }
+        
+        .inv-slot {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .inv-slot.selected {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .inv-slot canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #mode-indicator {
+          width: 110px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: auto;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          border: 2px solid rgba(255, 255, 255, 0.5);
+          border-radius: 6px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+        
+        #mode-indicator.mine-mode {
+            background: rgba(200, 50, 50, 0.8);
+            border-color: #ff6b6b;
+        }
+        
+        #mode-indicator.place-mode {
+            background: rgba(50, 150, 50, 0.8);
+            border-color: #6bff6b;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 140px;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
+            pointer-events: none;
+        }
+        
+        .btn {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            font-size: 28px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            pointer-events: auto;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+        
+        .btn:active {
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+        
+        #leftBtn, #rightBtn {
+            width: 50px;
+            height: 50px;
+            bottom: 30px;
+        }
+        
+        #leftBtn {
+            left: 15px;
+        }
+        
+        #rightBtn {
+            left: 95px;
+        }
+        
+        #jumpBtn {
+            right: 15px;
+            bottom: 30px;
+            width: 70px;
+            height: 70px;
+            font-size: 36px;
+            background: rgba(255, 200, 50, 0.4);
+            border-color: rgba(255, 220, 100, 0.8);
+        }
+        
+        #jumpBtn:active {
+            background: rgba(255, 220, 100, 0.7);
+        }
+        
+        #reach-indicator {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            margin-left: -4px;
+            margin-top: -4px;
+            pointer-events: none;
+        }
+        
+        #reach-indicator::before,
+        #reach-indicator::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        #reach-indicator::before {
+            left: 0;
+            top: 3px;
+            width: 8px;
+            height: 2px;
+        }
+        
+        #reach-indicator::after {
+            left: 3px;
+            top: 0;
+            width: 2px;
+            height: 8px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-container">
+        <div id="top-bar">
+            <div id="inventory"></div>
+            <div id="mode-indicator" class="mine-mode">MINE</div>
+        </div>
+        
+        <div id="reach-indicator"></div>
+        
+        <div id="controls">
+            <div class="btn" id="leftBtn">◄</div>
+            <div class="btn" id="rightBtn">►</div>
+            <div class="btn" id="jumpBtn">▲</div>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            'use strict';
+            
+            var canvas = document.getElementById('gameCanvas');
+            var ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            
+            var BLOCK_SIZE = 20;
+            var WORLD_WIDTH = 120;
+            var WORLD_HEIGHT = 60;
+            var GRAVITY = 0.8;
+            var JUMP_POWER = -13;
+            var MOVE_SPEED = 4;
+            var MAX_REACH = 5;
+            var MAX_FALL_SPEED = 15;
+            
+            // Block types
+            var BLOCKS = {
+                AIR: 0,
+                GRASS: 1,
+                DIRT: 2,
+                STONE: 3,
+                WOOD: 4,
+                LEAVES: 5,
+                PLANKS: 6,
+                SAND: 7,
+                COBBLESTONE: 8
+            };
+            
+            // Block colors with better contrast
+            var BLOCK_COLORS = {};
+            BLOCK_COLORS[BLOCKS.GRASS] = ['#7CBD3C', '#5FA127', '#4A8118'];
+            BLOCK_COLORS[BLOCKS.DIRT] = ['#8B6914', '#6B4910', '#4A3008'];
+            BLOCK_COLORS[BLOCKS.STONE] = ['#888888', '#666666', '#444444'];
+            BLOCK_COLORS[BLOCKS.WOOD] = ['#8B4513', '#6B3410', '#4A2008'];
+            BLOCK_COLORS[BLOCKS.LEAVES] = ['#228B22', '#1A6B1A', '#0F4D0F'];
+            BLOCK_COLORS[BLOCKS.PLANKS] = ['#DEB887', '#BF9870', '#9F7850'];
+            BLOCK_COLORS[BLOCKS.SAND] = ['#F4E4C1', '#D4C4A1', '#B4A481'];
+            BLOCK_COLORS[BLOCKS.COBBLESTONE] = ['#7A7A7A', '#5A5A5A', '#3A3A3A'];
+            
+            // Game state
+            var world = [];
+            var player = {
+                x: 60 * BLOCK_SIZE,
+                y: 20 * BLOCK_SIZE,
+                width: 14,
+                height: 30,
+                vx: 0,
+                vy: 0,
+                onGround: false
+            };
+            
+            var camera = {
+                x: 0,
+                y: 0
+            };
+            
+            var keys = {
+                left: false,
+                right: false,
+                jump: false,
+                jumpPressed: false
+            };
+            
+            var mode = 'mine';
+            var selectedBlock = BLOCKS.DIRT;
+            var inventory = [BLOCKS.GRASS, BLOCKS.DIRT, BLOCKS.STONE, BLOCKS.WOOD, BLOCKS.PLANKS, BLOCKS.COBBLESTONE, BLOCKS.SAND];
+            var selectedSlot = 0;
+            
+            // Initialize world
+            function initWorld() {
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    world[x] = [];
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        world[x][y] = BLOCKS.AIR;
+                    }
+                }
+                
+                // Generate terrain with caves
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
+                    
+                    for (var y = height; y < WORLD_HEIGHT; y++) {
+                        if (y === height) {
+                            world[x][y] = BLOCKS.GRASS;
+                        } else if (y < height + 4) {
+                            world[x][y] = BLOCKS.DIRT;
+                        } else {
+                            world[x][y] = BLOCKS.STONE;
+                        }
+                    }
+                    
+                    // Trees
+                    if (Math.random() < 0.08 && x < WORLD_WIDTH - 4 && x > 3) {
+                        var treeHeight = 5 + Math.floor(Math.random() * 4);
+                        for (var ty = 0; ty < treeHeight; ty++) {
+                            if (height - ty - 1 >= 0) {
+                                world[x][height - ty - 1] = BLOCKS.WOOD;
+                            }
+                        }
+                        // Leaves
+                        for (var lx = -2; lx <= 2; lx++) {
+                            for (var ly = -2; ly <= 1; ly++) {
+                                var tx = x + lx;
+                                var ty = height - treeHeight + ly;
+                                if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+                                    if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) {
+                                        world[tx][ty] = BLOCKS.LEAVES;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Add some sand near edges
+                for (var x = 0; x < 10; x++) {
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        if (world[x][y] === BLOCKS.GRASS || world[x][y] === BLOCKS.DIRT) {
+                            world[x][y] = BLOCKS.SAND;
+                        }
+                    }
+                }
+            }
+            
+            // Draw block with better shading
+            function drawBlock(x, y, blockType) {
+                if (blockType === BLOCKS.AIR) return;
+                
+                var colors = BLOCK_COLORS[blockType];
+                if (!colors) return;
+                
+                var screenX = Math.floor(x * BLOCK_SIZE - camera.x);
+                var screenY = Math.floor(y * BLOCK_SIZE - camera.y);
+                
+                // Main color
+                ctx.fillStyle = colors[0];
+                ctx.fillRect(screenX, screenY, BLOCK_SIZE, BLOCK_SIZE);
+                
+                // Special rendering for grass
+                if (blockType === BLOCKS.GRASS) {
+                    ctx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0];
+                    ctx.fillRect(screenX, screenY + 4, BLOCK_SIZE, BLOCK_SIZE - 4);
+                }
+                
+                // Dark shading (bottom and right)
+                ctx.fillStyle = colors[1];
+                ctx.fillRect(screenX, screenY + BLOCK_SIZE - 3, BLOCK_SIZE, 3);
+                ctx.fillRect(screenX + BLOCK_SIZE - 3, screenY, 3, BLOCK_SIZE);
+                
+                // Light highlight (top and left)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(screenX, screenY, BLOCK_SIZE, 2);
+                ctx.fillRect(screenX, screenY, 2, BLOCK_SIZE);
+                
+                // Darker corners
+                ctx.fillStyle = colors[2];
+                ctx.fillRect(screenX + BLOCK_SIZE - 2, screenY + BLOCK_SIZE - 2, 2, 2);
+            }
+            
+            // Draw player with better details
+            function drawPlayer() {
+                var screenX = Math.floor(player.x - camera.x);
+                var screenY = Math.floor(player.y - camera.y);
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(screenX - 2, screenY + player.height, player.width + 4, 2);
+                
+                // Body
+                ctx.fillStyle = '#3A7BC8';
+                ctx.fillRect(screenX + 1, screenY + 9, player.width - 2, 13);
+                
+                // Body shadow
+                ctx.fillStyle = '#2C5FA0';
+                ctx.fillRect(screenX + player.width - 3, screenY + 9, 2, 13);
+                
+                // Head
+                ctx.fillStyle = '#F5D7B8';
+                ctx.fillRect(screenX + 2, screenY, player.width - 4, 9);
+                
+                // Head shadow
+                ctx.fillStyle = '#D4B798';
+                ctx.fillRect(screenX + player.width - 4, screenY, 2, 9);
+                
+                // Eyes
+                ctx.fillStyle = '#000';
+                ctx.fillRect(screenX + 4, screenY + 3, 2, 2);
+                ctx.fillRect(screenX + 8, screenY + 3, 2, 2);
+                
+                // Legs
+                ctx.fillStyle = '#1A3E6E';
+                ctx.fillRect(screenX + 2, screenY + 22, 4, 8);
+                ctx.fillRect(screenX + 8, screenY + 22, 4, 8);
+                
+                // Arms
+                ctx.fillStyle = '#3A7BC8';
+                ctx.fillRect(screenX - 1, screenY + 10, 2, 9);
+                ctx.fillRect(screenX + player.width - 1, screenY + 10, 2, 9);
+            }
+            
+            // Update camera smoothly
+            function updateCamera() {
+                var targetX = player.x - canvas.width / 2 + player.width / 2;
+                var targetY = player.y - canvas.height / 2 + player.height / 2;
+                
+                targetX = Math.max(0, Math.min(targetX, WORLD_WIDTH * BLOCK_SIZE - canvas.width));
+                targetY = Math.max(0, Math.min(targetY, WORLD_HEIGHT * BLOCK_SIZE - canvas.height));
+                
+                camera.x += (targetX - camera.x) * 0.1;
+                camera.y += (targetY - camera.y) * 0.1;
+            }
+            
+            // Check collision - more precise
+            function checkCollision(x, y, width, height) {
+                var left = Math.floor(x / BLOCK_SIZE);
+                var right = Math.floor((x + width - 0.1) / BLOCK_SIZE);
+                var top = Math.floor(y / BLOCK_SIZE);
+                var bottom = Math.floor((y + height - 0.1) / BLOCK_SIZE);
+                
+                for (var bx = left; bx <= right; bx++) {
+                    for (var by = top; by <= bottom; by++) {
+                        if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+                            if (world[bx][by] !== BLOCKS.AIR) {
+                                return true;
+                            }
+                        } else if (by >= WORLD_HEIGHT) {
+                            return true; // Bottom of world is solid
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // Update player physics
+            function updatePlayer() {
+                // Horizontal movement - instant response
+                if (keys.left) {
+                    player.vx = -MOVE_SPEED;
+                } else if (keys.right) {
+                    player.vx = MOVE_SPEED;
+                } else {
+                    player.vx = 0;
+                }
+                
+                // Handle jumping first
+                if (keys.jump && player.onGround && !keys.jumpPressed) {
+                    player.vy = JUMP_POWER;
+                    player.onGround = false;
+                    keys.jumpPressed = true;
+                }
+                
+                // Reset jump press state when button is released
+                if (!keys.jump) {
+                    keys.jumpPressed = false;
+                }
+                
+                // Apply gravity only if not on ground
+                if (!player.onGround) {
+                    player.vy += GRAVITY;
+                    if (player.vy > MAX_FALL_SPEED) {
+                        player.vy = MAX_FALL_SPEED;
+                    }
+                } else {
+                    // If on ground and not jumping, keep velocity at 0
+                    if (player.vy > 0) {
+                        player.vy = 0;
+                    }
+                }
+                
+                // Apply horizontal movement first
+                var oldX = player.x;
+                player.x += player.vx;
+                
+                // Check horizontal collisions
+                if (checkCollision(player.x, player.y, player.width, player.height)) {
+                    player.x = oldX;
+                    player.vx = 0;
+                }
+                
+                // Keep in horizontal bounds
+                if (player.x < 0) {
+                    player.x = 0;
+                    player.vx = 0;
+                }
+                if (player.x > WORLD_WIDTH * BLOCK_SIZE - player.width) {
+                    player.x = WORLD_WIDTH * BLOCK_SIZE - player.width;
+                    player.vx = 0;
+                }
+                
+                // Apply vertical movement
+                var oldY = player.y;
+                player.y += player.vy;
+                
+                // Keep in vertical bounds
+                if (player.y < 0) {
+                    player.y = 0;
+                    player.vy = 0;
+                }
+                
+                // Check if we're falling (moving down)
+                if (player.vy > 0) {
+                    if (checkCollision(player.x, player.y, player.width, player.height)) {
+                        // Hit ground while falling
+                        player.y = Math.floor((player.y + player.height) / BLOCK_SIZE) * BLOCK_SIZE - player.height;
+                        player.vy = 0;
+                        player.onGround = true;
+                    } else {
+                        // In air while falling
+                        player.onGround = false;
+                    }
+                }
+                // Check if we're jumping (moving up)
+                else if (player.vy < 0) {
+                    if (checkCollision(player.x, player.y, player.width, player.height)) {
+                        // Hit ceiling while jumping
+                        player.y = Math.ceil(player.y / BLOCK_SIZE) * BLOCK_SIZE;
+                        player.vy = 0;
+                    }
+                    player.onGround = false;
+                }
+                // Not moving vertically - check if still on ground
+                else {
+                    // Check one pixel below to see if there's ground
+                    if (checkCollision(player.x, player.y + 1, player.width, player.height)) {
+                        player.onGround = true;
+                    } else {
+                        player.onGround = false;
+                    }
+                }
+            }
+            
+            // Render game
+            function render() {
+                // Clear with sky color
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1);
+                var endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1);
+                var startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1);
+                var endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
+                
+                // Draw blocks
+                for (var x = startX; x < endX; x++) {
+                    for (var y = startY; y < endY; y++) {
+                        drawBlock(x, y, world[x][y]);
+                    }
+                }
+                
+                // Draw player
+                drawPlayer();
+            }
+            
+            // Game loop
+            function gameLoop() {
+                updatePlayer();
+                updateCamera();
+                render();
+                requestAnimationFrame(gameLoop);
+            }
+            
+            // Check if block is in reach
+            function isInReach(worldX, worldY) {
+                var playerCenterX = player.x + player.width / 2;
+                var playerCenterY = player.y + player.height / 2;
+                var blockCenterX = worldX * BLOCK_SIZE + BLOCK_SIZE / 2;
+                var blockCenterY = worldY * BLOCK_SIZE + BLOCK_SIZE / 2;
+                
+                var dx = Math.abs(blockCenterX - playerCenterX);
+                var dy = Math.abs(blockCenterY - playerCenterY);
+                
+                return dx < BLOCK_SIZE * MAX_REACH && dy < BLOCK_SIZE * MAX_REACH;
+            }
+            
+            // Handle touch on canvas
+            function handleTouch(x, y) {
+                var worldX = Math.floor((x + camera.x) / BLOCK_SIZE);
+                var worldY = Math.floor((y + camera.y) / BLOCK_SIZE);
+                
+                if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
+                    if (isInReach(worldX, worldY)) {
+                        if (mode === 'mine') {
+                            if (world[worldX][worldY] !== BLOCKS.AIR) {
+                                world[worldX][worldY] = BLOCKS.AIR;
+                            }
+                        } else {
+                            if (world[worldX][worldY] === BLOCKS.AIR) {
+                                var playerLeft = Math.floor(player.x / BLOCK_SIZE);
+                                var playerRight = Math.floor((player.x + player.width - 1) / BLOCK_SIZE);
+                                var playerTop = Math.floor(player.y / BLOCK_SIZE);
+                                var playerBottom = Math.floor((player.y + player.height - 1) / BLOCK_SIZE);
+                                
+                                var overlaps = (worldX >= playerLeft && worldX <= playerRight && 
+                                              worldY >= playerTop && worldY <= playerBottom);
+                                
+                                if (!overlaps) {
+                                    world[worldX][worldY] = selectedBlock;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Canvas touch events
+            var isTouching = false;
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                isTouching = true;
+                var rect = canvas.getBoundingClientRect();
+                var touch = e.touches[0];
+                var x = touch.clientX - rect.left;
+                var y = touch.clientY - rect.top;
+                handleTouch(x, y);
+            });
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                if (isTouching) {
+                    var rect = canvas.getBoundingClientRect();
+                    var touch = e.touches[0];
+                    var x = touch.clientX - rect.left;
+                    var y = touch.clientY - rect.top;
+                    handleTouch(x, y);
+                }
+            });
+            
+            canvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                isTouching = false;
+            });
+            
+            // Control buttons
+            function addButtonEvents(id, keyName) {
+                var btn = document.getElementById(id);
+                
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    keys[keyName] = true;
+                });
+                
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    keys[keyName] = false;
+                });
+                
+                btn.addEventListener('touchcancel', function(e) {
+                    e.preventDefault();
+                    keys[keyName] = false;
+                });
+            }
+            
+            addButtonEvents('leftBtn', 'left');
+            addButtonEvents('rightBtn', 'right');
+            addButtonEvents('jumpBtn', 'jump');
+            
+            // Mode button
+            var modeBtn = document.getElementById('mode-indicator');
+            modeBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                mode = mode === 'mine' ? 'place' : 'mine';
+                this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
+                this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
+            });
+            
+            // Create inventory UI
+            function createInventory() {
+                var invDiv = document.getElementById('inventory');
+                for (var i = 0; i < inventory.length; i++) {
+                    var slot = document.createElement('div');
+                    slot.className = 'inv-slot';
+                    if (i === selectedSlot) {
+                        slot.className += ' selected';
+                    }
+                    
+                    var blockCanvas = document.createElement('canvas');
+                    blockCanvas.width = 30;
+                    blockCanvas.height = 30;
+                    var blockCtx = blockCanvas.getContext('2d');
+                    
+                    var blockType = inventory[i];
+                    var colors = BLOCK_COLORS[blockType];
+                    if (colors) {
+                        blockCtx.fillStyle = colors[0];
+                        blockCtx.fillRect(0, 0, 40, 40);
+                        
+                        if (blockType === BLOCKS.GRASS) {
+                            blockCtx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0];
+                            blockCtx.fillRect(0, 8, 40, 32);
+                        }
+                        
+                        blockCtx.fillStyle = colors[1];
+                        blockCtx.fillRect(0, 36, 40, 4);
+                        blockCtx.fillRect(36, 0, 4, 40);
+                        
+                        blockCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        blockCtx.fillRect(0, 0, 40, 3);
+                        blockCtx.fillRect(0, 0, 3, 40);
+                    }
+                    
+                    slot.appendChild(blockCanvas);
+                    slot.setAttribute('data-index', i);
+                    
+                    slot.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var index = parseInt(this.getAttribute('data-index'));
+                        selectedSlot = index;
+                        selectedBlock = inventory[index];
+                        
+                        var slots = document.querySelectorAll('.inv-slot');
+                        for (var j = 0; j < slots.length; j++) {
+                            slots[j].className = 'inv-slot';
+                        }
+                        this.className = 'inv-slot selected';
+                    });
+                    
+                    invDiv.appendChild(slot);
+                }
+            }
+            
+            // Window resize handler
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+            });
+            
+            // Initialize
+            initWorld();
+            createInventory();
+            selectedBlock = inventory[0];
+            gameLoop();
+            
+        })();
+    </script>
+</body>
+</html>
