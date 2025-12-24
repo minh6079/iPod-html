@@ -115,7 +115,7 @@
             <key>IsRemovable</key>
             <true/>
             <key>Label</key>
-            <string>Lock Screen</string>
+            <string>iOS 6 sim</string>
             <key>PayloadDescription</key>
             <string>Adds iOS 6 Lock Screen to Home Screen</string>
             <key>PayloadDisplayName</key>
@@ -143,7 +143,7 @@
     <key>PayloadIdentifier</key>
     <string>com.lockscreen.profile</string>
     <key>PayloadOrganization</key>
-    <string>iOS 6 sim</string>
+    <string>Lock Screen</string>
     <key>PayloadRemovalDisallowed</key>
     <false/>
     <key>PayloadType</key>
