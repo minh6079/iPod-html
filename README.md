@@ -23,4 +23,4 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Paste that video url in and press return on the keyboard or press the process video button on the page
 - Wait for the iframe to load and then enjoy
 - Why I made this:
-- - One day, I thought: Can I watch Youtube on an iPod touch 4? Then, I open Youtube but it was too heavy so it crash many times, but finally, I got Youtube running. But the frontend was so heavy that safari crash every minute. So i made this so I can watch Youtube again!
+- - One day, I thought: Can I watch Youtube on an iPod touch 4? Then, I open Youtube on safari but it was too heavy so it crash many times, but finally, I got Youtube running. But the frontend was so heavy that safari crash every minute. So I made this so I can watch Youtube again!
