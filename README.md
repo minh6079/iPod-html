@@ -7,6 +7,7 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Games
 - More games
 - Minecraft (beta)
+- Minecraft 2D, better, less lag
 - Cut the rope (both original and time travel, laggy)
 - Youtube (frontend, lite)
 - iOS 6 simulator (WIP, lock screen only, adding home screen later)
