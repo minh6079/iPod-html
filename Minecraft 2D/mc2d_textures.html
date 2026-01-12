@@ -22,7 +22,6 @@
 
         canvas {
             display: block;
-            position: relative;
             top: 0;
             left: 0;
             background: #87CEEB;
@@ -78,6 +77,28 @@
             width: 100%;
             height: 100%;
             display: block;
+        }
+
+        .variant-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: rgba(100, 200, 100, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            font-size: 10px;
+            line-height: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .variant-indicator:active {
+            background: rgba(120, 220, 120, 1);
         }
 
         .variant-dropdown {
@@ -613,6 +634,12 @@
                         var dropdown = document.createElement('div');
                         dropdown.className = 'variant-dropdown';
                         
+                        // Add variant indicator button
+                        var indicator = document.createElement('div');
+                        indicator.className = 'variant-indicator';
+                        indicator.textContent = '+';
+                        slot.appendChild(indicator);
+                        
                         var variants = blockVariants[bt];
                         for (var v = 0; v < variants.length; v++) {
                             var variantBlock = variants[v];
@@ -655,29 +682,27 @@
                         
                         slot.appendChild(dropdown);
                         
+                        // Add click handler for the + button
+                        (function(slotEl, indicatorEl) {
+                            indicatorEl.addEventListener('touchstart', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                if (slotEl.className.match(/show-dropdown/)) {
+                                    closeAllDropdowns();
+                                } else {
+                                    closeAllDropdowns();
+                                    slotEl.className += ' show-dropdown';
+                                    currentDropdown = slotEl;
+                                }
+                            });
+                        })(slot, indicator);
+                        
+                        // Regular tap to select
                         (function(slotEl, idx) {
-                            var longPressTimer;
-                            var touchMoved = false;
-                            
                             slotEl.addEventListener('touchstart', function(e) {
-                                touchMoved = false;
-                                longPressTimer = setTimeout(function() {
-                                    if (!touchMoved) {
-                                        closeAllDropdowns();
-                                        slotEl.className += ' show-dropdown';
-                                        currentDropdown = slotEl;
-                                    }
-                                }, 500);
-                            });
-                            
-                            slotEl.addEventListener('touchmove', function(e) {
-                                touchMoved = true;
-                                clearTimeout(longPressTimer);
-                            });
-                            
-                            slotEl.addEventListener('touchend', function(e) {
-                                clearTimeout(longPressTimer);
-                                if (!touchMoved && !slotEl.className.match(/show-dropdown/)) {
+                                // Only select if not tapping the indicator
+                                if (!e.target.className.match(/variant-indicator/)) {
                                     var bt = parseInt(slotEl.getAttribute('data-block'), 10);
                                     selectSlot(idx, bt);
                                     closeAllDropdowns();
