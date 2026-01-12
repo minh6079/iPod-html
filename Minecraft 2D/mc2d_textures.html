@@ -22,8 +22,6 @@
 
         canvas {
             display: block;
-            top: 0;
-            left: 0;
             background: #87CEEB;
             -webkit-image-rendering: optimize-contrast;
             image-rendering: pixelated;
@@ -81,8 +79,8 @@
 
         .variant-indicator {
             position: absolute;
-            bottom: -20px;
-            right: 5px;
+            bottom: -2px;
+            right: -2px;
             width: 12px;
             height: 12px;
             background: rgba(100, 200, 100, 0.9);
@@ -638,13 +636,14 @@
                         var indicator = document.createElement('div');
                         indicator.className = 'variant-indicator';
                         indicator.textContent = '+';
-                        slot.appendChild(indicator);
+                        indicator.setAttribute('data-isbutton', 'true');
                         
                         var variants = blockVariants[bt];
                         for (var v = 0; v < variants.length; v++) {
                             var variantBlock = variants[v];
                             var variantOption = document.createElement('div');
                             variantOption.className = 'variant-option';
+                            variantOption.setAttribute('data-variant', variantBlock);
                             
                             var variantCanvas = document.createElement('canvas');
                             variantCanvas.width = 28;
@@ -656,72 +655,108 @@
                             }
                             
                             variantOption.appendChild(variantCanvas);
-                            
-                            (function(slotEl, vBlock, idx) {
-                                variantOption.addEventListener('touchstart', function(e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    inventory[idx] = vBlock;
-                                    
-                                    var mainCanvas = slotEl.getElementsByTagName('canvas')[0];
-                                    var mainCtx = mainCanvas.getContext('2d');
-                                    mainCtx.clearRect(0, 0, 28, 28);
-                                    if (textures[vBlock]) {
-                                        mainCtx.drawImage(textures[vBlock], 0, 0, 28, 28);
-                                    }
-                                    slotEl.setAttribute('data-block', vBlock);
-                                    
-                                    selectSlot(idx, vBlock);
-                                    closeAllDropdowns();
-                                });
-                            })(slot, variantBlock, i);
-                            
                             dropdown.appendChild(variantOption);
                         }
                         
+                        slot.appendChild(indicator);
                         slot.appendChild(dropdown);
-                        
-                        // Add click handler for the + button
-                        (function(slotEl, indicatorEl) {
-                            indicatorEl.addEventListener('touchstart', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                
-                                if (slotEl.className.match(/show-dropdown/)) {
-                                    closeAllDropdowns();
-                                } else {
-                                    closeAllDropdowns();
-                                    slotEl.className += ' show-dropdown';
-                                    currentDropdown = slotEl;
-                                }
-                            });
-                        })(slot, indicator);
-                        
-                        // Regular tap to select
-                        (function(slotEl, idx) {
-                            slotEl.addEventListener('touchstart', function(e) {
-                                // Only select if not tapping the indicator
-                                if (!e.target.className.match(/variant-indicator/)) {
-                                    var bt = parseInt(slotEl.getAttribute('data-block'), 10);
-                                    selectSlot(idx, bt);
-                                    closeAllDropdowns();
-                                }
-                            });
-                        })(slot, i);
-                    } else {
-                        (function(slotEl, idx) {
-                            slotEl.addEventListener('touchstart', function(e) {
-                                e.preventDefault();
-                                var bt = parseInt(slotEl.getAttribute('data-block'), 10);
-                                selectSlot(idx, bt);
-                                closeAllDropdowns();
-                            });
-                        })(slot, i);
                     }
                     
                     invDiv.appendChild(slot);
                 }
+                
+                // Single event delegation for all inventory interactions
+                var touchStartX, touchStartY, touchStartTime, touchedElement;
+                
+                invDiv.addEventListener('touchstart', function(e) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                    touchedElement = e.target;
+                });
+                
+                invDiv.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    
+                    var touchEndTime = Date.now();
+                    var touchDuration = touchEndTime - touchStartTime;
+                    
+                    // Ignore if touch was too long (probably a drag)
+                    if (touchDuration > 1000) {
+                        return;
+                    }
+                    
+                    var target = touchedElement;
+                    
+                    // Find the closest parent elements
+                    var clickedSlot = null;
+                    var clickedIndicator = null;
+                    var clickedVariant = null;
+                    
+                    var el = target;
+                    while (el && el !== invDiv) {
+                        if (el.className && el.className.indexOf('inv-slot') >= 0) {
+                            clickedSlot = el;
+                        }
+                        if (el.className && el.className.indexOf('variant-indicator') >= 0) {
+                            clickedIndicator = el;
+                        }
+                        if (el.className && el.className.indexOf('variant-option') >= 0) {
+                            clickedVariant = el;
+                        }
+                        el = el.parentNode;
+                    }
+                    
+                    // Handle variant option click
+                    if (clickedVariant && clickedSlot) {
+                        var idx = parseInt(clickedSlot.getAttribute('data-index'), 10);
+                        var vBlock = parseInt(clickedVariant.getAttribute('data-variant'), 10);
+                        
+                        inventory[idx] = vBlock;
+                        
+                        var mainCanvas = clickedSlot.getElementsByTagName('canvas')[0];
+                        var mainCtx = mainCanvas.getContext('2d');
+                        mainCtx.clearRect(0, 0, 28, 28);
+                        if (textures[vBlock]) {
+                            mainCtx.drawImage(textures[vBlock], 0, 0, 28, 28);
+                        }
+                        clickedSlot.setAttribute('data-block', vBlock);
+                        
+                        selectSlot(idx, vBlock);
+                        closeAllDropdowns();
+                        return;
+                    }
+                    
+                    // Handle + button click
+                    if (clickedIndicator && clickedSlot) {
+                        if (clickedSlot.className.indexOf('show-dropdown') >= 0) {
+                            closeAllDropdowns();
+                        } else {
+                            closeAllDropdowns();
+                            clickedSlot.className += ' show-dropdown';
+                            currentDropdown = clickedSlot;
+                        }
+                        return;
+                    }
+                    
+                    // Handle slot click (select block)
+                    if (clickedSlot && !clickedIndicator && !clickedVariant) {
+                        var idx = parseInt(clickedSlot.getAttribute('data-index'), 10);
+                        var bt = parseInt(clickedSlot.getAttribute('data-block'), 10);
+                        selectSlot(idx, bt);
+                        closeAllDropdowns();
+                        return;
+                    }
+                });
+                
+                invDiv.addEventListener('touchmove', function(e) {
+                    // Allow scrolling but track if moved significantly
+                    var moveX = Math.abs(e.touches[0].clientX - touchStartX);
+                    var moveY = Math.abs(e.touches[0].clientY - touchStartY);
+                    if (moveX > 10 || moveY > 10) {
+                        touchedElement = null; // Cancel the touch
+                    }
+                });
             }
 
             window.addEventListener('resize', resizeCanvas);
