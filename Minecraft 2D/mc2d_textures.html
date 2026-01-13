@@ -550,12 +550,6 @@
                 isTouching = true; 
                 handleTouch(e.touches[0].clientX, e.touches[0].clientY); 
             });
-            canvas.addEventListener('touchmove', function (e) { 
-                e.preventDefault(); 
-                if (isTouching) { 
-                    handleTouch(e.touches[0].clientX, e.touches[0].clientY); 
-                } 
-            });
             canvas.addEventListener('touchend', function (e) { 
                 e.preventDefault(); 
                 isTouching = false; 
@@ -749,14 +743,6 @@
                     }
                 });
                 
-                invDiv.addEventListener('touchmove', function(e) {
-                    // Allow scrolling but track if moved significantly
-                    var moveX = Math.abs(e.touches[0].clientX - touchStartX);
-                    var moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                    if (moveX > 10 || moveY > 10) {
-                        touchedElement = null; // Cancel the touch
-                    }
-                });
             }
 
             window.addEventListener('resize', resizeCanvas);
