@@ -22,6 +22,8 @@
 
         canvas {
             display: block;
+            top: 0;
+            left: 0;
             background: #87CEEB;
             -webkit-image-rendering: optimize-contrast;
             image-rendering: pixelated;
@@ -607,6 +609,7 @@
 
             function createInventory() {
                 var invDiv = document.getElementById('inventory');
+                
                 for (var i = 0; i < inventory.length; i++) {
                     var slot = document.createElement('div');
                     slot.className = 'inv-slot';
@@ -632,11 +635,10 @@
                         var dropdown = document.createElement('div');
                         dropdown.className = 'variant-dropdown';
                         
-                        // Add variant indicator button
                         var indicator = document.createElement('div');
                         indicator.className = 'variant-indicator';
                         indicator.textContent = '+';
-                        indicator.setAttribute('data-isbutton', 'true');
+                        indicator.setAttribute('data-slot-index', i);
                         
                         var variants = blockVariants[bt];
                         for (var v = 0; v < variants.length; v++) {
@@ -644,6 +646,7 @@
                             var variantOption = document.createElement('div');
                             variantOption.className = 'variant-option';
                             variantOption.setAttribute('data-variant', variantBlock);
+                            variantOption.setAttribute('data-slot-index', i);
                             
                             var variantCanvas = document.createElement('canvas');
                             variantCanvas.width = 28;
@@ -665,96 +668,68 @@
                     invDiv.appendChild(slot);
                 }
                 
-                // Single event delegation for all inventory interactions
-                var touchStartX, touchStartY, touchStartTime, touchedElement;
-                
-                invDiv.addEventListener('touchstart', function(e) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                    touchStartTime = Date.now();
-                    touchedElement = e.target;
-                });
-                
-                invDiv.addEventListener('touchend', function(e) {
-                    e.preventDefault();
+                // Use click events instead of touch events
+                invDiv.addEventListener('click', function(e) {
+                    console.log('Click detected on:', e.target.className);
                     
-                    var touchEndTime = Date.now();
-                    var touchDuration = touchEndTime - touchStartTime;
+                    var target = e.target;
                     
-                    // Ignore if touch was too long (probably a drag)
-                    if (touchDuration > 1000) {
-                        return;
-                    }
-                    
-                    var target = touchedElement;
-                    
-                    // Find the closest parent elements
-                    var clickedSlot = null;
-                    var clickedIndicator = null;
-                    var clickedVariant = null;
-                    
-                    var el = target;
-                    while (el && el !== invDiv) {
-                        if (el.className && el.className.indexOf('inv-slot') >= 0) {
-                            clickedSlot = el;
-                        }
-                        if (el.className && el.className.indexOf('variant-indicator') >= 0) {
-                            clickedIndicator = el;
-                        }
-                        if (el.className && el.className.indexOf('variant-option') >= 0) {
-                            clickedVariant = el;
-                        }
-                        el = el.parentNode;
-                    }
-                    
-                    // Handle variant option click
-                    if (clickedVariant && clickedSlot) {
-                        var idx = parseInt(clickedSlot.getAttribute('data-index'), 10);
-                        var vBlock = parseInt(clickedVariant.getAttribute('data-variant'), 10);
+                    // Check if clicked on variant indicator
+                    if (target.className === 'variant-indicator' || target.parentNode.className === 'variant-indicator') {
+                        console.log('Clicked + button');
+                        var btn = target.className === 'variant-indicator' ? target : target.parentNode;
+                        var slotIndex = parseInt(btn.getAttribute('data-slot-index'), 10);
+                        var slot = invDiv.getElementsByClassName('inv-slot')[slotIndex];
                         
-                        inventory[idx] = vBlock;
-                        
-                        var mainCanvas = clickedSlot.getElementsByTagName('canvas')[0];
-                        var mainCtx = mainCanvas.getContext('2d');
-                        mainCtx.clearRect(0, 0, 28, 28);
-                        if (textures[vBlock]) {
-                            mainCtx.drawImage(textures[vBlock], 0, 0, 28, 28);
-                        }
-                        clickedSlot.setAttribute('data-block', vBlock);
-                        
-                        selectSlot(idx, vBlock);
-                        closeAllDropdowns();
-                        return;
-                    }
-                    
-                    // Handle + button click
-                    if (clickedIndicator && clickedSlot) {
-                        if (clickedSlot.className.indexOf('show-dropdown') >= 0) {
+                        if (slot.className.indexOf('show-dropdown') >= 0) {
                             closeAllDropdowns();
                         } else {
                             closeAllDropdowns();
-                            clickedSlot.className += ' show-dropdown';
-                            currentDropdown = clickedSlot;
+                            slot.className += ' show-dropdown';
                         }
+                        e.stopPropagation();
                         return;
                     }
                     
-                    // Handle slot click (select block)
-                    if (clickedSlot && !clickedIndicator && !clickedVariant) {
-                        var idx = parseInt(clickedSlot.getAttribute('data-index'), 10);
-                        var bt = parseInt(clickedSlot.getAttribute('data-block'), 10);
-                        selectSlot(idx, bt);
-                        closeAllDropdowns();
-                        return;
+                    // Check if clicked on variant option
+                    var variantEl = target;
+                    while (variantEl && variantEl !== invDiv) {
+                        if (variantEl.className === 'variant-option') {
+                            console.log('Clicked variant option');
+                            var slotIndex = parseInt(variantEl.getAttribute('data-slot-index'), 10);
+                            var vBlock = parseInt(variantEl.getAttribute('data-variant'), 10);
+                            var slot = invDiv.getElementsByClassName('inv-slot')[slotIndex];
+                            
+                            inventory[slotIndex] = vBlock;
+                            
+                            var mainCanvas = slot.getElementsByTagName('canvas')[0];
+                            var mainCtx = mainCanvas.getContext('2d');
+                            mainCtx.clearRect(0, 0, 28, 28);
+                            if (textures[vBlock]) {
+                                mainCtx.drawImage(textures[vBlock], 0, 0, 28, 28);
+                            }
+                            slot.setAttribute('data-block', vBlock);
+                            
+                            selectSlot(slotIndex, vBlock);
+                            closeAllDropdowns();
+                            e.stopPropagation();
+                            return;
+                        }
+                        variantEl = variantEl.parentNode;
                     }
-                });
-                
-                invDiv.addEventListener('touchmove', function(e) {
-                    // Allow scrolling but track if moved significantly
-                    var moveX = Math.abs(e.touches[0].clientX - touchStartX);
-                    var moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                    if (moveX > 10 || moveY > 10) {
-                        touchedElement = null; // Cancel the touch
+                    
+                    // Check if clicked on slot
+                    var slotEl = target;
+                    while (slotEl && slotEl !== invDiv) {
+                        if (slotEl.className && slotEl.className.indexOf('inv-slot') >= 0) {
+                            console.log('Clicked slot');
+                            var slotIndex = parseInt(slotEl.getAttribute('data-index'), 10);
+                            var bt = parseInt(slotEl.getAttribute('data-block'), 10);
+                            selectSlot(slotIndex, bt);
+                            closeAllDropdowns();
+                            return;
+                        }
+                        slotEl = slotEl.parentNode;
                     }
                 });
             }
