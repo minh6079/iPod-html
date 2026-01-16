@@ -260,10 +260,24 @@
             width: 2px;
             height: 6px;
         }
+
+        #debug-overlay {
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 10px;
+            font-size: 12px;
+            z-index: 9999;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 
 <body>
+    <div id="debug-overlay">Debug: Ready</div>
     <canvas id="gameCanvas"></canvas>
     <div id="ui-container">
         <div id="top-bar">
@@ -327,6 +341,11 @@
             var camera = { x: 0, y: 0 };
             var keys = { left: false, right: false, jump: false, jumpPressed: false };
             var mode = 'mine', selectedBlock = BLOCKS.DIRT, selectedSlot = 0;
+            
+            var debugDiv = document.getElementById('debug-overlay');
+            function debug(msg) {
+                debugDiv.textContent = 'Debug: ' + msg;
+            }
             
             var blockVariants = {};
             blockVariants[BLOCKS.COBBLESTONE] = [BLOCKS.COBBLESTONE, BLOCKS.MOSSY_COBBLESTONE, BLOCKS.COBBLE_SLAB];
@@ -671,13 +690,13 @@
                 
                 // Use click events instead of touch events
                 invDiv.addEventListener('click', function(e) {
-                    console.log('Click detected on:', e.target.className);
+                    debug('Click on: ' + e.target.className);
                     
                     var target = e.target;
                     
                     // Check if clicked on variant indicator
                     if (target.className === 'variant-indicator' || target.parentNode.className === 'variant-indicator') {
-                        console.log('Clicked + button');
+                        debug('+ button clicked!');
                         var btn = target.className === 'variant-indicator' ? target : target.parentNode;
                         var slotIndex = parseInt(btn.getAttribute('data-slot-index'), 10);
                         var slot = invDiv.getElementsByClassName('inv-slot')[slotIndex];
@@ -696,7 +715,7 @@
                     var variantEl = target;
                     while (variantEl && variantEl !== invDiv) {
                         if (variantEl.className === 'variant-option') {
-                            console.log('Clicked variant option');
+                            debug('Variant clicked');
                             var slotIndex = parseInt(variantEl.getAttribute('data-slot-index'), 10);
                             var vBlock = parseInt(variantEl.getAttribute('data-variant'), 10);
                             var slot = invDiv.getElementsByClassName('inv-slot')[slotIndex];
@@ -723,7 +742,7 @@
                     var slotEl = target;
                     while (slotEl && slotEl !== invDiv) {
                         if (slotEl.className && slotEl.className.indexOf('inv-slot') >= 0) {
-                            console.log('Clicked slot');
+                            debug('Slot clicked');
                             var slotIndex = parseInt(slotEl.getAttribute('data-index'), 10);
                             var bt = parseInt(slotEl.getAttribute('data-block'), 10);
                             selectSlot(slotIndex, bt);
@@ -732,6 +751,11 @@
                         }
                         slotEl = slotEl.parentNode;
                     }
+                });
+                
+                // Also try touchstart
+                invDiv.addEventListener('touchstart', function(e) {
+                    debug('Touch on: ' + e.target.className);
                 });
             }
 
