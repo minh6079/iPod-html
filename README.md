@@ -41,4 +41,3 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Type prompt
 - Press send
 - Repeat from type prompt
-- Click a video and enjoy
