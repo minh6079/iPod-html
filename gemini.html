@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Gemini</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #fff;
+            overflow: hidden;
+        }
+        
+        #container {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            height: 100%;
+        }
+        
+        #header {
+            background: #4285f4;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        #setup {
+            padding: 20px;
+        }
+        
+        #setup input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            -webkit-border-radius: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        #setup button {
+            width: 100%;
+            padding: 12px;
+            background: #4285f4;
+            color: #fff;
+            border: none;
+            -webkit-border-radius: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        #messages {
+            -webkit-box-flex: 1;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        
+        .msg {
+            margin-bottom: 12px;
+            clear: both;
+        }
+        
+        .msg-user {
+            text-align: right;
+        }
+        
+        .msg-ai {
+            text-align: left;
+        }
+        
+        .bubble {
+            display: inline-block;
+            max-width: 75%;
+            padding: 8px 12px;
+            -webkit-border-radius: 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .msg-user .bubble {
+            background: #4285f4;
+            color: #fff;
+        }
+        
+        .msg-ai .bubble {
+            background: #fff;
+            color: #202124;
+            border: 1px solid #dadce0;
+        }
+        
+        #input-area {
+            background: #fff;
+            border-top: 1px solid #dadce0;
+            padding: 8px;
+        }
+        
+        #input-container {
+            display: -webkit-box;
+            -webkit-box-align: center;
+        }
+        
+        #input {
+            -webkit-box-flex: 1;
+            padding: 10px;
+            border: 1px solid #dadce0;
+            -webkit-border-radius: 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        
+        #send {
+            width: 50px;
+            height: 40px;
+            background: #4285f4;
+            color: #fff;
+            border: none;
+            -webkit-border-radius: 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        #send:disabled {
+            background: #ccc;
+        }
+        
+        .hide {
+            display: none !important;
+        }
+        
+        .spinner {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">Gemini</div>
+        
+        <div id="setup">
+            <input type="text" id="key" placeholder="Paste API Key">
+            <button onclick="start()">Start</button>
+        </div>
+        
+        <div id="messages" class="hide"></div>
+        
+        <div id="input-area" class="hide">
+            <div id="input-container">
+                <input type="text" id="input" placeholder="Message">
+                <button id="send" onclick="send()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var key = '';
+        var msgs = [];
+        
+        function start() {
+            key = document.getElementById('key').value.replace(/\s/g, '');
+            if (!key) {
+                alert('Enter API key');
+                return;
+            }
+            document.getElementById('setup').className = 'hide';
+            document.getElementById('messages').className = '';
+            document.getElementById('input-area').className = '';
+            document.getElementById('input').focus();
+        }
+        
+        function add(txt, user) {
+            var m = document.getElementById('messages');
+            var d = document.createElement('div');
+            d.className = 'msg ' + (user ? 'msg-user' : 'msg-ai');
+            var b = document.createElement('div');
+            b.className = 'bubble';
+            b.appendChild(document.createTextNode(txt));
+            d.appendChild(b);
+            m.appendChild(d);
+            m.scrollTop = m.scrollHeight;
+        }
+        
+        function loading(show) {
+            var l = document.getElementById('load');
+            if (show) {
+                if (!l) {
+                    l = document.createElement('div');
+                    l.id = 'load';
+                    l.className = 'spinner';
+                    l.appendChild(document.createTextNode('●●●'));
+                    document.getElementById('messages').appendChild(l);
+                }
+            } else if (l) {
+                l.parentNode.removeChild(l);
+            }
+        }
+        
+        function send() {
+            var inp = document.getElementById('input');
+            var txt = inp.value.replace(/^\s+|\s+$/g, '');
+            if (!txt) return;
+            
+            add(txt, true);
+            msgs.push({role: 'user', parts: [{text: txt}]});
+            inp.value = '';
+            
+            var btn = document.getElementById('send');
+            btn.disabled = true;
+            loading(true);
+            
+            var x = new XMLHttpRequest();
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key);
+            x.setRequestHeader('Content-Type', 'application/json');
+            
+            x.onreadystatechange = function() {
+                if (x.readyState == 4) {
+                    loading(false);
+                    btn.disabled = false;
+                    
+                    if (x.status == 200) {
+                        try {
+                            var r = JSON.parse(x.responseText);
+                            var t = r.candidates[0].content.parts[0].text;
+                            add(t, false);
+                            msgs.push({role: 'model', parts: [{text: t}]});
+                        } catch(e) {
+                            add('Error parsing response', false);
+                        }
+                    } else {
+                        add('Error: ' + x.status, false);
+                    }
+                    inp.focus();
+                }
+            };
+            
+            x.send(JSON.stringify({contents: msgs}));
+        }
+        
+        document.getElementById('input').onkeypress = function(e) {
+            if (e.keyCode == 13) send();
+        };
+    </script>
+</body>
+</html>
