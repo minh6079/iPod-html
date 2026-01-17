@@ -250,12 +250,12 @@
 <body>
     <div id="container">
         <div id="header">
-            Gemini
+            Gemma
             <button id="clear" class="hide" onclick="clearChat()">Clear</button>
         </div>
         
         <div id="setup">
-            <h2>Welcome to Gemini</h2>
+            <h2>Welcome to Gemma</h2>
             <p>Enter your API key to get started</p>
             <input type="password" id="key" placeholder="Paste your API key here">
             <button onclick="start()">Start Chatting</button>
@@ -364,7 +364,7 @@
             
             var lbl = document.createElement('div');
             lbl.className = 'label';
-            lbl.appendChild(document.createTextNode(user ? 'You' : 'Gemini'));
+            lbl.appendChild(document.createTextNode(user ? 'You' : 'Gemma'));
             d.appendChild(lbl);
             
             var b = document.createElement('div');
@@ -388,7 +388,7 @@
                     l.className = 'spinner';
                     var lbl = document.createElement('div');
                     lbl.className = 'label';
-                    lbl.appendChild(document.createTextNode('Gemini'));
+                    lbl.appendChild(document.createTextNode('Gemma'));
                     l.appendChild(lbl);
                     var b = document.createElement('div');
                     b.className = 'bubble';
@@ -417,7 +417,7 @@
             loading(true);
             
             var x = new XMLHttpRequest();
-            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-2b:generateContent?key=' + key);
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent?key=' + key);
             x.setRequestHeader('Content-Type', 'application/json');
             
             x.onreadystatechange = function() {
