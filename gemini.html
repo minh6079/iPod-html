@@ -16,7 +16,7 @@
         html, body {
             height: 100%;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            background: #fff;
+            background: #f8f9fa;
             overflow: hidden;
         }
         
@@ -27,52 +27,80 @@
         }
         
         #header {
-            background: #4285f4;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
-            padding: 10px;
+            padding: 14px;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            letter-spacing: 0.5px;
         }
         
         #setup {
-            padding: 20px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        #setup h2 {
+            color: #5f6368;
+            font-size: 20px;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+        
+        #setup p {
+            color: #80868b;
+            font-size: 13px;
+            margin-bottom: 24px;
         }
         
         #setup input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            -webkit-border-radius: 4px;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-bottom: 10px;
+            padding: 14px;
+            border: 2px solid #dadce0;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+        
+        #setup input:focus {
+            outline: none;
+            border-color: #667eea;
         }
         
         #setup button {
             width: 100%;
-            padding: 12px;
-            background: #4285f4;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
             border: none;
-            -webkit-border-radius: 4px;
-            border-radius: 4px;
-            font-size: 14px;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: bold;
+            -webkit-box-shadow: 0 2px 6px rgba(102,126,234,0.4);
         }
         
         #messages {
             -webkit-box-flex: 1;
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
-            padding: 10px;
-            background: #f5f5f5;
+            padding: 16px 12px;
+            background: #f8f9fa;
         }
         
         .msg {
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             clear: both;
+            -webkit-animation: fadeIn 0.3s ease-in;
+        }
+        
+        @-webkit-keyframes fadeIn {
+            from { opacity: 0; -webkit-transform: translateY(10px); }
+            to { opacity: 1; -webkit-transform: translateY(0); }
         }
         
         .msg-user {
@@ -85,62 +113,88 @@
         
         .bubble {
             display: inline-block;
-            max-width: 75%;
-            padding: 8px 12px;
-            -webkit-border-radius: 16px;
-            border-radius: 16px;
-            font-size: 14px;
-            line-height: 1.4;
+            max-width: 80%;
+            padding: 12px 16px;
+            -webkit-border-radius: 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
             word-wrap: break-word;
             white-space: pre-wrap;
+            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         
         .msg-user .bubble {
-            background: #4285f4;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
+            -webkit-border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
         
         .msg-ai .bubble {
             background: #fff;
             color: #202124;
-            border: 1px solid #dadce0;
+            border: 1px solid #e8eaed;
+            -webkit-border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .label {
+            font-size: 11px;
+            color: #80868b;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        .msg-user .label {
+            text-align: right;
+        }
+        
+        .msg-ai .label {
+            text-align: left;
         }
         
         #input-area {
             background: #fff;
-            border-top: 1px solid #dadce0;
-            padding: 8px;
+            border-top: 1px solid #e8eaed;
+            padding: 12px;
+            -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
         }
         
         #input-container {
             display: -webkit-box;
             -webkit-box-align: center;
+            background: #f1f3f4;
+            -webkit-border-radius: 24px;
+            border-radius: 24px;
+            padding: 4px;
         }
         
         #input {
             -webkit-box-flex: 1;
-            padding: 10px;
-            border: 1px solid #dadce0;
-            -webkit-border-radius: 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            margin-right: 8px;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            outline: none;
         }
         
         #send {
-            width: 50px;
-            height: 40px;
-            background: #4285f4;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
             border: none;
-            -webkit-border-radius: 20px;
-            border-radius: 20px;
-            font-size: 12px;
+            -webkit-border-radius: 22px;
+            border-radius: 22px;
+            font-size: 18px;
             font-weight: bold;
+            -webkit-box-shadow: 0 2px 4px rgba(102,126,234,0.3);
         }
         
         #send:disabled {
-            background: #ccc;
+            background: #dadce0;
+            -webkit-box-shadow: none;
         }
         
         .hide {
@@ -148,28 +202,78 @@
         }
         
         .spinner {
-            text-align: center;
-            padding: 10px;
-            color: #666;
-            font-size: 13px;
+            text-align: left;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+        
+        .spinner .bubble {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            color: #80868b;
+            padding: 12px 16px;
+        }
+        
+        .dots {
+            display: inline-block;
+        }
+        
+        .dots span {
+            -webkit-animation: blink 1.4s infinite;
+            animation: blink 1.4s infinite;
+            opacity: 0.3;
+        }
+        
+        .dots span:nth-child(2) {
+            -webkit-animation-delay: 0.2s;
+            animation-delay: 0.2s;
+        }
+        
+        .dots span:nth-child(3) {
+            -webkit-animation-delay: 0.4s;
+            animation-delay: 0.4s;
+        }
+        
+        @-webkit-keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        #clear {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255,255,255,0.3);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            -webkit-border-radius: 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="container">
-        <div id="header">Gemini</div>
+        <div id="header" style="position: relative;">
+            Gemini
+            <button id="clear" class="hide" onclick="clearChat()">Clear</button>
+        </div>
         
         <div id="setup">
-            <input type="text" id="key" placeholder="Paste API Key">
-            <button onclick="start()">Start</button>
+            <h2>Welcome to Gemini</h2>
+            <p>Enter your API key to get started</p>
+            <input type="password" id="key" placeholder="Paste your API key here">
+            <button onclick="start()">Start Chatting</button>
         </div>
         
         <div id="messages" class="hide"></div>
         
         <div id="input-area" class="hide">
             <div id="input-container">
-                <input type="text" id="input" placeholder="Message">
-                <button id="send" onclick="send()">Send</button>
+                <input type="text" id="input" placeholder="Ask me anything...">
+                <button id="send" onclick="send()">➤</button>
             </div>
         </div>
     </div>
@@ -181,12 +285,13 @@
         function start() {
             key = document.getElementById('key').value.replace(/\s/g, '');
             if (!key) {
-                alert('Enter API key');
+                alert('Please enter your API key');
                 return;
             }
             document.getElementById('setup').className = 'hide';
             document.getElementById('messages').className = '';
             document.getElementById('input-area').className = '';
+            document.getElementById('clear').className = '';
             document.getElementById('input').focus();
         }
         
@@ -194,6 +299,12 @@
             var m = document.getElementById('messages');
             var d = document.createElement('div');
             d.className = 'msg ' + (user ? 'msg-user' : 'msg-ai');
+            
+            var lbl = document.createElement('div');
+            lbl.className = 'label';
+            lbl.appendChild(document.createTextNode(user ? 'You' : 'Gemini'));
+            d.appendChild(lbl);
+            
             var b = document.createElement('div');
             b.className = 'bubble';
             b.appendChild(document.createTextNode(txt));
@@ -209,9 +320,25 @@
                     l = document.createElement('div');
                     l.id = 'load';
                     l.className = 'spinner';
-                    l.appendChild(document.createTextNode('●●●'));
+                    var lbl = document.createElement('div');
+                    lbl.className = 'label';
+                    lbl.appendChild(document.createTextNode('Gemini'));
+                    l.appendChild(lbl);
+                    var b = document.createElement('div');
+                    b.className = 'bubble';
+                    var dots = document.createElement('div');
+                    dots.className = 'dots';
+                    for (var i = 0; i < 3; i++) {
+                        var s = document.createElement('span');
+                        s.appendChild(document.createTextNode('●'));
+                        dots.appendChild(s);
+                    }
+                    b.appendChild(dots);
+                    l.appendChild(b);
                     document.getElementById('messages').appendChild(l);
                 }
+                var m = document.getElementById('messages');
+                m.scrollTop = m.scrollHeight;
             } else if (l) {
                 l.parentNode.removeChild(l);
             }
@@ -256,6 +383,13 @@
             };
             
             x.send(JSON.stringify({contents: msgs}));
+        }
+        
+        function clearChat() {
+            if (confirm('Clear all messages?')) {
+                msgs = [];
+                document.getElementById('messages').innerHTML = '';
+            }
         }
         
         document.getElementById('input').onkeypress = function(e) {
