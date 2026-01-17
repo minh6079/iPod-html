@@ -10,6 +10,7 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Minecraft 2D, better, less lag
 - Cut the rope (both original and time travel, laggy)
 - Youtube (frontend, lite)
+- Gemini (frontend, lite)
 - iOS 6 simulator (WIP, lock screen only, adding home screen later)
 - Root certifications (credits CatsLover2006)
 
