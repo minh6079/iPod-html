@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>YouTube Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #667eea;
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
+            background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: -moz-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .wrapper {
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            -webkit-border-radius: 20px;
+            -moz-border-radius: 20px;
+            border-radius: 20px;
+            padding: 30px;
+            -webkit-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            -moz-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .api-key-section {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f0f7ff;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+        
+        .api-key-section label {
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            display: block;
+        }
+        
+        .api-key-section small {
+            display: block;
+            margin-top: 6px;
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            -webkit-appearance: none;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            margin-bottom: 10px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #667eea;
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
+            background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: -moz-linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+            -webkit-appearance: none;
+        }
+        
+        button:active {
+            opacity: 0.9;
+        }
+        
+        button.secondary {
+            background: #f093fb;
+            background: -webkit-gradient(linear, left top, right bottom, from(#f093fb), to(#f5576c));
+            background: -webkit-linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: -moz-linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button.tertiary {
+            background: #fc466b;
+            background: -webkit-gradient(linear, left top, right bottom, from(#fc466b), to(#3f5efb));
+            background: -webkit-linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            background: -moz-linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        }
+        
+        button.load-more {
+            background: #fc466b;
+            background: -webkit-gradient(linear, left top, right bottom, from(#fc466b), to(#3f5efb));
+            background: -webkit-linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            background: -moz-linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            margin-top: 15px;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .view-toggle {
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .view-toggle.active {
+            display: block;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin: 0 4px;
+            -webkit-appearance: none;
+        }
+        
+        .view-btn.active-view {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .search-results {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .results-grid {
+            margin-bottom: 10px;
+        }
+        
+        .results-grid.grid-view .result-item {
+            margin-bottom: 15px;
+        }
+        
+        .results-grid.list-view .result-item {
+            margin-bottom: 10px;
+        }
+        
+        .result-item {
+            padding: 0;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .result-item:active {
+            background: #e9ecef;
+        }
+        
+        .results-grid.list-view .result-item {
+            padding: 10px;
+        }
+        
+        .result-thumbnail {
+            width: 100%;
+            display: block;
+        }
+        
+        .results-grid.list-view .result-thumbnail {
+            width: 120px;
+            float: left;
+            margin-right: 10px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+        }
+        
+        .result-info {
+            padding: 10px;
+        }
+        
+        .results-grid.list-view .result-info {
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        
+        .result-channel {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .video-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            display: none;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            -webkit-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            -moz-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-container.active {
+            display: block;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+        }
+        
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .error {
+            color: #e74c3c;
+            margin-top: 8px;
+            display: none;
+            font-size: 13px;
+            padding: 8px;
+            background: #fee;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            padding: 10px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            .results-grid.list-view .result-thumbnail {
+                width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <h1>🎥 YouTube Player</h1>
+            
+            <div class="api-key-section">
+                <label for="apiKey">API Key (for search):</label>
+                <input 
+                    type="text" 
+                    id="apiKey" 
+                    placeholder="AIzaSy..."
+                />
+                <small>Get free key at console.cloud.google.com</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="videoUrl">Enter URL or Search:</label>
+                <input 
+                    type="text" 
+                    id="videoUrl" 
+                    placeholder="URL or search like 'funny cats'"
+                />
+                <p class="error" id="error">Error message</p>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" id="processBtn">Process Video</button>
+                <button type="button" class="secondary" id="openBtn">Open in New Tab</button>
+                <button type="button" class="tertiary" id="searchBtn">Search YouTube</button>
+            </div>
+            
+            <div class="loading" id="loading">Searching...</div>
+            
+            <div class="video-container" id="videoContainer">
+                <div class="video-wrapper">
+                    <iframe 
+                        id="videoFrame"
+                        frameborder="0"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </div>
+            
+            <div class="search-results" id="searchResults">
+                <h2>Search Results</h2>
+                
+                <div class="view-toggle" id="viewToggle">
+                    <button type="button" class="view-btn active-view" id="gridBtn">Grid</button>
+                    <button type="button" class="view-btn" id="listBtn">List</button>
+                </div>
+                
+                <div class="results-grid grid-view" id="resultsList"></div>
+                
+                <button type="button" class="load-more" id="loadMoreBtn" style="display:none;">Load More</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var nextPageToken = null;
+        var currentQuery = '';
+        var currentView = 'grid';
+        
+        function getYouTubeVideoId(url) {
+            var patterns = [
+                /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
+                /(?:youtu\.be\/)([^&\n?#]+)/,
+                /(?:youtube\.com\/embed\/)([^&\n?#]+)/,
+                /(?:youtube\.com\/v\/)([^&\n?#]+)/,
+                /(?:youtube\.com\/shorts\/)([^&\n?#]+)/
+            ];
+            
+            for (var i = 0; i < patterns.length; i++) {
+                var match = url.match(patterns[i]);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+        
+        function addClass(element, className) {
+            if (element.classList) {
+                element.classList.add(className);
+            } else {
+                element.className += ' ' + className;
+            }
+        }
+        
+        function removeClass(element, className) {
+            if (element.classList) {
+                element.classList.remove(className);
+            } else {
+                var reg = new RegExp('(^|\\s)' + className + '(\\s|$)', 'g');
+                element.className = element.className.replace(reg, ' ').replace(/\s+/g, ' ').replace(/^\s|\s$/g, '');
+            }
+        }
+        
+        function trim(str) {
+            return str.replace(/^\s+|\s+$/g, '');
+        }
+        
+        function showError(message) {
+            var error = document.getElementById('error');
+            error.textContent = message;
+            addClass(error, 'active');
+            setTimeout(function() {
+                removeClass(error, 'active');
+            }, 5000);
+        }
+        
+        function hideError() {
+            removeClass(document.getElementById('error'), 'active');
+        }
+        
+        function showLoading() {
+            addClass(document.getElementById('loading'), 'active');
+        }
+        
+        function hideLoading() {
+            removeClass(document.getElementById('loading'), 'active');
+        }
+        
+        function playVideo(videoId) {
+            var videoContainer = document.getElementById('videoContainer');
+            var videoFrame = document.getElementById('videoFrame');
+            var searchResults = document.getElementById('searchResults');
+            
+            hideError();
+            removeClass(searchResults, 'active');
+            
+            var embedUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+            videoFrame.src = embedUrl;
+            addClass(videoContainer, 'active');
+        }
+        
+        function createResultItem(videoId, title, channel, thumbnail) {
+            var item = document.createElement('div');
+            item.className = 'result-item clearfix';
+            item.onclick = function() {
+                playVideo(videoId);
+            };
+            
+            var img = document.createElement('img');
+            img.src = thumbnail;
+            img.alt = title;
+            img.className = 'result-thumbnail';
+            
+            var info = document.createElement('div');
+            info.className = 'result-info';
+            
+            var titleDiv = document.createElement('div');
+            titleDiv.className = 'result-title';
+            titleDiv.textContent = title;
+            
+            var channelDiv = document.createElement('div');
+            channelDiv.className = 'result-channel';
+            channelDiv.textContent = channel;
+            
+            info.appendChild(titleDiv);
+            info.appendChild(channelDiv);
+            
+            item.appendChild(img);
+            item.appendChild(info);
+            
+            return item;
+        }
+        
+        function displayResults(items, append) {
+            var resultsList = document.getElementById('resultsList');
+            var searchResults = document.getElementById('searchResults');
+            var loadMoreBtn = document.getElementById('loadMoreBtn');
+            var viewToggle = document.getElementById('viewToggle');
+            
+            if (!append) {
+                resultsList.innerHTML = '';
+            }
+            
+            if (!items || items.length === 0) {
+                if (!append) {
+                    resultsList.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No results found</div>';
+                }
+                loadMoreBtn.style.display = 'none';
+                return;
+            }
+            
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var videoId = item.id.videoId;
+                var title = item.snippet.title;
+                var channel = item.snippet.channelTitle;
+                var thumbnail = item.snippet.thumbnails.medium.url;
+                
+                var resultItem = createResultItem(videoId, title, channel, thumbnail);
+                resultsList.appendChild(resultItem);
+            }
+            
+            addClass(searchResults, 'active');
+            addClass(viewToggle, 'active');
+            
+            if (nextPageToken) {
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.disabled = false;
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+        
+        function searchYouTube(append) {
+            var input = document.getElementById('videoUrl');
+            var query = trim(input.value);
+            var apiKey = trim(document.getElementById('apiKey').value);
+            
+            hideError();
+            
+            if (!query) {
+                showError('Please enter a search query');
+                return;
+            }
+            
+            var videoId = getYouTubeVideoId(query);
+            if (videoId && !append) {
+                playVideo(videoId);
+                return;
+            }
+            
+            if (!apiKey) {
+                showError('Please enter API key to search');
+                return;
+            }
+            
+            if (!append) {
+                currentQuery = query;
+                nextPageToken = null;
+                removeClass(document.getElementById('videoContainer'), 'active');
+            }
+            
+            showLoading();
+            
+            var apiUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&q=' + 
+                         encodeURIComponent(currentQuery) + '&maxResults=20&type=video&key=' + apiKey;
+            
+            if (nextPageToken) {
+                apiUrl += '&pageToken=' + nextPageToken;
+            }
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', apiUrl, true);
+            
+            xhr.onload = function() {
+                hideLoading();
+                
+                if (xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (data.error) {
+                        showError('API Error: ' + data.error.message);
+                        return;
+                    }
+                    
+                    nextPageToken = data.nextPageToken || null;
+                    displayResults(data.items, append);
+                } else {
+                    showError('Search failed: ' + xhr.status);
+                }
+            };
+            
+            xhr.onerror = function() {
+                hideLoading();
+                showError('Network error');
+            };
+            
+            xhr.send();
+        }
+        
+        function processVideo() {
+            var input = document.getElementById('videoUrl');
+            var url = trim(input.value);
+            
+            hideError();
+            
+            if (!url) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+            
+            var videoId = getYouTubeVideoId(url);
+            
+            if (!videoId) {
+                showError('Enter valid URL or use Search');
+                removeClass(document.getElementById('videoContainer'), 'active');
+                return;
+            }
+            
+            playVideo(videoId);
+        }
+        
+        function openInNewTab() {
+            var input = document.getElementById('videoUrl');
+            var url = trim(input.value);
+            
+            hideError();
+            
+            if (!url) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+            
+            var videoId = getYouTubeVideoId(url);
+            
+            if (!videoId) {
+                showError('Please enter a valid YouTube URL');
+                return;
+            }
+            
+            window.open('https://www.youtube.com/watch?v=' + videoId, '_blank');
+        }
+        
+        function setView(view) {
+            currentView = view;
+            var resultsList = document.getElementById('resultsList');
+            var gridBtn = document.getElementById('gridBtn');
+            var listBtn = document.getElementById('listBtn');
+            
+            removeClass(resultsList, 'grid-view');
+            removeClass(resultsList, 'list-view');
+            addClass(resultsList, view + '-view');
+            
+            removeClass(gridBtn, 'active-view');
+            removeClass(listBtn, 'active-view');
+            
+            if (view === 'grid') {
+                addClass(gridBtn, 'active-view');
+            } else {
+                addClass(listBtn, 'active-view');
+            }
+        }
+        
+        document.getElementById('processBtn').onclick = processVideo;
+        document.getElementById('openBtn').onclick = openInNewTab;
+        document.getElementById('searchBtn').onclick = function() {
+            searchYouTube(false);
+        };
+        document.getElementById('loadMoreBtn').onclick = function() {
+            searchYouTube(true);
+        };
+        
+        document.getElementById('gridBtn').onclick = function() {
+            setView('grid');
+        };
+        
+        document.getElementById('listBtn').onclick = function() {
+            setView('list');
+        };
+        
+        var input = document.getElementById('videoUrl');
+        input.onkeypress = function(e) {
+            e = e || window.event;
+            var keyCode = e.keyCode || e.which;
+            if (keyCode === 13) {
+                processVideo();
+                return false;
+            }
+        };
+    </script>
+</body>
+</html>
