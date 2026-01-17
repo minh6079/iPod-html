@@ -417,7 +417,7 @@
             loading(true);
             
             var x = new XMLHttpRequest();
-            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key);
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-2b:generateContent?key=' + key);
             x.setRequestHeader('Content-Type', 'application/json');
             
             x.onreadystatechange = function() {
