@@ -277,6 +277,14 @@
         var msgs = [];
         
         function formatMarkdown(txt) {
+            // Remove LaTeX commands
+            txt = txt.replace(/\\text\{([^}]+)\}/g, '$1');
+            txt = txt.replace(/\\[a-zA-Z]+\{([^}]+)\}/g, '$1');
+            txt = txt.replace(/\\\(/g, '');
+            txt = txt.replace(/\\\)/g, '');
+            txt = txt.replace(/\\\[/g, '');
+            txt = txt.replace(/\\\]/g, '');
+            
             // Bold
             txt = txt.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             // Italic
