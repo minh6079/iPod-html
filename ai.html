@@ -275,6 +275,13 @@
     <script>
         var key = '';
         var msgs = [];
+        var models = [
+            'gemini-2.5-flash',
+            'gemma-3-4b-it',
+            'gemma-2b-it',
+            'gemma-1.1-2b-it'
+        ];
+        var currentModelIndex = 0;
         
         function formatMarkdown(txt) {
             // Remove LaTeX commands
@@ -416,16 +423,30 @@
             btn.disabled = true;
             loading(true);
             
+            tryModel(0);
+        }
+        
+        function tryModel(modelIndex) {
+            if (modelIndex >= models.length) {
+                loading(false);
+                document.getElementById('send').disabled = false;
+                add('All models are rate limited. Please try again later.', false);
+                return;
+            }
+            
+            currentModelIndex = modelIndex;
+            var model = models[modelIndex];
+            
             var x = new XMLHttpRequest();
-            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent?key=' + key);
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key);
             x.setRequestHeader('Content-Type', 'application/json');
             
             x.onreadystatechange = function() {
                 if (x.readyState == 4) {
-                    loading(false);
-                    btn.disabled = false;
-                    
                     if (x.status == 200) {
+                        loading(false);
+                        document.getElementById('send').disabled = false;
+                        
                         try {
                             var r = JSON.parse(x.responseText);
                             var t = r.candidates[0].content.parts[0].text;
@@ -434,10 +455,16 @@
                         } catch(e) {
                             add('Error parsing response', false);
                         }
+                        document.getElementById('input').focus();
+                    } else if (x.status == 429) {
+                        // Rate limited, try next model
+                        tryModel(modelIndex + 1);
                     } else {
+                        loading(false);
+                        document.getElementById('send').disabled = false;
                         add('Error: ' + x.status, false);
+                        document.getElementById('input').focus();
                     }
-                    inp.focus();
                 }
             };
             
