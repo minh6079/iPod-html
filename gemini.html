@@ -21,13 +21,11 @@
         }
         
         #container {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
             height: 100%;
         }
         
         #header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             padding: 14px;
             text-align: center;
@@ -35,6 +33,7 @@
             font-weight: bold;
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             letter-spacing: 0.5px;
+            position: relative;
         }
         
         #setup {
@@ -66,15 +65,10 @@
             background: #fff;
         }
         
-        #setup input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
         #setup button {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             border: none;
             -webkit-border-radius: 8px;
@@ -85,7 +79,7 @@
         }
         
         #messages {
-            -webkit-box-flex: 1;
+            height: 380px;
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
             padding: 16px 12px;
@@ -95,12 +89,6 @@
         .msg {
             margin-bottom: 16px;
             clear: both;
-            -webkit-animation: fadeIn 0.3s ease-in;
-        }
-        
-        @-webkit-keyframes fadeIn {
-            from { opacity: 0; -webkit-transform: translateY(10px); }
-            to { opacity: 1; -webkit-transform: translateY(0); }
         }
         
         .msg-user {
@@ -125,7 +113,7 @@
         }
         
         .msg-user .bubble {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             -webkit-border-bottom-right-radius: 4px;
             border-bottom-right-radius: 4px;
@@ -162,27 +150,27 @@
         }
         
         #input-container {
-            display: -webkit-box;
-            -webkit-box-align: center;
             background: #f1f3f4;
             -webkit-border-radius: 24px;
             border-radius: 24px;
             padding: 4px;
+            overflow: hidden;
         }
         
         #input {
-            -webkit-box-flex: 1;
+            width: 230px;
+            float: left;
             padding: 10px 16px;
             border: none;
             background: transparent;
             font-size: 15px;
-            outline: none;
         }
         
         #send {
             width: 44px;
             height: 44px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            float: right;
+            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             border: none;
             -webkit-border-radius: 22px;
@@ -214,35 +202,10 @@
             padding: 12px 16px;
         }
         
-        .dots {
-            display: inline-block;
-        }
-        
-        .dots span {
-            -webkit-animation: blink 1.4s infinite;
-            animation: blink 1.4s infinite;
-            opacity: 0.3;
-        }
-        
-        .dots span:nth-child(2) {
-            -webkit-animation-delay: 0.2s;
-            animation-delay: 0.2s;
-        }
-        
-        .dots span:nth-child(3) {
-            -webkit-animation-delay: 0.4s;
-            animation-delay: 0.4s;
-        }
-        
-        @-webkit-keyframes blink {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-        
         #clear {
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: 12px;
+            right: 12px;
             background: rgba(255,255,255,0.3);
             color: #fff;
             border: none;
@@ -256,7 +219,7 @@
 </head>
 <body>
     <div id="container">
-        <div id="header" style="position: relative;">
+        <div id="header">
             Gemini
             <button id="clear" class="hide" onclick="clearChat()">Clear</button>
         </div>
@@ -274,6 +237,7 @@
             <div id="input-container">
                 <input type="text" id="input" placeholder="Ask me anything...">
                 <button id="send" onclick="send()">➤</button>
+                <div style="clear:both;"></div>
             </div>
         </div>
     </div>
@@ -326,14 +290,7 @@
                     l.appendChild(lbl);
                     var b = document.createElement('div');
                     b.className = 'bubble';
-                    var dots = document.createElement('div');
-                    dots.className = 'dots';
-                    for (var i = 0; i < 3; i++) {
-                        var s = document.createElement('span');
-                        s.appendChild(document.createTextNode('●'));
-                        dots.appendChild(s);
-                    }
-                    b.appendChild(dots);
+                    b.appendChild(document.createTextNode('●●●'));
                     l.appendChild(b);
                     document.getElementById('messages').appendChild(l);
                 }
