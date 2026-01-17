@@ -2,7 +2,7 @@
 HTML files for iPod touch<br>
 Include games and animations<br>
 Tested on iPod touch 4 iOS 6.1.6 Safari 6
-# Includes:
+## Includes:
 - Animations
 - Games
 - More games
@@ -14,12 +14,12 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - iOS 6 simulator (WIP, lock screen only, adding home screen later)
 - Root certifications (credits CatsLover2006)
 
-# How to access:
+## How to access:
 - Open https://minh6079.github.io/iPod-html/ in your broswer
 
 ---
 
-## What do you need to do for the Youtube frontend:
+# What do you need to do for the Youtube frontend:
 - Open youtube.com in your broswer
 - Find a video
 - Copy the link
@@ -29,13 +29,13 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Why I made this:
 - - One day, I thought: Can I watch Youtube on an iPod touch 4? Then, I open Youtube on safari but it was too heavy so it crash many times, but finally, I got Youtube running. But the frontend was so heavy that safari crash every minute. So I made this so I can watch Youtube again!
 
-# For search:
+## For search:
 - Get an API key
 - Type in a search keyword
 - Press search
 - Click a video and enjoy
 
-## What do you need to do for the Gemini frontend:
+# What do you need to do for the Gemini frontend:
 - Get an API key
 - Press start chatting
 - Type prompt
