@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Image Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+        
+        #container {
+            height: 100%;
+        }
+        
+        #header {
+            background: -webkit-gradient(linear, left top, right bottom, from(#f093fb), to(#f5576c));
+            color: #fff;
+            padding: 14px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            letter-spacing: 0.5px;
+        }
+        
+        #setup {
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        #setup h2 {
+            color: #5f6368;
+            font-size: 20px;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+        
+        #setup p {
+            color: #80868b;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        
+        #setup input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #dadce0;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+        
+        #setup button {
+            width: 100%;
+            padding: 14px;
+            background: -webkit-gradient(linear, left top, right bottom, from(#f093fb), to(#f5576c));
+            color: #fff;
+            border: none;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            -webkit-box-shadow: 0 2px 6px rgba(245,87,108,0.4);
+        }
+        
+        #content {
+            height: 380px;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 12px;
+            background: #f8f9fa;
+        }
+        
+        #gallery {
+            text-align: center;
+        }
+        
+        .image-item {
+            margin-bottom: 20px;
+            background: #fff;
+            -webkit-border-radius: 12px;
+            border-radius: 12px;
+            padding: 12px;
+            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .prompt-label {
+            font-size: 12px;
+            color: #80868b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: auto;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            display: block;
+        }
+        
+        #input-area {
+            background: #fff;
+            border-top: 1px solid #e8eaed;
+            padding: 12px;
+            -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+        }
+        
+        #input-container {
+            background: #f1f3f4;
+            -webkit-border-radius: 24px;
+            border-radius: 24px;
+            padding: 4px;
+            overflow: hidden;
+        }
+        
+        #prompt {
+            width: 230px;
+            float: left;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+        }
+        
+        #generate {
+            width: 44px;
+            height: 44px;
+            float: right;
+            background: -webkit-gradient(linear, left top, right bottom, from(#f093fb), to(#f5576c));
+            color: #fff;
+            border: none;
+            -webkit-border-radius: 22px;
+            border-radius: 22px;
+            font-size: 18px;
+            font-weight: bold;
+            -webkit-box-shadow: 0 2px 4px rgba(245,87,108,0.3);
+        }
+        
+        #generate:disabled {
+            background: #dadce0;
+            -webkit-box-shadow: none;
+        }
+        
+        .hide {
+            display: none !important;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .error {
+            background: #fef7f7;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            -webkit-border-radius: 8px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">🎨 Image Generator</div>
+        
+        <div id="setup">
+            <h2>Gemini Image Generator</h2>
+            <p>Create images with AI</p>
+            <input type="password" id="key" placeholder="Paste your API key here">
+            <button onclick="start()">Start Creating</button>
+        </div>
+        
+        <div id="content" class="hide">
+            <div id="gallery"></div>
+        </div>
+        
+        <div id="input-area" class="hide">
+            <div id="input-container">
+                <input type="text" id="prompt" placeholder="Describe an image...">
+                <button id="generate" onclick="generate()">✨</button>
+                <div style="clear:both;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var key = '';
+        
+        function start() {
+            key = document.getElementById('key').value.replace(/\s/g, '');
+            if (!key) {
+                alert('Please enter your API key');
+                return;
+            }
+            document.getElementById('setup').className = 'hide';
+            document.getElementById('content').className = '';
+            document.getElementById('input-area').className = '';
+            document.getElementById('prompt').focus();
+        }
+        
+        function showError(msg) {
+            var gallery = document.getElementById('gallery');
+            var err = document.createElement('div');
+            err.className = 'error';
+            err.appendChild(document.createTextNode(msg));
+            gallery.appendChild(err);
+        }
+        
+        function showLoading() {
+            var gallery = document.getElementById('gallery');
+            var load = document.createElement('div');
+            load.className = 'loading';
+            load.id = 'loader';
+            load.appendChild(document.createTextNode('🎨 Generating image...'));
+            gallery.appendChild(load);
+            gallery.scrollTop = gallery.scrollHeight;
+        }
+        
+        function hideLoading() {
+            var load = document.getElementById('loader');
+            if (load) {
+                load.parentNode.removeChild(load);
+            }
+        }
+        
+        function addImage(promptText, imageData) {
+            var gallery = document.getElementById('gallery');
+            
+            var item = document.createElement('div');
+            item.className = 'image-item';
+            
+            var label = document.createElement('div');
+            label.className = 'prompt-label';
+            label.appendChild(document.createTextNode('Prompt: ' + promptText));
+            item.appendChild(label);
+            
+            var img = document.createElement('img');
+            img.src = 'data:image/png;base64,' + imageData;
+            item.appendChild(img);
+            
+            gallery.appendChild(item);
+            gallery.scrollTop = gallery.scrollHeight;
+        }
+        
+        function generate() {
+            var input = document.getElementById('prompt');
+            var promptText = input.value.replace(/^\s+|\s+$/g, '');
+            
+            if (!promptText) return;
+            
+            input.value = '';
+            var btn = document.getElementById('generate');
+            btn.disabled = true;
+            
+            showLoading();
+            
+            var x = new XMLHttpRequest();
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=' + key);
+            x.setRequestHeader('Content-Type', 'application/json');
+            
+            x.onreadystatechange = function() {
+                if (x.readyState == 4) {
+                    hideLoading();
+                    btn.disabled = false;
+                    
+                    if (x.status == 200) {
+                        try {
+                            var r = JSON.parse(x.responseText);
+                            if (r.candidates && r.candidates[0] && r.candidates[0].content && r.candidates[0].content.parts) {
+                                var parts = r.candidates[0].content.parts;
+                                for (var i = 0; i < parts.length; i++) {
+                                    if (parts[i].inlineData && parts[i].inlineData.data) {
+                                        addImage(promptText, parts[i].inlineData.data);
+                                    }
+                                }
+                            } else {
+                                showError('No image generated. Try a different prompt.');
+                            }
+                        } catch(e) {
+                            showError('Error parsing response: ' + e.message);
+                        }
+                    } else if (x.status == 429) {
+                        showError('Rate limit exceeded. Please wait and try again.');
+                    } else if (x.status == 404) {
+                        showError('Model not available. You may need access to gemini-2.5-flash-image.');
+                    } else {
+                        showError('Error ' + x.status + ': Request failed.');
+                    }
+                    
+                    input.focus();
+                }
+            };
+            
+            var payload = {
+                contents: [{
+                    parts: [{
+                        text: promptText
+                    }]
+                }]
+            };
+            
+            x.send(JSON.stringify(payload));
+        }
+        
+        document.getElementById('prompt').onkeypress = function(e) {
+            if (e.keyCode == 13) generate();
+        };
+    </script>
+</body>
+</html>
