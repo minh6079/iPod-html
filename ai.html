@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Gemini</title>
     <style>
@@ -14,94 +14,103 @@
         }
         
         html, body {
+            width: 100%;
             height: 100%;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             background: #f8f9fa;
             overflow: hidden;
+            position: fixed;
         }
         
         #container {
+            width: 100%;
             height: 100%;
+            position: relative;
         }
         
         #header {
             background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
-            padding: 14px 60px 14px 14px;
+            padding: 12px 10px;
             text-align: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            letter-spacing: 0.5px;
             position: relative;
-            overflow: hidden;
+            height: 44px;
+            line-height: 20px;
         }
         
         #setup {
-            padding: 30px 20px;
+            padding: 20px 15px;
             text-align: center;
         }
         
         #setup h2 {
             color: #5f6368;
-            font-size: 20px;
-            margin-bottom: 8px;
+            font-size: 18px;
+            margin-bottom: 6px;
             font-weight: normal;
         }
         
         #setup p {
             color: #80868b;
-            font-size: 13px;
-            margin-bottom: 24px;
+            font-size: 12px;
+            margin-bottom: 20px;
         }
         
         #setup select {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border: 2px solid #dadce0;
             -webkit-border-radius: 8px;
             border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 16px;
+            font-size: 14px;
+            margin-bottom: 12px;
             background: #fff;
         }
         
         #setup input {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border: 2px solid #dadce0;
             -webkit-border-radius: 8px;
             border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 16px;
+            font-size: 14px;
+            margin-bottom: 12px;
             background: #fff;
         }
         
         #setup button {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             border: none;
             -webkit-border-radius: 8px;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 6px rgba(102,126,234,0.4);
         }
         
         #messages {
-            height: 330px;
+            position: absolute;
+            top: 44px;
+            left: 0;
+            right: 0;
+            bottom: 64px;
             overflow-y: scroll;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            padding: 16px 12px;
+            padding: 12px 10px;
             background: #f8f9fa;
         }
         
         .msg {
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             clear: both;
+            width: 100%;
         }
         
         .msg-user {
@@ -114,17 +123,16 @@
         
         .bubble {
             display: inline-block;
-            max-width: 75%;
-            padding: 12px 16px;
-            -webkit-border-radius: 18px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
+            max-width: 70%;
+            padding: 10px 12px;
+            -webkit-border-radius: 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.4;
             word-wrap: break-word;
             word-break: break-word;
             white-space: pre-wrap;
             -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            overflow-wrap: break-word;
         }
         
         .msg-user .bubble {
@@ -161,21 +169,21 @@
         }
         
         .msg-ai .bubble ul, .msg-ai .bubble ol {
-            margin: 8px 0 8px 20px;
+            margin: 6px 0 6px 18px;
         }
         
         .msg-ai .bubble li {
-            margin: 4px 0;
+            margin: 3px 0;
         }
         
         .msg-ai .bubble p {
-            margin: 8px 0;
+            margin: 6px 0;
         }
         
         .label {
-            font-size: 11px;
+            font-size: 10px;
             color: #80868b;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             font-weight: 500;
         }
         
@@ -188,39 +196,45 @@
         }
         
         #input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
             background: #fff;
             border-top: 1px solid #e8eaed;
-            padding: 12px;
+            padding: 10px;
             -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
         }
         
         #input-container {
             background: #f1f3f4;
-            -webkit-border-radius: 24px;
-            border-radius: 24px;
+            -webkit-border-radius: 22px;
+            border-radius: 22px;
             padding: 4px;
-            overflow: hidden;
+            height: 44px;
         }
         
         #input {
-            width: 230px;
+            width: 220px;
             float: left;
-            padding: 10px 16px;
+            padding: 8px 12px;
             border: none;
             background: transparent;
-            font-size: 15px;
+            font-size: 14px;
+            height: 36px;
         }
         
         #send {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             float: right;
             background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             border: none;
-            -webkit-border-radius: 22px;
-            border-radius: 22px;
-            font-size: 18px;
+            -webkit-border-radius: 18px;
+            border-radius: 18px;
+            font-size: 16px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 4px rgba(102,126,234,0.3);
         }
@@ -236,28 +250,28 @@
         
         .spinner {
             text-align: left;
-            padding: 12px 16px;
-            margin-bottom: 16px;
+            padding: 10px 0;
+            margin-bottom: 12px;
         }
         
         .spinner .bubble {
             background: #fff;
             border: 1px solid #e8eaed;
             color: #80868b;
-            padding: 12px 16px;
+            padding: 10px 12px;
         }
         
         #clear {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.3);
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.25);
             color: #fff;
-            border: none;
-            padding: 6px 10px;
-            -webkit-border-radius: 12px;
-            border-radius: 12px;
-            font-size: 11px;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 8px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            font-size: 10px;
             font-weight: bold;
         }
     </style>
