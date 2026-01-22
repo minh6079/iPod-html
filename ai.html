@@ -32,13 +32,20 @@
             background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
             color: #fff;
             padding: 12px 10px;
-            text-align: center;
             font-size: 16px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             position: relative;
             height: 44px;
             line-height: 20px;
+        }
+        
+        #header-title {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 12px;
+            text-align: center;
         }
         
         #setup {
@@ -279,7 +286,7 @@
 <body>
     <div id="container">
         <div id="header">
-            AI Chat
+            <span id="header-title">AI Chat</span>
             <button id="clear" class="hide" onclick="clearChat()">Clear</button>
         </div>
         
