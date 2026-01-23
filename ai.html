@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Gemini</title>
     <style>
         * {
@@ -34,13 +35,9 @@
             font-size: 16px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            position: relative;
             height: 44px;
             line-height: 20px;
-            z-index: 100;
         }
         
         #header-title {
@@ -105,7 +102,7 @@
         }
         
         #messages {
-            position: fixed;
+            position: absolute;
             top: 44px;
             left: 0;
             right: 0;
@@ -206,7 +203,7 @@
         }
         
         #input-area {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
@@ -215,7 +212,6 @@
             border-top: 1px solid #e8eaed;
             padding: 10px;
             -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-            z-index: 100;
         }
         
         #input-container {
