@@ -48,7 +48,6 @@
             pointer-events: auto;
         }
 
-        /* Inventory button (replaces hotbar) */
         #inventoryBtn {
             position: absolute;
             right: 8px;
@@ -62,19 +61,18 @@
             color: #fff;
             pointer-events: auto;
             cursor: pointer;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         }
 
-        /* Selected block icon canvas (left of INV) */
         #selectedBlockIcon {
             position: absolute;
             right: 70px;
             top: 8px;
             width: 24px;
             height: 24px;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
-            background: rgba(0,0,0,0.12);
+            background: rgba(0, 0, 0, 0.12);
             pointer-events: none;
         }
 
@@ -101,21 +99,19 @@
             font-weight: bold;
             padding: 8px 12px;
             position: relative;
-            display: inline-block;
-            align-items: center;
-            justify-content: space-between;
             font-size: 16px;
+            line-height: 24px;
         }
 
         #closeInventory {
             position: absolute;
-            right: 5%;
-            top: 20%;
+            right: 12px;
+            top: 8px;
             font-size: 18px;
             cursor: pointer;
             padding: 4px 8px;
             border-radius: 6px;
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
         }
 
         #inventory {
@@ -123,27 +119,21 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             height: calc(100% - 40px);
-        }
-
-        /* Grid inventory */
-        #inventory {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            justify-items: center;
-            align-items: center;
+            text-align: left;
         }
 
         .inv-slot {
-            width: 48px;
-            height: 48px;
-            margin: 0;
+            width: 45px;
+            height: 45px;
+            margin: 4px;
             border: 2px solid rgba(255, 255, 255, 0.15);
             border-radius: 6px;
             background: rgba(0, 0, 0, 0.25);
             position: relative;
             cursor: pointer;
             pointer-events: auto;
+            display: inline-block;
+            vertical-align: top;
         }
 
         .inv-slot.selected {
@@ -162,7 +152,7 @@
             position: absolute;
             bottom: 27px;
             left: 57%;
-            -webkit-transform: translateX(-50%);
+            margin-left: -50px;
             pointer-events: auto;
             padding: 8px 14px;
             background: rgba(0, 0, 0, 0.7);
@@ -190,7 +180,6 @@
             left: 0;
             right: 0;
             height: 90px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
             background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
             pointer-events: none;
         }
@@ -284,7 +273,6 @@
             <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
             <div id="inventoryBtn" class="btn">INV</div>
         </div>
-
         <div id="inventory-panel">
             <div id="inventory-header">
                 <span>Inventory</span>
@@ -292,7 +280,6 @@
             </div>
             <div id="inventory"></div>
         </div>
-
         <div id="reach-indicator"></div>
         <div id="controls">
             <div class="btn" id="leftBtn">◄</div>
@@ -301,7 +288,6 @@
             <div class="btn" id="jumpBtn">▲</div>
         </div>
     </div>
-
     <script>
         (function () {
             // Canvas setup
@@ -313,7 +299,6 @@
                 canvas.height = 480;
             }
             resizeCanvas();
-
             // Game constants
             var BLOCK_SIZE = 16,
                 WORLD_WIDTH = 120,
@@ -323,7 +308,6 @@
                 MOVE_SPEED = 3,
                 MAX_REACH = 4,
                 MAX_FALL_SPEED = 15;
-
             // Block definitions
             var BLOCKS = {
                 AIR: 0,
@@ -350,7 +334,6 @@
                 GOLD_BLOCK: 22,
                 DIAMOND_BLOCK: 23
             };
-
             // Texture file mapping (must match available texture files)
             var TEXTURE_FILES = {
                 1: 'textures/grass.png',
@@ -376,11 +359,9 @@
                 22: 'textures/gold_block.png',
                 23: 'textures/diamond_block.png'
             };
-
             var textures = {};
             var texturesLoaded = 0;
             var totalTextures = 22; // number of entries in TEXTURE_FILES
-
             // Flat list of all blocks shown in the grid (order determines grid)
             var ALL_BLOCKS = [
                 BLOCKS.GRASS,
@@ -406,7 +387,6 @@
                 BLOCKS.COBBLE_SLAB,
                 BLOCKS.OAK_FENCE
             ];
-
             // World & player
             var world = [],
                 player = {
@@ -418,18 +398,24 @@
                     vy: 0,
                     onGround: false
                 };
-            var camera = { x: 0, y: 0 };
-            var keys = { left: false, right: false, jump: false, jumpPressed: false };
+            var camera = {
+                x: 0,
+                y: 0
+            };
+            var keys = {
+                left: false,
+                right: false,
+                jump: false,
+                jumpPressed: false
+            };
             var mode = 'mine',
                 selectedBlock = ALL_BLOCKS[0],
                 selectedSlot = 0;
-
             // UI elements (DOM)
             var inventoryPanel = document.getElementById('inventory-panel');
             var inventoryBtn = document.getElementById('inventoryBtn');
             var closeInventoryBtn = document.getElementById('closeInventory');
             var selectedBlockIcon = document.getElementById('selectedBlockIcon');
-
             // Draw selected block icon (24x24)
             function updateSelectedBlockIcon() {
                 if (!selectedBlockIcon) return;
@@ -447,7 +433,6 @@
                     iconCtx.fillRect(0, 0, 24, 24);
                 }
             }
-
             // Load textures
             function loadTextures() {
                 for (var blockType in TEXTURE_FILES) {
@@ -476,7 +461,6 @@
                     })(blockType);
                 }
             }
-
             // World generation
             function initWorld() {
                 for (var x = 0; x < WORLD_WIDTH; x++) {
@@ -530,12 +514,10 @@
                     }
                 }
             }
-
             // small helper to avoid potential global typo errors
             function WORLDWidthSafe() {
                 return WORLD_WIDTH;
             }
-
             // Drawing
             function drawBlock(x, y, t) {
                 if (t === BLOCKS.AIR) return;
@@ -570,13 +552,43 @@
             }
 
             function updatePlayer() {
-                if (keys.left) { player.vx = -MOVE_SPEED; } else if (keys.right) { player.vx = MOVE_SPEED; } else { player.vx = 0; }
-                if (keys.jump && player.onGround && !keys.jumpPressed) { player.vy = JUMP_POWER; player.onGround = false; keys.jumpPressed = true; }
-                if (!keys.jump) { keys.jumpPressed = false; }
-                if (!player.onGround) { player.vy += GRAVITY; if (player.vy > MAX_FALL_SPEED) { player.vy = MAX_FALL_SPEED; } } else if (player.vy > 0) { player.vy = 0; }
-
-                var oldX = player.x; player.x += player.vx; if (checkCollision(player.x, player.y, player.width, player.height)) { player.x = oldX; }
-                var oldY = player.y; player.y += player.vy; if (checkCollision(player.x, player.y, player.width, player.height)) { player.y = oldY; player.vy = 0; player.onGround = true; } else { player.onGround = false; }
+                if (keys.left) {
+                    player.vx = -MOVE_SPEED;
+                } else if (keys.right) {
+                    player.vx = MOVE_SPEED;
+                } else {
+                    player.vx = 0;
+                }
+                if (keys.jump && player.onGround && !keys.jumpPressed) {
+                    player.vy = JUMP_POWER;
+                    player.onGround = false;
+                    keys.jumpPressed = true;
+                }
+                if (!keys.jump) {
+                    keys.jumpPressed = false;
+                }
+                if (!player.onGround) {
+                    player.vy += GRAVITY;
+                    if (player.vy > MAX_FALL_SPEED) {
+                        player.vy = MAX_FALL_SPEED;
+                    }
+                } else if (player.vy > 0) {
+                    player.vy = 0;
+                }
+                var oldX = player.x;
+                player.x += player.vx;
+                if (checkCollision(player.x, player.y, player.width, player.height)) {
+                    player.x = oldX;
+                }
+                var oldY = player.y;
+                player.y += player.vy;
+                if (checkCollision(player.x, player.y, player.width, player.height)) {
+                    player.y = oldY;
+                    player.vy = 0;
+                    player.onGround = true;
+                } else {
+                    player.onGround = false;
+                }
             }
 
             function updateCamera() {
@@ -591,30 +603,22 @@
             function drawPlayer() {
                 var screenX = Math.floor(player.x - camera.x);
                 var screenY = Math.floor(player.y - camera.y);
-
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.fillRect(screenX - 2, screenY + player.height, player.width + 4, 2);
-
                 ctx.fillStyle = '#3A7BC8';
                 ctx.fillRect(screenX + 1, screenY + 9, player.width - 2, 13);
-
                 ctx.fillStyle = '#2C5FA0';
                 ctx.fillRect(screenX + player.width - 3, screenY + 9, 2, 13);
-
                 ctx.fillStyle = '#F5D7B8';
                 ctx.fillRect(screenX + 2, screenY, player.width - 4, 9);
-
                 ctx.fillStyle = '#D4B798';
                 ctx.fillRect(screenX + player.width - 4, screenY, 2, 9);
-
                 ctx.fillStyle = '#000';
                 ctx.fillRect(screenX + 4, screenY + 3, 2, 2);
                 ctx.fillRect(screenX + 8, screenY + 3, 2, 2);
-
                 ctx.fillStyle = '#1A3E6E';
                 ctx.fillRect(screenX + 2, screenY + 22, 4, 4);
                 ctx.fillRect(screenX + 8, screenY + 22, 4, 4);
-
                 ctx.fillStyle = '#3A7BC8';
                 ctx.fillRect(screenX - 1, screenY + 10, 2, 9);
                 ctx.fillRect(screenX + player.width - 1, screenY + 10, 2, 9);
@@ -643,12 +647,16 @@
             }
 
             function isInReach(wx, wy) {
-                var px = player.x + player.width / 2, py = player.y + player.height / 2, bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2, by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
+                var px = player.x + player.width / 2,
+                    py = player.y + player.height / 2,
+                    bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2,
+                    by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
                 return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH;
             }
 
             function handleTouch(x, y) {
-                var wx = Math.floor((x + camera.x) / BLOCK_SIZE), wy = Math.floor((y + camera.y) / BLOCK_SIZE);
+                var wx = Math.floor((x + camera.x) / BLOCK_SIZE),
+                    wy = Math.floor((y + camera.y) / BLOCK_SIZE);
                 if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
                     if (mode === 'mine') {
                         if (world[wx][wy] !== BLOCKS.AIR) {
@@ -656,8 +664,10 @@
                         }
                     } else {
                         if (world[wx][wy] === BLOCKS.AIR) {
-                            var px = Math.floor(player.x / BLOCK_SIZE), py = Math.floor(player.y / BLOCK_SIZE);
-                            var pw = Math.ceil(player.width / BLOCK_SIZE), ph = Math.ceil(player.height / BLOCK_SIZE);
+                            var px = Math.floor(player.x / BLOCK_SIZE),
+                                py = Math.floor(player.y / BLOCK_SIZE);
+                            var pw = Math.ceil(player.width / BLOCK_SIZE),
+                                ph = Math.ceil(player.height / BLOCK_SIZE);
                             if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
                                 world[wx][wy] = selectedBlock;
                             }
@@ -665,7 +675,6 @@
                     }
                 }
             }
-
             // Touch handlers for canvas
             var isTouching = false;
             canvas.addEventListener('touchstart', function (e) {
@@ -683,7 +692,6 @@
                 e.preventDefault();
                 isTouching = false;
             });
-
             // Buttons events
             function addButtonEvents(id, key) {
                 var btn = document.getElementById(id);
@@ -699,7 +707,6 @@
             addButtonEvents('leftBtn', 'left');
             addButtonEvents('rightBtn', 'right');
             addButtonEvents('jumpBtn', 'jump');
-
             // Mode toggle
             var modeBtn = document.getElementById('mode-indicator');
             modeBtn.addEventListener('touchstart', function (e) {
@@ -708,7 +715,6 @@
                 this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
                 this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
             });
-
             // Inventory panel open/close
             inventoryBtn.addEventListener('touchstart', function (e) {
                 e.preventDefault();
@@ -718,24 +724,19 @@
                 e.preventDefault();
                 inventoryPanel.style.display = 'none';
             });
-
             // Create grid inventory (shows all blocks)
             function createInventory() {
                 var invDiv = document.getElementById('inventory');
                 invDiv.innerHTML = '';
-
                 for (var i = 0; i < ALL_BLOCKS.length; i++) {
                     var bt = ALL_BLOCKS[i];
-
                     var slot = document.createElement('div');
                     slot.className = 'inv-slot';
                     slot.setAttribute('data-block', bt);
-
                     var c = document.createElement('canvas');
                     c.width = 48;
                     c.height = 48;
                     var cctx = c.getContext('2d');
-
                     if (textures[bt]) {
                         cctx.drawImage(textures[bt], 0, 0, 48, 48);
                     } else {
@@ -743,41 +744,32 @@
                         cctx.fillStyle = '#555';
                         cctx.fillRect(0, 0, 48, 48);
                     }
-
                     slot.appendChild(c);
                     invDiv.appendChild(slot);
                 }
-
                 // Single touch handler for grid slots
                 invDiv.addEventListener('touchstart', function (e) {
                     e.preventDefault();
-
                     var el = e.target;
                     while (el && !el.classList.contains('inv-slot')) {
                         el = el.parentNode;
                     }
                     if (!el) return;
-
                     var bt = parseInt(el.getAttribute('data-block'), 10);
                     selectedBlock = bt;
-
                     var slots = invDiv.getElementsByClassName('inv-slot');
                     for (var s = 0; s < slots.length; s++) {
                         slots[s].className = 'inv-slot';
                     }
                     el.className += ' selected';
-
                     // update the small icon next to INV
                     updateSelectedBlockIcon();
-
                     // close inventory after select
                     inventoryPanel.style.display = 'none';
                 });
             }
-
             // Start
             window.addEventListener('resize', resizeCanvas);
-
             initWorld();
             selectedBlock = ALL_BLOCKS[0];
             loadTextures();
