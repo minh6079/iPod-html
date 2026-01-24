@@ -1,516 +1,788 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Gemini</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=320, user-scalable=no" />
+    <title>2D Minecraft ES5 iPod</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            -webkit-box-sizing: border-box;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background: #f8f9fa;
+
+        body {
+            background: #000;
             overflow: hidden;
-            position: fixed;
+            font-family: Arial, sans-serif;
         }
-        
-        #container {
+
+        canvas {
+            display: block;
+            background: #87CEEB;
+            -webkit-image-rendering: optimize-contrast;
+            image-rendering: pixelated;
+        }
+
+        #ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+            pointer-events: auto;
+        }
+
+        /* Inventory button (replaces hotbar) */
+        #inventoryBtn {
+            position: absolute;
+            right: 8px;
+            top: 6px;
+            font-size: 14px;
+            height: 30px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: #fff;
+            pointer-events: auto;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+
+        /* Selected block icon canvas (left of INV) */
+        #selectedBlockIcon {
+            position: absolute;
+            right: 70px;
+            top: 8px;
+            width: 24px;
+            height: 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.12);
+            pointer-events: none;
+        }
+
+        #inventory-panel {
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            right: 10px;
+            bottom: 100px;
+            background: rgba(0, 0, 0, 0.92);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            z-index: 500;
+            display: none;
+            pointer-events: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #inventory-header {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+            color: white;
+            font-weight: bold;
+            padding: 8px 12px;
+            position: relative;
+            display: inline-block;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 16px;
+        }
+
+        #closeInventory {
+            position: absolute;
+            right: 5%;
+            top: 20%;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        #inventory {
+            padding: 10px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            height: calc(100% - 40px);
+        }
+
+        /* Grid inventory */
+        #inventory {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .inv-slot {
+            width: 48px;
+            height: 48px;
+            margin: 0;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.25);
+            position: relative;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .inv-slot.selected {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .inv-slot canvas {
             width: 100%;
             height: 100%;
-            position: relative;
+            display: block;
+            image-rendering: pixelated;
         }
-        
-        #header {
-            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
-            color: #fff;
-            padding: 12px 10px;
-            font-size: 16px;
-            font-weight: bold;
-            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            position: relative;
-            height: 44px;
-            line-height: 20px;
-        }
-        
-        #header-title {
+
+        #mode-indicator {
             position: absolute;
-            left: 0;
-            right: 0;
-            top: 12px;
-            text-align: center;
-        }
-        
-        #setup {
-            padding: 20px 15px;
-            text-align: center;
-        }
-        
-        #setup h2 {
-            color: #5f6368;
-            font-size: 18px;
-            margin-bottom: 6px;
-            font-weight: normal;
-        }
-        
-        #setup p {
-            color: #80868b;
-            font-size: 12px;
-            margin-bottom: 20px;
-        }
-        
-        #setup select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dadce0;
-            -webkit-border-radius: 8px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 12px;
-            background: #fff;
-        }
-        
-        #setup input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dadce0;
-            -webkit-border-radius: 8px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 12px;
-            background: #fff;
-        }
-        
-        #setup button {
-            width: 100%;
-            padding: 12px;
-            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
+            bottom: 27px;
+            left: 57%;
+            -webkit-transform: translateX(-50%);
+            pointer-events: auto;
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.7);
             color: #fff;
-            border: none;
-            -webkit-border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             font-size: 14px;
             font-weight: bold;
-            -webkit-box-shadow: 0 2px 6px rgba(102,126,234,0.4);
+            cursor: pointer;
         }
-        
-        #messages {
-            position: absolute;
-            top: 44px;
-            left: 0;
-            right: 0;
-            bottom: 64px;
-            overflow-y: scroll;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            padding: 12px 10px;
-            background: #f8f9fa;
+
+        #mode-indicator.mine-mode {
+            background: rgba(200, 50, 50, 0.8);
+            border-color: #ff6b6b;
         }
-        
-        .msg {
-            margin-bottom: 12px;
-            clear: both;
-            width: 100%;
+
+        #mode-indicator.place-mode {
+            background: rgba(50, 150, 50, 0.8);
+            border-color: #6bff6b;
         }
-        
-        .msg-user {
-            text-align: right;
-        }
-        
-        .msg-ai {
-            text-align: left;
-        }
-        
-        .bubble {
-            display: inline-block;
-            max-width: 70%;
-            padding: 10px 12px;
-            -webkit-border-radius: 16px;
-            border-radius: 16px;
-            font-size: 14px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            word-break: break-word;
-            white-space: pre-wrap;
-            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-        
-        .msg-user .bubble {
-            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
-            color: #fff;
-            -webkit-border-bottom-right-radius: 4px;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .msg-ai .bubble {
-            background: #fff;
-            color: #202124;
-            border: 1px solid #e8eaed;
-            -webkit-border-bottom-left-radius: 4px;
-            border-bottom-left-radius: 4px;
-            text-align: left;
-        }
-        
-        .msg-ai .bubble strong {
-            font-weight: bold;
-        }
-        
-        .msg-ai .bubble em {
-            font-style: italic;
-        }
-        
-        .msg-ai .bubble code {
-            background: #f1f3f4;
-            padding: 2px 4px;
-            -webkit-border-radius: 3px;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 13px;
-        }
-        
-        .msg-ai .bubble ul, .msg-ai .bubble ol {
-            margin: 6px 0 6px 18px;
-        }
-        
-        .msg-ai .bubble li {
-            margin: 3px 0;
-        }
-        
-        .msg-ai .bubble p {
-            margin: 6px 0;
-        }
-        
-        .label {
-            font-size: 10px;
-            color: #80868b;
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
-        
-        .msg-user .label {
-            text-align: right;
-        }
-        
-        .msg-ai .label {
-            text-align: left;
-        }
-        
-        #input-area {
+
+        #controls {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 64px;
-            background: #fff;
-            border-top: 1px solid #e8eaed;
-            padding: 10px;
-            -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            height: 90px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+            background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+            pointer-events: none;
         }
-        
-        #input-container {
-            background: #f1f3f4;
-            -webkit-border-radius: 22px;
-            border-radius: 22px;
-            padding: 4px;
-            height: 44px;
-        }
-        
-        #input {
-            width: 220px;
-            float: left;
-            padding: 8px 12px;
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            height: 36px;
-        }
-        
-        #send {
-            width: 36px;
-            height: 36px;
-            float: right;
-            background: -webkit-gradient(linear, left top, right bottom, from(#667eea), to(#764ba2));
-            color: #fff;
-            border: none;
-            -webkit-border-radius: 18px;
-            border-radius: 18px;
-            font-size: 16px;
-            font-weight: bold;
-            -webkit-box-shadow: 0 2px 4px rgba(102,126,234,0.3);
-        }
-        
-        #send:disabled {
-            background: #dadce0;
-            -webkit-box-shadow: none;
-        }
-        
-        .hide {
-            display: none !important;
-        }
-        
-        .spinner {
-            text-align: left;
-            padding: 10px 0;
-            margin-bottom: 12px;
-        }
-        
-        .spinner .bubble {
-            background: #fff;
-            border: 1px solid #e8eaed;
-            color: #80868b;
-            padding: 10px 12px;
-        }
-        
-        #clear {
+
+        .btn {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255,255,255,0.25);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 5px 8px;
-            -webkit-border-radius: 10px;
-            border-radius: 10px;
-            font-size: 10px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            font-size: 20px;
+            color: white;
+            text-align: center;
             font-weight: bold;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            background: rgba(255, 255, 255, 0.6);
+            -webkit-transform: scale(0.95);
+        }
+
+        #leftBtn,
+        #rightBtn {
+            width: 50px;
+            height: 50px;
+            bottom: 20px;
+        }
+
+        #leftBtn {
+            left: 10px;
+        }
+
+        #rightBtn {
+            left: 65px;
+        }
+
+        #jumpBtn {
+            right: 10px;
+            bottom: 20px;
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+            background: rgba(255, 200, 50, 0.4);
+            border-color: rgba(255, 220, 100, 0.8);
+        }
+
+        #jumpBtn:active {
+            background: rgba(255, 220, 100, 0.7);
+        }
+
+        #reach-indicator {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            margin-left: -3px;
+            margin-top: -3px;
+            pointer-events: none;
+        }
+
+        #reach-indicator::before,
+        #reach-indicator::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        #reach-indicator::before {
+            left: 0;
+            top: 2px;
+            width: 6px;
+            height: 2px;
+        }
+
+        #reach-indicator::after {
+            left: 2px;
+            top: 0;
+            width: 2px;
+            height: 6px;
         }
     </style>
 </head>
+
 <body>
-    <div id="container">
-        <div id="header">
-            <span id="header-title">AI Chat</span>
-            <button id="clear" class="hide" onclick="clearChat()">Clear</button>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-container">
+        <div id="top-bar">
+            <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
+            <div id="inventoryBtn" class="btn">INV</div>
         </div>
-        
-        <div id="setup">
-            <h2>Welcome to Gemini</h2>
-            <p>Choose model and enter API key</p>
-            <select id="modelSelect">
-                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                <option value="gemma-3-4b-it">Gemma 3 4B</option>
-                <option value="gemma-3-1b-it">Gemma 3 1B</option>
-            </select>
-            <input type="password" id="key" placeholder="Paste your API key here">
-            <button onclick="start()">Start Chatting</button>
-        </div>
-        
-        <div id="messages" class="hide"></div>
-        
-        <div id="input-area" class="hide">
-            <div id="input-container">
-                <input type="text" id="input" placeholder="Ask me anything...">
-                <button id="send" onclick="send()">➤</button>
-                <div style="clear:both;"></div>
+
+        <div id="inventory-panel">
+            <div id="inventory-header">
+                <span>Inventory</span>
+                <div id="closeInventory">✕</div>
             </div>
+            <div id="inventory"></div>
+        </div>
+
+        <div id="reach-indicator"></div>
+        <div id="controls">
+            <div class="btn" id="leftBtn">◄</div>
+            <div class="btn" id="rightBtn">►</div>
+            <div id="mode-indicator" class="mine-mode">MINE</div>
+            <div class="btn" id="jumpBtn">▲</div>
         </div>
     </div>
 
     <script>
-        var key = '';
-        var msgs = [];
-        var selectedModel = 'gemini-2.5-flash';
-        
-        function formatMarkdown(txt) {
-            // Remove LaTeX commands
-            txt = txt.replace(/\\text\{([^}]+)\}/g, '$1');
-            txt = txt.replace(/\\[a-zA-Z]+\{([^}]+)\}/g, '$1');
-            txt = txt.replace(/\\\(/g, '');
-            txt = txt.replace(/\\\)/g, '');
-            txt = txt.replace(/\\\[/g, '');
-            txt = txt.replace(/\\\]/g, '');
-            
-            // Bold
-            txt = txt.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            // Italic
-            txt = txt.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            // Code
-            txt = txt.replace(/`(.+?)`/g, '<code>$1</code>');
-            
-            // Split into lines
-            var lines = txt.split('\n');
-            var html = '';
-            var inList = false;
-            var listType = '';
-            
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                var trimmed = line.replace(/^\s+/, '');
-                
-                // Bullet list
-                if (trimmed.indexOf('* ') === 0 || trimmed.indexOf('- ') === 0) {
-                    if (!inList || listType !== 'ul') {
-                        if (inList) html += '</' + listType + '>';
-                        html += '<ul>';
-                        inList = true;
-                        listType = 'ul';
-                    }
-                    html += '<li>' + trimmed.substring(2) + '</li>';
-                }
-                // Numbered list
-                else if (trimmed.match(/^\d+\.\s/)) {
-                    if (!inList || listType !== 'ol') {
-                        if (inList) html += '</' + listType + '>';
-                        html += '<ol>';
-                        inList = true;
-                        listType = 'ol';
-                    }
-                    html += '<li>' + trimmed.replace(/^\d+\.\s/, '') + '</li>';
-                }
-                // Regular line
-                else {
-                    if (inList) {
-                        html += '</' + listType + '>';
-                        inList = false;
-                        listType = '';
-                    }
-                    if (line.length > 0) {
-                        html += line + '<br>';
-                    } else {
-                        html += '<br>';
-                    }
-                }
+        (function () {
+            // Canvas setup
+            var canvas = document.getElementById('gameCanvas');
+            var ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = 320;
+                canvas.height = 480;
             }
-            
-            if (inList) {
-                html += '</' + listType + '>';
-            }
-            
-            return html;
-        }
-        
-        function start() {
-            key = document.getElementById('key').value.replace(/\s/g, '');
-            selectedModel = document.getElementById('modelSelect').value;
-            
-            if (!key) {
-                alert('Please enter your API key');
-                return;
-            }
-            document.getElementById('setup').className = 'hide';
-            document.getElementById('messages').className = '';
-            document.getElementById('input-area').className = '';
-            document.getElementById('clear').className = '';
-            document.getElementById('input').focus();
-        }
-        
-        function add(txt, user, modelName) {
-            var m = document.getElementById('messages');
-            var d = document.createElement('div');
-            d.className = 'msg ' + (user ? 'msg-user' : 'msg-ai');
-            
-            var lbl = document.createElement('div');
-            lbl.className = 'label';
-            if (user) {
-                lbl.appendChild(document.createTextNode('You'));
-            } else {
-                var labelText = modelName || 'AI';
-                lbl.appendChild(document.createTextNode(labelText));
-            }
-            d.appendChild(lbl);
-            
-            var b = document.createElement('div');
-            b.className = 'bubble';
-            if (user) {
-                b.appendChild(document.createTextNode(txt));
-            } else {
-                b.innerHTML = formatMarkdown(txt);
-            }
-            d.appendChild(b);
-            m.appendChild(d);
-            m.scrollTop = m.scrollHeight;
-        }
-        
-        function loading(show) {
-            var l = document.getElementById('load');
-            if (show) {
-                if (!l) {
-                    l = document.createElement('div');
-                    l.id = 'load';
-                    l.className = 'spinner';
-                    var lbl = document.createElement('div');
-                    lbl.className = 'label';
-                    lbl.appendChild(document.createTextNode('AI'));
-                    l.appendChild(lbl);
-                    var b = document.createElement('div');
-                    b.className = 'bubble';
-                    b.appendChild(document.createTextNode('●●●'));
-                    l.appendChild(b);
-                    document.getElementById('messages').appendChild(l);
-                }
-                var m = document.getElementById('messages');
-                m.scrollTop = m.scrollHeight;
-            } else if (l) {
-                l.parentNode.removeChild(l);
-            }
-        }
-        
-        function send() {
-            var inp = document.getElementById('input');
-            var txt = inp.value.replace(/^\s+|\s+$/g, '');
-            if (!txt) return;
-            
-            add(txt, true);
-            msgs.push({role: 'user', parts: [{text: txt}]});
-            inp.value = '';
-            
-            var btn = document.getElementById('send');
-            btn.disabled = true;
-            loading(true);
-            
-            var x = new XMLHttpRequest();
-            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/' + selectedModel + ':generateContent?key=' + key);
-            x.setRequestHeader('Content-Type', 'application/json');
-            
-            x.onreadystatechange = function() {
-                if (x.readyState == 4) {
-                    loading(false);
-                    btn.disabled = false;
-                    
-                    if (x.status == 200) {
-                        try {
-                            var r = JSON.parse(x.responseText);
-                            var t = r.candidates[0].content.parts[0].text;
-                            
-                            // Format model name for display
-                            var displayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
-                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-                            
-                            add(t, false, displayName);
-                            msgs.push({role: 'model', parts: [{text: t}]});
-                        } catch(e) {
-                            add('Error parsing response', false, 'Error');
-                        }
-                    } else if (x.status == 429) {
-                        add('Rate limit exceeded. Please wait and try again later.', false, 'Error');
-                    } else {
-                        add('Error ' + x.status + ': Request failed. Please try again.', false, 'Error');
-                    }
-                    document.getElementById('input').focus();
-                }
+            resizeCanvas();
+
+            // Game constants
+            var BLOCK_SIZE = 16,
+                WORLD_WIDTH = 120,
+                WORLD_HEIGHT = 60,
+                GRAVITY = 0.8,
+                JUMP_POWER = -12,
+                MOVE_SPEED = 3,
+                MAX_REACH = 4,
+                MAX_FALL_SPEED = 15;
+
+            // Block definitions
+            var BLOCKS = {
+                AIR: 0,
+                GRASS: 1,
+                DIRT: 2,
+                STONE: 3,
+                WOOD: 4,
+                LEAVES: 5,
+                PLANKS: 6,
+                COBBLESTONE: 8,
+                COAL_ORE: 9,
+                IRON_ORE: 10,
+                GOLD_ORE: 11,
+                DIAMOND_ORE: 12,
+                MOSSY_COBBLESTONE: 13,
+                OAK_STAIRS_LEFT: 14,
+                OAK_STAIRS_RIGHT: 15,
+                OAK_FENCE: 16,
+                OAK_SLAB: 17,
+                STONE_SLAB: 18,
+                COBBLE_SLAB: 19,
+                COAL_BLOCK: 20,
+                IRON_BLOCK: 21,
+                GOLD_BLOCK: 22,
+                DIAMOND_BLOCK: 23
             };
-            
-            x.send(JSON.stringify({contents: msgs}));
-        }
-        
-        function clearChat() {
-            if (confirm('Clear all messages?')) {
-                msgs = [];
-                document.getElementById('messages').innerHTML = '';
+
+            // Texture file mapping (must match available texture files)
+            var TEXTURE_FILES = {
+                1: 'textures/grass.png',
+                2: 'textures/dirt.png',
+                3: 'textures/stone.png',
+                4: 'textures/wood.png',
+                5: 'textures/leaves.png',
+                6: 'textures/planks.png',
+                8: 'textures/cobblestone.png',
+                9: 'textures/coal_ore.png',
+                10: 'textures/iron_ore.png',
+                11: 'textures/gold_ore.png',
+                12: 'textures/diamond_ore.png',
+                13: 'textures/mossy_cobblestone.png',
+                14: 'textures/oak_stairs_left.png',
+                15: 'textures/oak_stairs_right.png',
+                16: 'textures/oak_fence.png',
+                17: 'textures/oak_slab.png',
+                18: 'textures/stone_slab.png',
+                19: 'textures/cobble_slab.png',
+                20: 'textures/coal_block.png',
+                21: 'textures/iron_block.png',
+                22: 'textures/gold_block.png',
+                23: 'textures/diamond_block.png'
+            };
+
+            var textures = {};
+            var texturesLoaded = 0;
+            var totalTextures = 22; // number of entries in TEXTURE_FILES
+
+            // Flat list of all blocks shown in the grid (order determines grid)
+            var ALL_BLOCKS = [
+                BLOCKS.GRASS,
+                BLOCKS.DIRT,
+                BLOCKS.STONE,
+                BLOCKS.WOOD,
+                BLOCKS.LEAVES,
+                BLOCKS.PLANKS,
+                BLOCKS.COBBLESTONE,
+                BLOCKS.MOSSY_COBBLESTONE,
+                BLOCKS.COAL_ORE,
+                BLOCKS.IRON_ORE,
+                BLOCKS.GOLD_ORE,
+                BLOCKS.DIAMOND_ORE,
+                BLOCKS.COAL_BLOCK,
+                BLOCKS.IRON_BLOCK,
+                BLOCKS.GOLD_BLOCK,
+                BLOCKS.DIAMOND_BLOCK,
+                BLOCKS.OAK_STAIRS_LEFT,
+                BLOCKS.OAK_STAIRS_RIGHT,
+                BLOCKS.OAK_SLAB,
+                BLOCKS.STONE_SLAB,
+                BLOCKS.COBBLE_SLAB,
+                BLOCKS.OAK_FENCE
+            ];
+
+            // World & player
+            var world = [],
+                player = {
+                    x: 60 * BLOCK_SIZE,
+                    y: 20 * BLOCK_SIZE,
+                    width: 12,
+                    height: 24,
+                    vx: 0,
+                    vy: 0,
+                    onGround: false
+                };
+            var camera = { x: 0, y: 0 };
+            var keys = { left: false, right: false, jump: false, jumpPressed: false };
+            var mode = 'mine',
+                selectedBlock = ALL_BLOCKS[0],
+                selectedSlot = 0;
+
+            // UI elements (DOM)
+            var inventoryPanel = document.getElementById('inventory-panel');
+            var inventoryBtn = document.getElementById('inventoryBtn');
+            var closeInventoryBtn = document.getElementById('closeInventory');
+            var selectedBlockIcon = document.getElementById('selectedBlockIcon');
+
+            // Draw selected block icon (24x24)
+            function updateSelectedBlockIcon() {
+                if (!selectedBlockIcon) return;
+                var iconCtx = selectedBlockIcon.getContext('2d');
+                iconCtx.clearRect(0, 0, 24, 24);
+                if (textures[selectedBlock]) {
+                    try {
+                        iconCtx.drawImage(textures[selectedBlock], 0, 0, 24, 24);
+                    } catch (e) {
+                        iconCtx.fillStyle = '#555';
+                        iconCtx.fillRect(0, 0, 24, 24);
+                    }
+                } else {
+                    iconCtx.fillStyle = '#555';
+                    iconCtx.fillRect(0, 0, 24, 24);
+                }
             }
-        }
-        
-        document.getElementById('input').onkeypress = function(e) {
-            if (e.keyCode == 13) send();
-        };
+
+            // Load textures
+            function loadTextures() {
+                for (var blockType in TEXTURE_FILES) {
+                    (function (type) {
+                        var img = new Image();
+                        img.src = TEXTURE_FILES[type];
+                        img.onload = function () {
+                            textures[type] = this;
+                            texturesLoaded++;
+                            if (texturesLoaded === totalTextures) {
+                                createInventory();
+                                updateSelectedBlockIcon();
+                                gameLoop();
+                            }
+                        };
+                        img.onerror = function () {
+                            console.error('Failed to load texture: ' + TEXTURE_FILES[type]);
+                            textures[type] = null;
+                            texturesLoaded++;
+                            if (texturesLoaded === totalTextures) {
+                                createInventory();
+                                updateSelectedBlockIcon();
+                                gameLoop();
+                            }
+                        };
+                    })(blockType);
+                }
+            }
+
+            // World generation
+            function initWorld() {
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    world[x] = [];
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        world[x][y] = BLOCKS.AIR;
+                    }
+                }
+                for (var x = 0; x < WORLDWidthSafe(); x++) {
+                    var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
+                    for (var y = height; y < WORLD_HEIGHT; y++) {
+                        if (y === height) {
+                            world[x][y] = BLOCKS.GRASS;
+                        } else if (y < height + 4) {
+                            world[x][y] = BLOCKS.DIRT;
+                        } else {
+                            world[x][y] = BLOCKS.STONE;
+                            var depth = y - (height + 4);
+                            if (depth > 2 && Math.random() < 0.08) {
+                                world[x][y] = BLOCKS.COAL_ORE;
+                            }
+                            if (depth > 8 && Math.random() < 0.04) {
+                                world[x][y] = BLOCKS.IRON_ORE;
+                            }
+                            if (depth > 15 && Math.random() < 0.02) {
+                                world[x][y] = BLOCKS.GOLD_ORE;
+                            }
+                            if (depth > 20 && Math.random() < 0.01) {
+                                world[x][y] = BLOCKS.DIAMOND_ORE;
+                            }
+                        }
+                    }
+                    if (Math.random() < 0.08 && x < WORLD_WIDTH - 4 && x > 3) {
+                        var th = 5 + Math.floor(Math.random() * 4);
+                        for (var ty = 0; ty < th; ty++) {
+                            if (height - ty - 1 >= 0) {
+                                world[x][height - ty - 1] = BLOCKS.WOOD;
+                            }
+                        }
+                        for (var lx = -2; lx <= 2; lx++) {
+                            for (var ly = -2; ly <= 1; ly++) {
+                                var tx = x + lx;
+                                var ty = height - th + ly;
+                                if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+                                    if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) {
+                                        world[tx][ty] = BLOCKS.LEAVES;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // small helper to avoid potential global typo errors
+            function WORLDWidthSafe() {
+                return WORLD_WIDTH;
+            }
+
+            // Drawing
+            function drawBlock(x, y, t) {
+                if (t === BLOCKS.AIR) return;
+                var sx = x * BLOCK_SIZE - camera.x;
+                var sy = y * BLOCK_SIZE - camera.y;
+                if (textures[t]) {
+                    ctx.drawImage(textures[t], sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+                } else {
+                    // fallback: simple colored block if texture missing
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+                }
+            }
+
+            function checkCollision(x, y, w, h) {
+                var left = Math.floor(x / BLOCK_SIZE),
+                    right = Math.floor((x + w) / BLOCK_SIZE),
+                    top = Math.floor(y / BLOCK_SIZE),
+                    bottom = Math.floor((y + h) / BLOCK_SIZE);
+                for (var bx = left; bx <= right; bx++) {
+                    for (var by = top; by <= bottom; by++) {
+                        if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+                            if (world[bx][by] !== BLOCKS.AIR) {
+                                return true;
+                            }
+                        } else if (by >= WORLD_HEIGHT) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            function updatePlayer() {
+                if (keys.left) { player.vx = -MOVE_SPEED; } else if (keys.right) { player.vx = MOVE_SPEED; } else { player.vx = 0; }
+                if (keys.jump && player.onGround && !keys.jumpPressed) { player.vy = JUMP_POWER; player.onGround = false; keys.jumpPressed = true; }
+                if (!keys.jump) { keys.jumpPressed = false; }
+                if (!player.onGround) { player.vy += GRAVITY; if (player.vy > MAX_FALL_SPEED) { player.vy = MAX_FALL_SPEED; } } else if (player.vy > 0) { player.vy = 0; }
+
+                var oldX = player.x; player.x += player.vx; if (checkCollision(player.x, player.y, player.width, player.height)) { player.x = oldX; }
+                var oldY = player.y; player.y += player.vy; if (checkCollision(player.x, player.y, player.width, player.height)) { player.y = oldY; player.vy = 0; player.onGround = true; } else { player.onGround = false; }
+            }
+
+            function updateCamera() {
+                var tx = player.x - canvas.width / 2 + player.width / 2;
+                var ty = player.y - canvas.height / 2 + player.height / 2;
+                tx = Math.max(0, Math.min(tx, WORLD_WIDTH * BLOCK_SIZE - canvas.width));
+                ty = Math.max(0, Math.min(ty, WORLD_HEIGHT * BLOCK_SIZE - canvas.height));
+                camera.x += (tx - camera.x) * 0.1;
+                camera.y += (ty - camera.y) * 0.1;
+            }
+
+            function drawPlayer() {
+                var screenX = Math.floor(player.x - camera.x);
+                var screenY = Math.floor(player.y - camera.y);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(screenX - 2, screenY + player.height, player.width + 4, 2);
+
+                ctx.fillStyle = '#3A7BC8';
+                ctx.fillRect(screenX + 1, screenY + 9, player.width - 2, 13);
+
+                ctx.fillStyle = '#2C5FA0';
+                ctx.fillRect(screenX + player.width - 3, screenY + 9, 2, 13);
+
+                ctx.fillStyle = '#F5D7B8';
+                ctx.fillRect(screenX + 2, screenY, player.width - 4, 9);
+
+                ctx.fillStyle = '#D4B798';
+                ctx.fillRect(screenX + player.width - 4, screenY, 2, 9);
+
+                ctx.fillStyle = '#000';
+                ctx.fillRect(screenX + 4, screenY + 3, 2, 2);
+                ctx.fillRect(screenX + 8, screenY + 3, 2, 2);
+
+                ctx.fillStyle = '#1A3E6E';
+                ctx.fillRect(screenX + 2, screenY + 22, 4, 4);
+                ctx.fillRect(screenX + 8, screenY + 22, 4, 4);
+
+                ctx.fillStyle = '#3A7BC8';
+                ctx.fillRect(screenX - 1, screenY + 10, 2, 9);
+                ctx.fillRect(screenX + player.width - 1, screenY + 10, 2, 9);
+            }
+
+            function render() {
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1),
+                    endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1),
+                    startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1),
+                    endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
+                for (var x = startX; x < endX; x++) {
+                    for (var y = startY; y < endY; y++) {
+                        drawBlock(x, y, world[x][y]);
+                    }
+                }
+                drawPlayer();
+            }
+
+            function gameLoop() {
+                updatePlayer();
+                updateCamera();
+                render();
+                setTimeout(gameLoop, 16);
+            }
+
+            function isInReach(wx, wy) {
+                var px = player.x + player.width / 2, py = player.y + player.height / 2, bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2, by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
+                return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH;
+            }
+
+            function handleTouch(x, y) {
+                var wx = Math.floor((x + camera.x) / BLOCK_SIZE), wy = Math.floor((y + camera.y) / BLOCK_SIZE);
+                if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
+                    if (mode === 'mine') {
+                        if (world[wx][wy] !== BLOCKS.AIR) {
+                            world[wx][wy] = BLOCKS.AIR;
+                        }
+                    } else {
+                        if (world[wx][wy] === BLOCKS.AIR) {
+                            var px = Math.floor(player.x / BLOCK_SIZE), py = Math.floor(player.y / BLOCK_SIZE);
+                            var pw = Math.ceil(player.width / BLOCK_SIZE), ph = Math.ceil(player.height / BLOCK_SIZE);
+                            if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
+                                world[wx][wy] = selectedBlock;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Touch handlers for canvas
+            var isTouching = false;
+            canvas.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                isTouching = true;
+                handleTouch(e.touches[0].clientX, e.touches[0].clientY);
+            });
+            canvas.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+                if (isTouching) {
+                    handleTouch(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            });
+            canvas.addEventListener('touchend', function (e) {
+                e.preventDefault();
+                isTouching = false;
+            });
+
+            // Buttons events
+            function addButtonEvents(id, key) {
+                var btn = document.getElementById(id);
+                btn.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    keys[key] = true;
+                });
+                btn.addEventListener('touchend', function (e) {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+            }
+            addButtonEvents('leftBtn', 'left');
+            addButtonEvents('rightBtn', 'right');
+            addButtonEvents('jumpBtn', 'jump');
+
+            // Mode toggle
+            var modeBtn = document.getElementById('mode-indicator');
+            modeBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                mode = mode === 'mine' ? 'place' : 'mine';
+                this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
+                this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
+            });
+
+            // Inventory panel open/close
+            inventoryBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                inventoryPanel.style.display = 'block';
+            });
+            closeInventoryBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                inventoryPanel.style.display = 'none';
+            });
+
+            // Create grid inventory (shows all blocks)
+            function createInventory() {
+                var invDiv = document.getElementById('inventory');
+                invDiv.innerHTML = '';
+
+                for (var i = 0; i < ALL_BLOCKS.length; i++) {
+                    var bt = ALL_BLOCKS[i];
+
+                    var slot = document.createElement('div');
+                    slot.className = 'inv-slot';
+                    slot.setAttribute('data-block', bt);
+
+                    var c = document.createElement('canvas');
+                    c.width = 48;
+                    c.height = 48;
+                    var cctx = c.getContext('2d');
+
+                    if (textures[bt]) {
+                        cctx.drawImage(textures[bt], 0, 0, 48, 48);
+                    } else {
+                        // fallback tile if texture missing
+                        cctx.fillStyle = '#555';
+                        cctx.fillRect(0, 0, 48, 48);
+                    }
+
+                    slot.appendChild(c);
+                    invDiv.appendChild(slot);
+                }
+
+                // Single touch handler for grid slots
+                invDiv.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+
+                    var el = e.target;
+                    while (el && !el.classList.contains('inv-slot')) {
+                        el = el.parentNode;
+                    }
+                    if (!el) return;
+
+                    var bt = parseInt(el.getAttribute('data-block'), 10);
+                    selectedBlock = bt;
+
+                    var slots = invDiv.getElementsByClassName('inv-slot');
+                    for (var s = 0; s < slots.length; s++) {
+                        slots[s].className = 'inv-slot';
+                    }
+                    el.className += ' selected';
+
+                    // update the small icon next to INV
+                    updateSelectedBlockIcon();
+
+                    // close inventory after select
+                    inventoryPanel.style.display = 'none';
+                });
+            }
+
+            // Start
+            window.addEventListener('resize', resizeCanvas);
+
+            initWorld();
+            selectedBlock = ALL_BLOCKS[0];
+            loadTextures();
+        })();
     </script>
 </body>
+
 </html>
