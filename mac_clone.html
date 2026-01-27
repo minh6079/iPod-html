@@ -985,17 +985,18 @@
             var gradient;
             switch (value) {
                 case 'sunset':
-                    gradient = 'linear-gradient(to bottom, #ffb5a7, #fcd5ce, #f8edeb)';
+                    gradient = '-webkit-linear-gradient(top, #ffb5a7, #fcd5ce, #f8edeb)';
                     break;
                 case 'mint':
-                    gradient = 'linear-gradient(to bottom, #c1ffd7, #e9ffec, #f6fff6)';
+                    gradient = '-webkit-linear-gradient(top, #c1ffd7, #e9ffec, #f6fff6)';
                     break;
                 case 'graphite':
-                    gradient = 'linear-gradient(to bottom, #6b7280, #9aa0aa, #c9cdd5)';
+                    gradient = '-webkit-linear-gradient(top, #6b7280, #9aa0aa, #c9cdd5)';
                     break;
                 default:
-                    gradient = 'linear-gradient(to bottom, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%)';
+                    gradient = '-webkit-linear-gradient(top, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%)';
             }
+        
             document.body.style.background = gradient;
             localStorage.setItem('wallpaper', value);
         }
