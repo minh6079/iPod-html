@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, maximum-scale=0.4">
+    <title>macOS Classic Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(to bottom, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%);
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Wallpaper grain */
+        body:before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+            background-size: 3px 3px;
+            opacity: 0.25;
+        }
+
+        /* Menu Bar */
+        #menubar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 28px;
+            z-index: 10000;
+            background: rgba(255, 255, 255, 0.55);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+            font-size: 13px;
+            line-height: 28px;
+        }
+
+        .menu-left {
+            float: left;
+            padding-left: 10px;
+        }
+
+        .menu-right {
+            float: right;
+            padding-right: 10px;
+        }
+
+        .menu-item {
+            display: inline-block;
+            padding: 0 8px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .apple-icon {
+            font-size: 16px;
+        }
+
+        /* Windows */
+        .window {
+            position: absolute;
+            min-width: 280px;
+            min-height: 220px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            overflow: hidden;
+        }
+
+        .window.hidden {
+            display: none;
+        }
+
+        .window.maximized {
+            top: 28px !important;
+            left: 10px !important;
+            right: 10px !important;
+            bottom: 84px !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        .titlebar {
+            height: 32px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6));
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            cursor: move;
+            position: relative;
+        }
+
+        .traffic-lights {
+            float: left;
+            padding: 10px;
+        }
+
+        .traffic-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            margin-right: 8px;
+            cursor: pointer;
+            padding: 8px;
+            margin: -8px 0;
+        }
+
+        .btn-close {
+            background: #ff5f57;
+        }
+
+        .btn-min {
+            background: #febc2e;
+        }
+
+        .btn-max {
+            background: #28c840;
+        }
+
+        .window-title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 600;
+            color: #222;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .window-content {
+            padding: 12px;
+            height: 100%;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .window-content-inner {
+            height: 100%;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 14px;
+            height: 14px;
+            cursor: nwse-resize;
+            opacity: 0.6;
+        }
+
+        .resize-handle:after {
+            content: "";
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            border-right: 2px solid rgba(0, 0, 0, 0.25);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+            border-radius: 2px;
+        }
+
+        /* Finder */
+        #finder-grid {
+            overflow: hidden;
+            margin: -5px;
+        }
+
+        .finder-tile {
+            float: left;
+            width: 120px;
+            margin: 5px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 12px;
+            text-align: center;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .finder-tile:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .finder-tile:active {
+            transform: translateY(0);
+            background: rgba(43, 127, 255, 0.3);
+        }
+
+        /* Notes */
+        #notes-textarea {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            outline: 0;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 0;
+            padding: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            display: block;
+        }
+
+        /* Safari */
+        .safari-toolbar {
+            margin-bottom: 8px;
+            overflow: hidden;
+            padding-bottom: 8px;
+        }
+
+        .safari-btn {
+            float: left;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            background: #2b7fff;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .safari-btn:hover {
+            background: #1a5fcc;
+        }
+
+        .safari-btn:active {
+            background: #0d4da8;
+            transform: scale(0.95);
+        }
+
+        #safari-url {
+            float: left;
+            width: calc(100% - 200px);
+            max-width: 500px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        #safari-frame {
+            width: 100%;
+            height: calc(100% - 45px);
+            border: none;
+            border-radius: 12px;
+            background: white;
+            display: block;
+        }
+
+        /* Settings */
+        .settings-row {
+            padding: 12px 0;
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            float: left;
+            font-weight: 600;
+            line-height: 28px;
+        }
+
+        .settings-value {
+            float: right;
+        }
+
+        .settings-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .settings-btn:active {
+            background: rgba(43, 127, 255, 0.3);
+        }
+
+        #wallpaper {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        #brightness {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        /* Dock */
+        #dock-wrap {
+            position: fixed;
+            left: 50%;
+            bottom: 10px;
+            z-index: 9000;
+            margin-left: -250px;
+        }
+
+        #dock {
+            height: 74px;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 22px;
+            padding: 8px 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            white-space: nowrap;
+        }
+
+        .dock-item {
+            display: inline-block;
+            vertical-align: bottom;
+            text-align: center;
+            margin: 0 7px;
+        }
+
+        .dock-icon {
+            display: block;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            font-size: 30px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+            line-height: 56px;
+            text-align: center;
+            transition: transform 0.15s ease;
+        }
+
+        .dock-icon:hover {
+            transform: translateY(-8px) scale(1.12);
+        }
+
+        .dock-icon:active {
+            transform: translateY(-4px) scale(1.08);
+        }
+
+        .dock-indicator {
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            opacity: 0.3;
+            margin: 6px auto 0 auto;
+        }
+
+        .dock-item.running .dock-indicator {
+            opacity: 0.7;
+        }
+
+        /* Launchpad */
+        #launchpad {
+            position: fixed;
+            top: 28px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9500;
+            display: none;
+            background: rgba(240, 245, 255, 0.55);
+            padding: 30px;
+        }
+
+        #launchpad.show {
+            display: block;
+        }
+
+        .lp-app {
+            display: inline-block;
+            width: 96px;
+            text-align: center;
+            margin: 11px;
+            cursor: pointer;
+            vertical-align: top;
+        }
+
+        .lp-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            font-size: 36px;
+            line-height: 72px;
+            background: rgba(255, 255, 255, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 8px auto;
+            transition: transform 0.15s ease;
+        }
+
+        .lp-app:active .lp-icon {
+            transform: scale(0.9);
+        }
+
+        .lp-name {
+            font-size: 12px;
+        }
+
+        .clearfix {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Bar -->
+    <div id="menubar">
+        <div class="menu-left">
+            <span class="menu-item apple-icon">🍎</span>
+            <span class="menu-item">Finder</span>
+            <span class="menu-item">File</span>
+            <span class="menu-item">Edit</span>
+            <span class="menu-item">View</span>
+            <span class="menu-item" id="menu-launchpad">Launchpad</span>
+        </div>
+        <div class="menu-right">
+            <span class="menu-item">📶</span>
+            <span class="menu-item" id="battery">🔋100%</span>
+            <span class="menu-item" id="clock">--:--</span>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+
+    <!-- Finder Window -->
+    <div class="window" id="win-finder" data-app="finder" style="top:90px;left:90px;width:640px;height:400px;">
+        <div class="titlebar">
+            <div class="traffic-lights">
+                <span class="traffic-btn btn-close" data-action="close"></span>
+                <span class="traffic-btn btn-min" data-action="min"></span>
+                <span class="traffic-btn btn-max" data-action="max"></span>
+            </div>
+            <div class="window-title">Finder</div>
+        </div>
+        <div class="window-content">
+            <div id="finder-grid">
+                <div class="finder-tile">📄 Documents</div>
+                <div class="finder-tile">🖼️ Pictures</div>
+                <div class="finder-tile">🎵 Music</div>
+                <div class="finder-tile">🎬 Movies</div>
+                <div class="finder-tile">⚙️ System</div>
+                <div class="finder-tile">🗑️ Trash</div>
+                <div class="finder-tile">💻 Desktop</div>
+                <div class="finder-tile">📥 Downloads</div>
+                <div class="finder-tile">📁 Applications</div>
+                <div class="finder-tile">☁️ iCloud</div>
+                <div class="finder-tile">📚 Library</div>
+                <div class="finder-tile">🌐 Network</div>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Notes Window -->
+    <div class="window hidden" id="win-notes" data-app="notes" style="top:140px;left:220px;width:520px;height:450px;">
+        <div class="titlebar">
+            <div class="traffic-lights">
+                <span class="traffic-btn btn-close" data-action="close"></span>
+                <span class="traffic-btn btn-min" data-action="min"></span>
+                <span class="traffic-btn btn-max" data-action="max"></span>
+            </div>
+            <div class="window-title">Notes</div>
+        </div>
+        <div class="window-content" style="padding: 0;">
+            <textarea id="notes-textarea" placeholder="Type your notes..."></textarea>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Safari Window -->
+    <div class="window hidden" id="win-safari" data-app="safari" style="top:180px;left:160px;width:760px;height:550px;">
+        <div class="titlebar">
+            <div class="traffic-lights">
+                <span class="traffic-btn btn-close" data-action="close"></span>
+                <span class="traffic-btn btn-min" data-action="min"></span>
+                <span class="traffic-btn btn-max" data-action="max"></span>
+            </div>
+            <div class="window-title">Safari</div>
+        </div>
+        <div class="window-content" style="padding: 12px; height: calc(100% - 32px);">
+            <div class="safari-toolbar">
+                <button class="safari-btn" id="safari-back">◀</button>
+                <button class="safari-btn" id="safari-forward">▶</button>
+                <button class="safari-btn" id="safari-refresh">⟳</button>
+                <input id="safari-url" type="text" placeholder="https://example.com">
+                <button class="safari-btn" id="safari-go">Go</button>
+                <div class="clearfix"></div>
+            </div>
+            <iframe id="safari-frame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Settings Window -->
+    <div class="window hidden" id="win-settings" data-app="settings" style="top:120px;left:440px;width:520px;height:380px;">
+        <div class="titlebar">
+            <div class="traffic-lights">
+                <span class="traffic-btn btn-close" data-action="close"></span>
+                <span class="traffic-btn btn-min" data-action="min"></span>
+                <span class="traffic-btn btn-max" data-action="max"></span>
+            </div>
+            <div class="window-title">Settings</div>
+        </div>
+        <div class="window-content">
+            <div class="settings-row">
+                <span class="settings-label">Wallpaper</span>
+                <select class="settings-value" id="wallpaper">
+                    <option value="default">Tahoe Blue</option>
+                    <option value="sunset">Sunset Peach</option>
+                    <option value="mint">Mint Mist</option>
+                    <option value="graphite">Graphite</option>
+                </select>
+                <div class="clearfix"></div>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">Brightness</span>
+                <input class="settings-value" type="range" id="brightness" min="50" max="100" value="100">
+                <div class="clearfix"></div>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">Theme</span>
+                <span class="settings-value">Light Mode</span>
+                <div class="clearfix"></div>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">Sound Effects</span>
+                <span class="settings-value">On</span>
+                <div class="clearfix"></div>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">About</span>
+                <button class="settings-value settings-btn" id="about-btn">About This Mac</button>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Launchpad -->
+    <div id="launchpad">
+        <div class="lp-app" data-app="finder">
+            <div class="lp-icon">🗂️</div>
+            <div class="lp-name">Finder</div>
+        </div>
+        <div class="lp-app" data-app="safari">
+            <div class="lp-icon">🌐</div>
+            <div class="lp-name">Safari</div>
+        </div>
+        <div class="lp-app" data-app="notes">
+            <div class="lp-icon">📝</div>
+            <div class="lp-name">Notes</div>
+        </div>
+        <div class="lp-app" data-app="settings">
+            <div class="lp-icon">⚙️</div>
+            <div class="lp-name">Settings</div>
+        </div>
+    </div>
+
+    <!-- Dock -->
+    <div id="dock-wrap">
+        <div id="dock">
+            <div class="dock-item">
+                <div class="dock-icon" data-app="finder" title="Finder">🗂️</div>
+                <div class="dock-indicator"></div>
+            </div>
+            <div class="dock-item">
+                <div class="dock-icon" data-app="safari" title="Safari">🌐</div>
+                <div class="dock-indicator"></div>
+            </div>
+            <div class="dock-item">
+                <div class="dock-icon" data-app="notes" title="Notes">📝</div>
+                <div class="dock-indicator"></div>
+            </div>
+            <div class="dock-item">
+                <div class="dock-icon" data-app="settings" title="Settings">⚙️</div>
+                <div class="dock-indicator"></div>
+            </div>
+            <div class="dock-item">
+                <div class="dock-icon" id="launchpad-icon" title="Launchpad">🟦</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        var zIndex = 1;
+        var safariHistory = [];
+        var safariIndex = -1;
+
+        // Clock
+        function updateClock() {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            if (hours < 10) hours = '0' + hours;
+            if (minutes < 10) minutes = '0' + minutes;
+            document.getElementById('clock').textContent = hours + ':' + minutes;
+        }
+        updateClock();
+        setInterval(updateClock, 60000);
+
+        // Battery
+        var batteryLevel = 100;
+        setInterval(function() {
+            batteryLevel = Math.max(1, batteryLevel - 1);
+            document.getElementById('battery').textContent = '🔋' + batteryLevel + '%';
+        }, 20000);
+
+        // Window Management
+        function bringToFront(win) {
+            win.style.zIndex = ++zIndex;
+        }
+
+        function openApp(appName) {
+            var win = document.getElementById('win-' + appName);
+            if (!win) return;
+            win.classList.remove('hidden');
+            bringToFront(win);
+            
+            var dockIcon = document.querySelector('.dock-icon[data-app="' + appName + '"]');
+            if (dockIcon) {
+                var dockItem = dockIcon.parentNode;
+                dockItem.classList.add('running');
+            }
+        }
+
+        function closeApp(appName) {
+            var win = document.getElementById('win-' + appName);
+            if (!win) return;
+            win.classList.add('hidden');
+            
+            var dockIcon = document.querySelector('.dock-icon[data-app="' + appName + '"]');
+            if (dockIcon) {
+                var dockItem = dockIcon.parentNode;
+                dockItem.classList.remove('running');
+            }
+        }
+
+        // Dock clicks
+        var dockIcons = document.querySelectorAll('.dock-icon[data-app]');
+        for (var i = 0; i < dockIcons.length; i++) {
+            (function(icon) {
+                function handleClick(e) {
+                    openApp(icon.getAttribute('data-app'));
+                    e.preventDefault();
+                }
+                icon.addEventListener('click', handleClick);
+                icon.addEventListener('touchend', handleClick);
+            })(dockIcons[i]);
+        }
+
+        // Launchpad
+        var launchpad = document.getElementById('launchpad');
+        var launchpadIcon = document.getElementById('launchpad-icon');
+        var menuLaunchpad = document.getElementById('menu-launchpad');
+
+        function toggleLaunchpad(e) {
+            if (launchpad.classList.contains('show')) {
+                launchpad.classList.remove('show');
+            } else {
+                launchpad.classList.add('show');
+            }
+            if (e) e.preventDefault();
+        }
+
+        launchpadIcon.addEventListener('click', toggleLaunchpad);
+        launchpadIcon.addEventListener('touchend', toggleLaunchpad);
+        menuLaunchpad.addEventListener('click', toggleLaunchpad);
+        menuLaunchpad.addEventListener('touchend', toggleLaunchpad);
+
+        var lpApps = document.querySelectorAll('.lp-app');
+        for (var i = 0; i < lpApps.length; i++) {
+            (function(app) {
+                function handleLpClick(e) {
+                    openApp(app.getAttribute('data-app'));
+                    launchpad.classList.remove('show');
+                    e.preventDefault();
+                }
+                app.addEventListener('click', handleLpClick);
+                app.addEventListener('touchend', handleLpClick);
+            })(lpApps[i]);
+        }
+
+        // Window dragging and resizing
+        var windows = document.querySelectorAll('.window');
+        for (var i = 0; i < windows.length; i++) {
+            (function(win) {
+                var titlebar = win.querySelector('.titlebar');
+                var resizeHandle = win.querySelector('.resize-handle');
+                var isDragging = false;
+                var isResizing = false;
+                var startX, startY, startWidth, startHeight, startLeft, startTop;
+                var lastTap = 0;
+
+                // Helper to get event coordinates
+                function getEventCoords(e) {
+                    if (e.touches && e.touches.length > 0) {
+                        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    }
+                    return { x: e.clientX, y: e.clientY };
+                }
+
+                // Bring to front on touch/click
+                function bringFront() {
+                    bringToFront(win);
+                }
+                win.addEventListener('mousedown', bringFront);
+                win.addEventListener('touchstart', bringFront);
+
+                // Dragging - mouse
+                titlebar.addEventListener('mousedown', function(e) {
+                    if (e.target.classList.contains('traffic-btn')) return;
+                    isDragging = true;
+                    startX = e.clientX - win.offsetLeft;
+                    startY = e.clientY - win.offsetTop;
+                    e.preventDefault();
+                });
+
+                // Dragging - touch
+                titlebar.addEventListener('touchstart', function(e) {
+                    if (e.target.classList.contains('traffic-btn')) return;
+                    var coords = getEventCoords(e);
+                    isDragging = true;
+                    startX = coords.x - win.offsetLeft;
+                    startY = coords.y - win.offsetTop;
+                    
+                    // Double-tap detection
+                    var currentTime = new Date().getTime();
+                    var tapLength = currentTime - lastTap;
+                    if (tapLength < 500 && tapLength > 0) {
+                        // Double tap detected
+                        if (win.classList.contains('maximized')) {
+                            win.classList.remove('maximized');
+                        } else {
+                            win.classList.add('maximized');
+                        }
+                        isDragging = false;
+                    }
+                    lastTap = currentTime;
+                    e.preventDefault();
+                });
+
+                // Resizing - mouse
+                resizeHandle.addEventListener('mousedown', function(e) {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = win.offsetWidth;
+                    startHeight = win.offsetHeight;
+                    e.preventDefault();
+                });
+
+                // Resizing - touch
+                resizeHandle.addEventListener('touchstart', function(e) {
+                    var coords = getEventCoords(e);
+                    isResizing = true;
+                    startX = coords.x;
+                    startY = coords.y;
+                    startWidth = win.offsetWidth;
+                    startHeight = win.offsetHeight;
+                    e.preventDefault();
+                });
+
+                // Move handlers - mouse
+                document.addEventListener('mousemove', function(e) {
+                    if (isDragging) {
+                        win.style.left = (e.clientX - startX) + 'px';
+                        win.style.top = (e.clientY - startY) + 'px';
+                    }
+                    if (isResizing) {
+                        var newWidth = startWidth + (e.clientX - startX);
+                        var newHeight = startHeight + (e.clientY - startY);
+                        win.style.width = Math.max(280, newWidth) + 'px';
+                        win.style.height = Math.max(220, newHeight) + 'px';
+                    }
+                });
+
+                // Move handlers - touch
+                document.addEventListener('touchmove', function(e) {
+                    var coords = getEventCoords(e);
+                    if (isDragging) {
+                        win.style.left = (coords.x - startX) + 'px';
+                        win.style.top = (coords.y - startY) + 'px';
+                        e.preventDefault();
+                    }
+                    if (isResizing) {
+                        var newWidth = startWidth + (coords.x - startX);
+                        var newHeight = startHeight + (coords.y - startY);
+                        win.style.width = Math.max(280, newWidth) + 'px';
+                        win.style.height = Math.max(220, newHeight) + 'px';
+                        e.preventDefault();
+                    }
+                });
+
+                // End handlers
+                function stopDrag() {
+                    isDragging = false;
+                    isResizing = false;
+                }
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+                document.addEventListener('touchcancel', stopDrag);
+
+                // Traffic light buttons
+                var closeBtn = win.querySelector('.btn-close');
+                var minBtn = win.querySelector('.btn-min');
+                var maxBtn = win.querySelector('.btn-max');
+
+                function handleClose(e) {
+                    closeApp(win.getAttribute('data-app'));
+                    e.stopPropagation();
+                }
+                function handleMin(e) {
+                    win.classList.add('hidden');
+                    e.stopPropagation();
+                }
+                function handleMax(e) {
+                    if (win.classList.contains('maximized')) {
+                        win.classList.remove('maximized');
+                    } else {
+                        win.classList.add('maximized');
+                    }
+                    e.stopPropagation();
+                }
+
+                closeBtn.addEventListener('click', handleClose);
+                closeBtn.addEventListener('touchend', handleClose);
+                
+                minBtn.addEventListener('click', handleMin);
+                minBtn.addEventListener('touchend', handleMin);
+                
+                maxBtn.addEventListener('click', handleMax);
+                maxBtn.addEventListener('touchend', handleMax);
+
+                // Double-click titlebar to maximize
+                titlebar.addEventListener('dblclick', function() {
+                    if (win.classList.contains('maximized')) {
+                        win.classList.remove('maximized');
+                    } else {
+                        win.classList.add('maximized');
+                    }
+                });
+            })(windows[i]);
+        }
+
+        // Notes app
+        var notesTextarea = document.getElementById('notes-textarea');
+        if (localStorage.getItem('notes')) {
+            notesTextarea.value = localStorage.getItem('notes');
+        }
+        notesTextarea.addEventListener('input', function() {
+            localStorage.setItem('notes', notesTextarea.value);
+        });
+
+        // Safari app
+        var safariUrl = document.getElementById('safari-url');
+        var safariFrame = document.getElementById('safari-frame');
+        var safariGo = document.getElementById('safari-go');
+        var safariBack = document.getElementById('safari-back');
+        var safariForward = document.getElementById('safari-forward');
+        var safariRefresh = document.getElementById('safari-refresh');
+
+        function loadSafari(url, addHistory) {
+            if (!/^https?:\/\//.test(url)) {
+                url = 'https://' + url;
+            }
+            safariFrame.src = url;
+            safariUrl.value = url;
+            
+            if (addHistory) {
+                safariHistory = safariHistory.slice(0, safariIndex + 1);
+                safariHistory.push(url);
+                safariIndex++;
+            }
+        }
+
+        safariGo.addEventListener('click', function() {
+            loadSafari(safariUrl.value, true);
+        });
+        safariGo.addEventListener('touchend', function(e) {
+            loadSafari(safariUrl.value, true);
+            e.preventDefault();
+        });
+
+        safariUrl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                loadSafari(safariUrl.value, true);
+            }
+        });
+
+        safariBack.addEventListener('click', function() {
+            if (safariIndex > 0) {
+                safariIndex--;
+                loadSafari(safariHistory[safariIndex], false);
+            }
+        });
+        safariBack.addEventListener('touchend', function(e) {
+            if (safariIndex > 0) {
+                safariIndex--;
+                loadSafari(safariHistory[safariIndex], false);
+            }
+            e.preventDefault();
+        });
+
+        safariForward.addEventListener('click', function() {
+            if (safariIndex < safariHistory.length - 1) {
+                safariIndex++;
+                loadSafari(safariHistory[safariIndex], false);
+            }
+        });
+        safariForward.addEventListener('touchend', function(e) {
+            if (safariIndex < safariHistory.length - 1) {
+                safariIndex++;
+                loadSafari(safariHistory[safariIndex], false);
+            }
+            e.preventDefault();
+        });
+
+        safariRefresh.addEventListener('click', function() {
+            if (safariIndex >= 0) {
+                loadSafari(safariHistory[safariIndex], false);
+            }
+        });
+        safariRefresh.addEventListener('touchend', function(e) {
+            if (safariIndex >= 0) {
+                loadSafari(safariHistory[safariIndex], false);
+            }
+            e.preventDefault();
+        });
+
+        // Settings
+        var wallpaperSelect = document.getElementById('wallpaper');
+        var brightnessRange = document.getElementById('brightness');
+        var aboutBtn = document.getElementById('about-btn');
+
+        function applyWallpaper(value) {
+            var gradient;
+            switch (value) {
+                case 'sunset':
+                    gradient = 'linear-gradient(to bottom, #ffb5a7, #fcd5ce, #f8edeb)';
+                    break;
+                case 'mint':
+                    gradient = 'linear-gradient(to bottom, #c1ffd7, #e9ffec, #f6fff6)';
+                    break;
+                case 'graphite':
+                    gradient = 'linear-gradient(to bottom, #6b7280, #9aa0aa, #c9cdd5)';
+                    break;
+                default:
+                    gradient = 'linear-gradient(to bottom, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%)';
+            }
+            document.body.style.background = gradient;
+            localStorage.setItem('wallpaper', value);
+        }
+
+        function applyBrightness(value) {
+            document.body.style.opacity = value / 100;
+            localStorage.setItem('brightness', value);
+        }
+
+        if (localStorage.getItem('wallpaper')) {
+            wallpaperSelect.value = localStorage.getItem('wallpaper');
+            applyWallpaper(localStorage.getItem('wallpaper'));
+        }
+
+        if (localStorage.getItem('brightness')) {
+            brightnessRange.value = localStorage.getItem('brightness');
+            applyBrightness(localStorage.getItem('brightness'));
+        }
+
+        wallpaperSelect.addEventListener('change', function() {
+            applyWallpaper(this.value);
+        });
+        wallpaperSelect.addEventListener('touchend', function() {
+            applyWallpaper(this.value);
+        });
+
+        brightnessRange.addEventListener('input', function() {
+            applyBrightness(this.value);
+        });
+        brightnessRange.addEventListener('change', function() {
+            applyBrightness(this.value);
+        });
+
+        aboutBtn.addEventListener('click', function() {
+            alert('macOS Classic Simulator\nHTML/CSS/JS Demo\nOld-school edition!');
+        });
+        aboutBtn.addEventListener('touchend', function(e) {
+            alert('macOS Classic Simulator\nHTML/CSS/JS Demo\nOld-school edition!');
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
