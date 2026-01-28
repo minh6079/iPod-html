@@ -18,7 +18,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(to bottom, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%);
+            =background: -webkit-linear-gradient(top, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%);
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -1000,24 +1000,42 @@
         var brightnessRange = document.getElementById('brightness');
         var aboutBtn = document.getElementById('about-btn');
 
-        function applyWallpaper(value) {
-            var gradient;
-            switch (value) {
-                case 'sunset':
-                    gradient = 'linear-gradient(to bottom, #ffb5a7, #fcd5ce, #f8edeb)';
-                    break;
-                case 'mint':
-                    gradient = 'linear-gradient(to bottom, #c1ffd7, #e9ffec, #f6fff6)';
-                    break;
-                case 'graphite':
-                    gradient = 'linear-gradient(to bottom, #6b7280, #9aa0aa, #c9cdd5)';
-                    break;
-                default:
-                    gradient = 'linear-gradient(to bottom, #b7cdfd 0%, #dfe9ff 40%, #eef4ff 100%)';
-            }
-            document.body.style.background = gradient;
-            localStorage.setItem('wallpaper', value);
-        }
+function applyWallpaper(value) {
+    var gradient;
+
+    switch (value) {
+        case 'sunset':
+            gradient = '-webkit-gradient(linear, left top, left bottom,' +
+                       ' from(#ffb5a7),' +
+                       ' color-stop(0.5, #fcd5ce),' +
+                       ' to(#f8edeb))';
+            break;
+
+        case 'mint':
+            gradient = '-webkit-gradient(linear, left top, left bottom,' +
+                       ' from(#c1ffd7),' +
+                       ' color-stop(0.5, #e9ffec),' +
+                       ' to(#f6fff6))';
+            break;
+
+        case 'graphite':
+            gradient = '-webkit-gradient(linear, left top, left bottom,' +
+                       ' from(#6b7280),' +
+                       ' color-stop(0.5, #9aa0aa),' +
+                       ' to(#c9cdd5))';
+            break;
+
+        default:
+            gradient = '-webkit-gradient(linear, left top, left bottom,' +
+                       ' from(#b7cdfd),' +
+                       ' color-stop(0.4, #dfe9ff),' +
+                       ' to(#eef4ff))';
+    }
+
+    document.body.style.background = gradient;
+    localStorage.setItem('wallpaper', value);
+}
+
 
         function applyBrightness(value) {
             document.body.style.opacity = value / 100;
