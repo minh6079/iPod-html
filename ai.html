@@ -35,9 +35,13 @@
             font-size: 16px;
             font-weight: bold;
             -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 44px;
             line-height: 20px;
+            z-index: 100;
         }
         
         #header-title {
@@ -49,8 +53,16 @@
         }
         
         #setup {
-            padding: 20px 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 60px 15px 20px 15px;
             text-align: center;
+            background: #f8f9fa;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
         }
         
         #setup h2 {
@@ -102,7 +114,7 @@
         }
         
         #messages {
-            position: absolute;
+            position: fixed;
             top: 44px;
             left: 0;
             right: 0;
@@ -203,7 +215,7 @@
         }
         
         #input-area {
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
@@ -212,6 +224,7 @@
             border-top: 1px solid #e8eaed;
             padding: 10px;
             -webkit-box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            z-index: 100;
         }
         
         #input-container {
@@ -399,6 +412,12 @@
             document.getElementById('messages').className = '';
             document.getElementById('input-area').className = '';
             document.getElementById('clear').className = '';
+            
+            // Add welcome message
+            var modelDisplayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
+            modelDisplayName = modelDisplayName.charAt(0).toUpperCase() + modelDisplayName.slice(1);
+            add('Welcome to AI Chat! You are chatting with ' + modelDisplayName + '. How can I help you today?', false, modelDisplayName);
+            
             document.getElementById('input').focus();
         }
         
@@ -464,36 +483,86 @@
             
             var btn = document.getElementById('send');
             btn.disabled = true;
-            loading(true);
+            
+            // Create streaming message bubble
+            var m = document.getElementById('messages');
+            var streamDiv = document.createElement('div');
+            streamDiv.id = 'streaming-msg';
+            streamDiv.className = 'msg msg-ai';
+            
+            var lbl = document.createElement('div');
+            lbl.className = 'label';
+            var modelDisplayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
+            modelDisplayName = modelDisplayName.charAt(0).toUpperCase() + modelDisplayName.slice(1);
+            lbl.appendChild(document.createTextNode(modelDisplayName));
+            streamDiv.appendChild(lbl);
+            
+            var bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.id = 'stream-bubble';
+            streamDiv.appendChild(bubble);
+            
+            m.appendChild(streamDiv);
+            m.scrollTop = m.scrollHeight;
             
             var x = new XMLHttpRequest();
-            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/' + selectedModel + ':generateContent?key=' + key);
+            x.open('POST', 'https://generativelanguage.googleapis.com/v1beta/models/' + selectedModel + ':streamGenerateContent?alt=sse&key=' + key);
             x.setRequestHeader('Content-Type', 'application/json');
             
+            var fullText = '';
+            var lastLength = 0;
+            
             x.onreadystatechange = function() {
+                if (x.readyState == 3 || x.readyState == 4) {
+                    var responseText = x.responseText;
+                    var newData = responseText.substring(lastLength);
+                    lastLength = responseText.length;
+                    
+                    // Parse SSE events
+                    var lines = newData.split('\n');
+                    for (var i = 0; i < lines.length; i++) {
+                        var line = lines[i];
+                        if (line.indexOf('data: ') === 0) {
+                            var jsonStr = line.substring(6);
+                            try {
+                                var data = JSON.parse(jsonStr);
+                                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                                    var part = data.candidates[0].content.parts[0];
+                                    if (part.text) {
+                                        fullText += part.text;
+                                        bubble.innerHTML = formatMarkdown(fullText);
+                                        m.scrollTop = m.scrollHeight;
+                                    }
+                                }
+                            } catch(e) {
+                                // Skip invalid JSON
+                            }
+                        }
+                    }
+                }
+                
                 if (x.readyState == 4) {
-                    loading(false);
                     btn.disabled = false;
                     
+                    // Remove streaming bubble
+                    var streamMsg = document.getElementById('streaming-msg');
+                    if (streamMsg) {
+                        streamMsg.parentNode.removeChild(streamMsg);
+                    }
+                    
                     if (x.status == 200) {
-                        try {
-                            var r = JSON.parse(x.responseText);
-                            var t = r.candidates[0].content.parts[0].text;
-                            
-                            // Format model name for display
-                            var displayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
-                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-                            
-                            add(t, false, displayName);
-                            msgs.push({role: 'model', parts: [{text: t}]});
-                        } catch(e) {
-                            add('Error parsing response', false, 'Error');
+                        if (fullText) {
+                            add(fullText, false, modelDisplayName);
+                            msgs.push({role: 'model', parts: [{text: fullText}]});
+                        } else {
+                            add('Error: No response received', false, 'Error');
                         }
                     } else if (x.status == 429) {
                         add('Rate limit exceeded. Please wait and try again later.', false, 'Error');
                     } else {
                         add('Error ' + x.status + ': Request failed. Please try again.', false, 'Error');
                     }
+                    
                     document.getElementById('input').focus();
                 }
             };
