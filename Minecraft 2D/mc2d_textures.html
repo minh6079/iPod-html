@@ -333,7 +333,8 @@
                 IRON_BLOCK: 20,
                 GOLD_BLOCK: 21,
                 DIAMOND_BLOCK: 22,
-                BEACON: 23
+                BEACON: 23,
+                BEAM: 24
             };
             // Texture file mapping (must match available texture files)
             var TEXTURE_FILES = {
@@ -359,11 +360,12 @@
                 20: 'textures/iron_block.png',
                 21: 'textures/gold_block.png',
                 22: 'textures/diamond_block.png',
-                23: 'textures/beacon.png'
+                23: 'textures/beacon.png',
+                24: 'textures/beam.png
             };
             var textures = {};
             var texturesLoaded = 0;
-            var totalTextures = 23; // number of entries in TEXTURE_FILES
+            var totalTextures = 24; // number of entries in TEXTURE_FILES
             // Flat list of all blocks shown in the grid (order determines grid)
             var ALL_BLOCKS = [
                 BLOCKS.GRASS,
@@ -388,7 +390,8 @@
                 BLOCKS.GOLD_BLOCK,
                 BLOCKS.DIAMOND_ORE,
                 BLOCKS.DIAMOND_BLOCK,
-                BLOCKS.BEACON
+                BLOCKS.BEACON,
+                BLOCKS.BEAM
             ];
             // World & player
             var world = [],
