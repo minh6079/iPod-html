@@ -666,10 +666,12 @@
                 if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
                     if (mode === 'mine') {
                         if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
-                            // Check if mining a beacon - remove beam above it
+                            // Check if mining a beacon - remove all beam blocks above it
                             if (world[wx][wy] === BLOCKS.BEACON) {
-                                if (wy - 1 >= 0 && world[wx][wy - 1] === BLOCKS.BEAM) {
-                                    world[wx][wy - 1] = BLOCKS.AIR;
+                                for (var beamY = wy - 1; beamY >= 0; beamY--) {
+                                    if (world[wx][beamY] === BLOCKS.BEAM) {
+                                        world[wx][beamY] = BLOCKS.AIR;
+                                    }
                                 }
                             }
                             world[wx][wy] = BLOCKS.AIR;
@@ -715,9 +717,9 @@
                     var rightValid = validBlocks.indexOf(rightBlock) !== -1;
                     
                     if (centerValid && leftValid && rightValid) {
-                        // Activate beacon - place beam on top
-                        if (wy - 1 >= 0) {
-                            world[wx][wy - 1] = BLOCKS.BEAM;
+                        // Activate beacon - place beam all the way to top
+                        for (var beamY = wy - 1; beamY >= 0; beamY--) {
+                            world[wx][beamY] = BLOCKS.BEAM;
                         }
                     }
                 }
