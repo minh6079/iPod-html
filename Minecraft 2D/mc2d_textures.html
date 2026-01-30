@@ -546,7 +546,7 @@
                 for (var bx = left; bx <= right; bx++) {
                     for (var by = top; by <= bottom; by++) {
                         if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                            if (world[bx][by] !== BLOCKS.AIR) {
+                            if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM) {
                                 return true;
                             }
                         } else if (by >= WORLD_HEIGHT) {
