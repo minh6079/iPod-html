@@ -603,7 +603,7 @@
           for (var bx = left; bx <= right; bx++) {
             for (var by = top; by <= bottom; by++) {
               if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM) {
+                if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM && world[bx][by] !== BLOCKS.RED_MUSHROOM && world[bx][by] !== BLOCKS.BROWN_MUSHROOM && world[bx][by] !== BLOCKS.DANDELION && world[bx][by] !== BLOCKS.POPPY) {
                   return true;
                 }
               } else if (by >= WORLD_HEIGHT) {
