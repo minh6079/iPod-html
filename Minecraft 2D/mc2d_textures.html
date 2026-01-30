@@ -666,6 +666,12 @@
                 if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
                     if (mode === 'mine') {
                         if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
+                            // Check if mining a beacon - remove beam above it
+                            if (world[wx][wy] === BLOCKS.BEACON) {
+                                if (wy - 1 >= 0 && world[wx][wy - 1] === BLOCKS.BEAM) {
+                                    world[wx][wy - 1] = BLOCKS.AIR;
+                                }
+                            }
                             world[wx][wy] = BLOCKS.AIR;
                         }
                     } else {
@@ -676,7 +682,18 @@
                                 ph = Math.ceil(player.height / BLOCK_SIZE);
                             if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
                                 world[wx][wy] = selectedBlock;
-                                checkBeaconActivation(wx, wy);
+                                
+                                // Check if beacon was placed
+                                if (selectedBlock === BLOCKS.BEACON) {
+                                    checkBeaconActivation(wx, wy);
+                                }
+                                
+                                // Check if a base block (iron/gold/diamond) was placed - recheck all beacons
+                                if (selectedBlock === BLOCKS.IRON_BLOCK || 
+                                    selectedBlock === BLOCKS.GOLD_BLOCK || 
+                                    selectedBlock === BLOCKS.DIAMOND_BLOCK) {
+                                    checkAllBeacons();
+                                }
                             }
                         }
                     }
@@ -691,7 +708,7 @@
                     var leftBlock = (wx - 1 >= 0 && wy + 1 < WORLD_HEIGHT) ? world[wx - 1][wy + 1] : BLOCKS.AIR;
                     var rightBlock = (wx + 1 < WORLD_WIDTH && wy + 1 < WORLD_HEIGHT) ? world[wx + 1][wy + 1] : BLOCKS.AIR;
                     
-                    // Check if all three blocks are iron, gold, or diamond blocks
+                    // Check if all three blocks are iron, gold, or diamond blocks (can be mixed)
                     var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
                     var centerValid = validBlocks.indexOf(centerBlock) !== -1;
                     var leftValid = validBlocks.indexOf(leftBlock) !== -1;
@@ -701,6 +718,17 @@
                         // Activate beacon - place beam on top
                         if (wy - 1 >= 0) {
                             world[wx][wy - 1] = BLOCKS.BEAM;
+                        }
+                    }
+                }
+            }
+            
+            function checkAllBeacons() {
+                // Scan entire world for beacons and check each one
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        if (world[x][y] === BLOCKS.BEACON) {
+                            checkBeaconActivation(x, y);
                         }
                     }
                 }
