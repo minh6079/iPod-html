@@ -2,8 +2,8 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=320, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=320, user-scalable=no" />
     <title>2D Minecraft ES5 iPod</title>
     <style>
         * {
@@ -22,9 +22,6 @@
 
         canvas {
             display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
             background: #87CEEB;
             -webkit-image-rendering: optimize-contrast;
             image-rendering: pixelated;
@@ -48,55 +45,123 @@
             height: 40px;
             background: rgba(0, 0, 0, 0.6);
             white-space: nowrap;
-            /* keep slots in one line */
+            pointer-events: auto;
+        }
+
+        #inventoryBtn {
+            position: absolute;
+            right: 8px;
+            top: 6px;
+            font-size: 14px;
+            height: 30px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: #fff;
+            pointer-events: auto;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        }
+
+        #selectedBlockIcon {
+            position: absolute;
+            right: 70px;
+            top: 8px;
+            width: 24px;
+            height: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.12);
+            pointer-events: none;
+        }
+
+        #inventory-panel {
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            right: 10px;
+            bottom: 100px;
+            background: rgba(0, 0, 0, 0.92);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            z-index: 500;
+            display: none;
+            pointer-events: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #inventory-header {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+            color: white;
+            font-weight: bold;
+            padding: 8px 12px;
+            position: relative;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+        #closeInventory {
+            position: absolute;
+            right: 12px;
+            top: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
         }
 
         #inventory {
-            pointer-events: auto;
-            height: 100%;
-            display: inline-block;
-            /* horizontal stacking */
-            vertical-align: middle;
+            padding: 10px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            height: calc(100% - 40px);
+            text-align: left;
         }
 
         .inv-slot {
-            display: inline-block;
-            /* horizontal */
-            width: 28px;
-            height: 28px;
-            margin: 6px 2px;
-            /* spacing around each slot */
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 3px;
-            background: rgba(0, 0, 0, 0.5);
+            width: 42px;
+            height: 42px;
+            margin: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.25);
             position: relative;
             cursor: pointer;
+            pointer-events: auto;
+            display: inline-block;
+            vertical-align: top;
         }
 
         .inv-slot.selected {
             border-color: #fff;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .inv-slot canvas {
             width: 100%;
             height: 100%;
             display: block;
+            image-rendering: pixelated;
         }
 
         #mode-indicator {
+            position: absolute;
+            bottom: 27px;
+            left: 63%;
+            margin-left: -50px;
             pointer-events: auto;
-            display: inline-block;
-            padding: 6px 10px;
-            margin: 6px 10px;
+            padding: 8px 14px;
             background: rgba(0, 0, 0, 0.7);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 4px;
-            font-size: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            vertical-align: middle;
         }
 
         #mode-indicator.mine-mode {
@@ -115,7 +180,7 @@
             left: 0;
             right: 0;
             height: 90px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+            background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
             pointer-events: none;
         }
 
@@ -131,8 +196,6 @@
             font-weight: bold;
             pointer-events: auto;
             cursor: pointer;
-            align-items: center;
-            justify-content: center;
         }
 
         .btn:active {
@@ -207,80 +270,410 @@
     <canvas id="gameCanvas"></canvas>
     <div id="ui-container">
         <div id="top-bar">
+            <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
+            <div id="inventoryBtn" class="btn">INV</div>
+        </div>
+        <div id="inventory-panel">
+            <div id="inventory-header">
+                <span>Inventory</span>
+                <div id="closeInventory">✕</div>
+            </div>
             <div id="inventory"></div>
-            <div id="mode-indicator" class="mine-mode">MINE</div>
         </div>
         <div id="reach-indicator"></div>
         <div id="controls">
             <div class="btn" id="leftBtn">◄</div>
             <div class="btn" id="rightBtn">►</div>
+            <div id="mode-indicator" class="mine-mode">MINE</div>
             <div class="btn" id="jumpBtn">▲</div>
         </div>
     </div>
-
     <script>
         (function () {
+            // Canvas setup
             var canvas = document.getElementById('gameCanvas');
             var ctx = canvas.getContext('2d');
-            function resizeCanvas() { canvas.width = 320; canvas.height = 480; }
+
+            function resizeCanvas() {
+                canvas.width = 320;
+                canvas.height = 480;
+            }
             resizeCanvas();
 
-            var BLOCK_SIZE = 16, WORLD_WIDTH = 120, WORLD_HEIGHT = 60, GRAVITY = 0.8, JUMP_POWER = -12, MOVE_SPEED = 3, MAX_REACH = 4, MAX_FALL_SPEED = 15;
-            var BLOCKS = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, WOOD: 4, LEAVES: 5, PLANKS: 6, SAND: 7, COBBLESTONE: 8 };
+            // Base constants (never change)
+            var BLOCK_SIZE = 16,
+                WORLD_WIDTH = 120,
+                WORLD_HEIGHT = 60,
+                GRAVITY = 0.8,
+                MAX_FALL_SPEED = 15;
+
+            // Dynamic constants (change based on beacons)
+            var JUMP_POWER = -12,
+                MOVE_SPEED = 3,
+                MAX_REACH = 4;
+
+            // Function to check if any beacon exists in the world
+            function hasActiveBeacon() {
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        if (world[x][y] === BLOCKS.BEACON) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // Function to update player stats based on beacon presence
+            function updatePlayerStats() {
+                if (hasActiveBeacon()) {
+                    JUMP_POWER = -15;
+                    MOVE_SPEED = 5;
+                    MAX_REACH = 5;
+                } else {
+                    JUMP_POWER = -12;
+                    MOVE_SPEED = 3;
+                    MAX_REACH = 4;
+                }
+            }
+
+            // Block definitions
+            var BLOCKS = {
+                AIR: 0,
+                GRASS: 1,
+                DIRT: 2,
+                STONE: 3,
+                WOOD: 4,
+                LEAVES: 5,
+                PLANKS: 6,
+                COBBLESTONE: 7,
+                COAL_ORE: 8,
+                IRON_ORE: 9,
+                GOLD_ORE: 10,
+                DIAMOND_ORE: 11,
+                MOSSY_COBBLESTONE: 12,
+                OAK_STAIRS_LEFT: 13,
+                OAK_STAIRS_RIGHT: 14,
+                OAK_FENCE: 15,
+                OAK_SLAB: 16,
+                STONE_SLAB: 17,
+                COBBLE_SLAB: 18,
+                COAL_BLOCK: 19,
+                IRON_BLOCK: 20,
+                GOLD_BLOCK: 21,
+                DIAMOND_BLOCK: 22,
+                BEACON: 23,
+                BEAM: 24,
+                RED_MUSHROOM: 25,
+                BROWN_MUSHROOM: 26,
+                DANDELION: 27,
+                POPPY: 28
+            };
+
+            // Block colors for non-textured rendering
             var BLOCK_COLORS = {};
-            BLOCK_COLORS[BLOCKS.GRASS] = ['#7CBD3C', '#5FA127', '#4A8118']; BLOCK_COLORS[BLOCKS.DIRT] = ['#8B6914', '#6B4910', '#4A3008'];
-            BLOCK_COLORS[BLOCKS.STONE] = ['#888', '#666', '#444']; BLOCK_COLORS[BLOCKS.WOOD] = ['#8B4513', '#6B3410', '#4A2008'];
-            BLOCK_COLORS[BLOCKS.LEAVES] = ['#228B22', '#1A6B1A', '#0F4D0F']; BLOCK_COLORS[BLOCKS.PLANKS] = ['#DEB887', '#BF9870', '#9F7850'];
-            BLOCK_COLORS[BLOCKS.SAND] = ['#F4E4C1', '#D4C4A1', '#B4A481']; BLOCK_COLORS[BLOCKS.COBBLESTONE] = ['#7A7A7A', '#5A5A5A', '#3A3A3A'];
+            BLOCK_COLORS[BLOCKS.GRASS] = ['#7CBD3C', '#5FA127', '#4A8118'];
+            BLOCK_COLORS[BLOCKS.DIRT] = ['#8B6914', '#6B4910', '#4A3008'];
+            BLOCK_COLORS[BLOCKS.STONE] = ['#888', '#666', '#444'];
+            BLOCK_COLORS[BLOCKS.WOOD] = ['#8B4513', '#6B3410', '#4A2008'];
+            BLOCK_COLORS[BLOCKS.LEAVES] = ['#228B22', '#1A6B1A', '#0F4D0F'];
+            BLOCK_COLORS[BLOCKS.PLANKS] = ['#DEB887', '#BF9870', '#9F7850'];
+            BLOCK_COLORS[BLOCKS.COBBLESTONE] = ['#7A7A7A', '#5A5A5A', '#3A3A3A'];
+            BLOCK_COLORS[BLOCKS.COAL_ORE] = ['#333333', '#222222', '#111111'];
+            BLOCK_COLORS[BLOCKS.IRON_ORE] = ['#D8D8D8', '#B8B8B8', '#989898'];
+            BLOCK_COLORS[BLOCKS.GOLD_ORE] = ['#FFD700', '#E6C200', '#BA9A00'];
+            BLOCK_COLORS[BLOCKS.DIAMOND_ORE] = ['#00FFFF', '#00CCCC', '#009999'];
+            BLOCK_COLORS[BLOCKS.MOSSY_COBBLESTONE] = ['#5A7A5A', '#3A5A3A', '#1A3A1A'];
+            BLOCK_COLORS[BLOCKS.COAL_BLOCK] = ['#1C1C1C', '#0E0E0E', '#050505'];
+            BLOCK_COLORS[BLOCKS.IRON_BLOCK] = ['#C0C0C0', '#A0A0A0', '#808080'];
+            BLOCK_COLORS[BLOCKS.GOLD_BLOCK] = ['#FFD700', '#E6C200', '#BA9A00'];
+            BLOCK_COLORS[BLOCKS.DIAMOND_BLOCK] = ['#00FFFF', '#00CCCC', '#009999'];
+            BLOCK_COLORS[BLOCKS.BEACON] = ['#FF69B4', '#E65A9E', '#BA3D73'];
+            BLOCK_COLORS[BLOCKS.BEAM] = ['#FFB6C1', '#E69AA8', '#BA7A80'];
+            BLOCK_COLORS[BLOCKS.RED_MUSHROOM] = ['#FF0000', '#CC0000', '#990000'];
+            BLOCK_COLORS[BLOCKS.BROWN_MUSHROOM] = ['#8B4513', '#6B3410', '#4A2008'];
+            BLOCK_COLORS[BLOCKS.DANDELION] = ['#FFFF00', '#CCCC00', '#999900'];
+            BLOCK_COLORS[BLOCKS.POPPY] = ['#FF4500', '#CC3700', '#992800'];
+            BLOCK_COLORS[BLOCKS.OAK_STAIRS_LEFT] = BLOCK_COLORS[BLOCKS.PLANKS];
+            BLOCK_COLORS[BLOCKS.OAK_STAIRS_RIGHT] = BLOCK_COLORS[BLOCKS.PLANKS];
+            BLOCK_COLORS[BLOCKS.OAK_FENCE] = BLOCK_COLORS[BLOCKS.PLANKS];
+            BLOCK_COLORS[BLOCKS.OAK_SLAB] = BLOCK_COLORS[BLOCKS.PLANKS];
+            BLOCK_COLORS[BLOCKS.STONE_SLAB] = BLOCK_COLORS[BLOCKS.STONE];
+            BLOCK_COLORS[BLOCKS.COBBLE_SLAB] = BLOCK_COLORS[BLOCKS.COBBLESTONE];
 
-            var world = [], player = { x: 60 * BLOCK_SIZE, y: 20 * BLOCK_SIZE, width: 12, height: 24, vx: 0, vy: 0, onGround: false };
-            var camera = { x: 0, y: 0 };
-            var keys = { left: false, right: false, jump: false, jumpPressed: false };
-            var mode = 'mine', selectedBlock = BLOCKS.DIRT, inventory = [BLOCKS.GRASS, BLOCKS.DIRT, BLOCKS.STONE, BLOCKS.WOOD, BLOCKS.PLANKS, BLOCKS.COBBLESTONE, BLOCKS.SAND], selectedSlot = 0;
+            // Flat list of all blocks shown in the grid (order determines grid)
+            var ALL_BLOCKS = [
+                BLOCKS.GRASS,
+                BLOCKS.DIRT,
+                BLOCKS.STONE,
+                BLOCKS.STONE_SLAB,
+                BLOCKS.LEAVES,
+                BLOCKS.WOOD,
+                BLOCKS.PLANKS,
+                BLOCKS.OAK_STAIRS_LEFT,
+                BLOCKS.OAK_STAIRS_RIGHT,
+                BLOCKS.OAK_SLAB,
+                BLOCKS.OAK_FENCE,
+                BLOCKS.COBBLESTONE,
+                BLOCKS.MOSSY_COBBLESTONE,
+                BLOCKS.COBBLE_SLAB,
+                BLOCKS.COAL_ORE,
+                BLOCKS.COAL_BLOCK,
+                BLOCKS.IRON_ORE,
+                BLOCKS.IRON_BLOCK,
+                BLOCKS.GOLD_ORE,
+                BLOCKS.GOLD_BLOCK,
+                BLOCKS.DIAMOND_ORE,
+                BLOCKS.DIAMOND_BLOCK,
+                BLOCKS.BEACON
+            ];
 
+            // World & player
+            var world = [],
+                player = {
+                    x: 60 * BLOCK_SIZE,
+                    y: 20 * BLOCK_SIZE,
+                    width: 12,
+                    height: 24,
+                    vx: 0,
+                    vy: 0,
+                    onGround: false
+                };
+            var camera = {
+                x: 0,
+                y: 0
+            };
+            var keys = {
+                left: false,
+                right: false,
+                jump: false,
+                jumpPressed: false
+            };
+            var mode = 'mine',
+                selectedBlock = ALL_BLOCKS[0],
+                selectedSlot = 0;
+
+            // UI elements (DOM)
+            var inventoryPanel = document.getElementById('inventory-panel');
+            var inventoryBtn = document.getElementById('inventoryBtn');
+            var closeInventoryBtn = document.getElementById('closeInventory');
+            var selectedBlockIcon = document.getElementById('selectedBlockIcon');
+
+            // Draw block icon on canvas
+            function drawBlockIcon(ctx, blockType, size) {
+                var colors = BLOCK_COLORS[blockType];
+                if (!colors) return;
+
+                ctx.fillStyle = colors[0];
+                ctx.fillRect(0, 0, size, size);
+
+                if (blockType === BLOCKS.GRASS) {
+                    ctx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0];
+                    ctx.fillRect(0, size * 0.2, size, size * 0.8);
+                }
+
+                ctx.fillStyle = colors[1];
+                ctx.fillRect(0, size - 2, size, 2);
+                ctx.fillRect(size - 2, 0, 2, size);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(0, 0, 1, size);
+                ctx.fillRect(0, 0, 4, 1);
+
+                ctx.fillStyle = colors[2];
+                ctx.fillRect(size - 1, size - 1, 1, 1);
+            }
+
+            // Draw selected block icon (24x24)
+            function updateSelectedBlockIcon() {
+                if (!selectedBlockIcon) return;
+                var iconCtx = selectedBlockIcon.getContext('2d');
+                iconCtx.clearRect(0, 0, 24, 24);
+                drawBlockIcon(iconCtx, selectedBlock, 24);
+            }
+
+            // World generation
             function initWorld() {
-                for (var x = 0; x < WORLD_WIDTH; x++) { world[x] = []; for (var y = 0; y < WORLD_HEIGHT; y++) { world[x][y] = BLOCKS.AIR; } }
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    world[x] = [];
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        world[x][y] = BLOCKS.AIR;
+                    }
+                }
                 for (var x = 0; x < WORLD_WIDTH; x++) {
                     var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
-                    for (var y = height; y < WORLD_HEIGHT; y++) { if (y === height) { world[x][y] = BLOCKS.GRASS; } else if (y < height + 4) { world[x][y] = BLOCKS.DIRT; } else { world[x][y] = BLOCKS.STONE; } }
+                    for (var y = height; y < WORLD_HEIGHT; y++) {
+                        if (y === height) {
+                            world[x][y] = BLOCKS.GRASS;
+                        } else if (y < height + 4) {
+                            world[x][y] = BLOCKS.DIRT;
+                        } else {
+                            world[x][y] = BLOCKS.STONE;
+                            var depth = y - (height + 4);
+                            if (depth > 2 && Math.random() < 0.08) {
+                                world[x][y] = BLOCKS.COAL_ORE;
+                            }
+                            if (depth > 8 && Math.random() < 0.04) {
+                                world[x][y] = BLOCKS.IRON_ORE;
+                            }
+                            if (depth > 15 && Math.random() < 0.02) {
+                                world[x][y] = BLOCKS.GOLD_ORE;
+                            }
+                            if (depth > 20 && Math.random() < 0.01) {
+                                world[x][y] = BLOCKS.DIAMOND_ORE;
+                            }
+                        }
+                    }
                     if (Math.random() < 0.08 && x < WORLD_WIDTH - 4 && x > 3) {
-                        var th = 5 + Math.floor(Math.random() * 4); for (var ty = 0; ty < th; ty++) { if (height - ty - 1 >= 0) { world[x][height - ty - 1] = BLOCKS.WOOD; } }
-                        for (var lx = -2; lx <= 2; lx++) { for (var ly = -2; ly <= 1; ly++) { var tx = x + lx; var ty = height - th + ly; if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) { if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) { world[tx][ty] = BLOCKS.LEAVES; } } } }
+                        var th = 5 + Math.floor(Math.random() * 4);
+                        for (var ty = 0; ty < th; ty++) {
+                            if (height - ty - 1 >= 0) {
+                                world[x][height - ty - 1] = BLOCKS.WOOD;
+                            }
+                        }
+                        for (var lx = -2; lx <= 2; lx++) {
+                            for (var ly = -2; ly <= 1; ly++) {
+                                var tx = x + lx;
+                                var ty = height - th + ly;
+                                if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+                                    if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) {
+                                        world[tx][ty] = BLOCKS.LEAVES;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Generate flowers and mushrooms on grass
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
+
+                    // Only place on grass blocks
+                    if (height > 0 && height < WORLD_HEIGHT && world[x][height] === BLOCKS.GRASS) {
+                        var rand = Math.random();
+
+                        // Red mushrooms (rare, 2%)
+                        if (rand < 0.02 && world[x][height - 1] === BLOCKS.AIR) {
+                            world[x][height - 1] = BLOCKS.RED_MUSHROOM;
+                        }
+                        // Brown mushrooms (rare, 2%)
+                        else if (rand < 0.04 && world[x][height - 1] === BLOCKS.AIR) {
+                            world[x][height - 1] = BLOCKS.BROWN_MUSHROOM;
+                        }
+                        // Dandelion (common, 6%)
+                        else if (rand < 0.10 && world[x][height - 1] === BLOCKS.AIR) {
+                            world[x][height - 1] = BLOCKS.DANDELION;
+                        }
+                        // Poppy (common, 6%)
+                        else if (rand < 0.16 && world[x][height - 1] === BLOCKS.AIR) {
+                            world[x][height - 1] = BLOCKS.POPPY;
+                        }
                     }
                 }
             }
 
+            // Drawing
             function drawBlock(x, y, t) {
-                if (t === BLOCKS.AIR) return; var colors = BLOCK_COLORS[t]; if (!colors) return; var sx = x * BLOCK_SIZE - camera.x; var sy = y * BLOCK_SIZE - camera.y;
-                ctx.fillStyle = colors[0]; ctx.fillRect(sx, sy, BLOCK_SIZE, BLOCK_SIZE);
-                if (t === BLOCKS.GRASS) { ctx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0]; ctx.fillRect(sx, sy + 3, BLOCK_SIZE, BLOCK_SIZE - 3); }
-                ctx.fillStyle = colors[1]; ctx.fillRect(sx, sy + BLOCK_SIZE - 2, BLOCK_SIZE, 2); ctx.fillRect(sx + BLOCK_SIZE - 2, sy, 2, BLOCK_SIZE);
-                ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(sx, sy, 1, BLOCK_SIZE); ctx.fillRect(sx, sy, 4, 1);
-                ctx.fillStyle = colors[2]; ctx.fillRect(sx + BLOCK_SIZE - 1, sy + BLOCK_SIZE - 1, 1, 1);
+                if (t === BLOCKS.AIR) return;
+                var colors = BLOCK_COLORS[t];
+                if (!colors) return;
+                var sx = x * BLOCK_SIZE - camera.x;
+                var sy = y * BLOCK_SIZE - camera.y;
+
+                ctx.fillStyle = colors[0];
+                ctx.fillRect(sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+
+                if (t === BLOCKS.GRASS) {
+                    ctx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0];
+                    ctx.fillRect(sx, sy + 3, BLOCK_SIZE, BLOCK_SIZE - 3);
+                }
+
+                ctx.fillStyle = colors[1];
+                ctx.fillRect(sx, sy + BLOCK_SIZE - 2, BLOCK_SIZE, 2);
+                ctx.fillRect(sx + BLOCK_SIZE - 2, sy, 2, BLOCK_SIZE);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(sx, sy, 1, BLOCK_SIZE);
+                ctx.fillRect(sx, sy, 4, 1);
+
+                ctx.fillStyle = colors[2];
+                ctx.fillRect(sx + BLOCK_SIZE - 1, sy + BLOCK_SIZE - 1, 1, 1);
             }
 
             function checkCollision(x, y, w, h) {
-                var left = Math.floor(x / BLOCK_SIZE), right = Math.floor((x + w - 0) / BLOCK_SIZE), top = Math.floor(y / BLOCK_SIZE), bottom = Math.floor((y + h - 0) / BLOCK_SIZE);
-                for (var bx = left; bx <= right; bx++) { for (var by = top; by <= bottom; by++) { if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) { if (world[bx][by] !== BLOCKS.AIR) { return true; } } else if (by >= WORLD_HEIGHT) { return true; } } } return false;
+                var left = Math.floor(x / BLOCK_SIZE),
+                    right = Math.floor((x + w) / BLOCK_SIZE),
+                    top = Math.floor(y / BLOCK_SIZE),
+                    bottom = Math.floor((y + h) / BLOCK_SIZE);
+                for (var bx = left; bx <= right; bx++) {
+                    for (var by = top; by <= bottom; by++) {
+                        if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+                            if (world[bx][by] !== BLOCKS.AIR &&
+                                world[bx][by] !== BLOCKS.BEAM &&
+                                world[bx][by] !== BLOCKS.RED_MUSHROOM &&
+                                world[bx][by] !== BLOCKS.BROWN_MUSHROOM &&
+                                world[bx][by] !== BLOCKS.DANDELION &&
+                                world[bx][by] !== BLOCKS.POPPY) {
+                                return true;
+                            }
+                        } else if (by >= WORLD_HEIGHT) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
 
             function updatePlayer() {
-                if (keys.left) { player.vx = -MOVE_SPEED; } else if (keys.right) { player.vx = MOVE_SPEED; } else { player.vx = 0; }
-                if (keys.jump && player.onGround && !keys.jumpPressed) { player.vy = JUMP_POWER; player.onGround = false; keys.jumpPressed = true; }
-                if (!keys.jump) { keys.jumpPressed = false; }
-                if (!player.onGround) { player.vy += GRAVITY; if (player.vy > MAX_FALL_SPEED) { player.vy = MAX_FALL_SPEED; } } else if (player.vy > 0) { player.vy = 0; }
-
-                var oldX = player.x; player.x += player.vx; if (checkCollision(player.x, player.y, player.width, player.height)) { player.x = oldX; }
-                var oldY = player.y; player.y += player.vy; if (checkCollision(player.x, player.y, player.width, player.height)) { player.y = oldY; player.vy = 0; player.onGround = true; } else { player.onGround = false; }
+                if (keys.left) {
+                    player.vx = -MOVE_SPEED;
+                } else if (keys.right) {
+                    player.vx = MOVE_SPEED;
+                } else {
+                    player.vx = 0;
+                }
+                if (keys.jump && player.onGround && !keys.jumpPressed) {
+                    player.vy = JUMP_POWER;
+                    player.onGround = false;
+                    keys.jumpPressed = true;
+                }
+                if (!keys.jump) {
+                    keys.jumpPressed = false;
+                }
+                if (!player.onGround) {
+                    player.vy += GRAVITY;
+                    if (player.vy > MAX_FALL_SPEED) {
+                        player.vy = MAX_FALL_SPEED;
+                    }
+                } else if (player.vy > 0) {
+                    player.vy = 0;
+                }
+                var oldX = player.x;
+                player.x += player.vx;
+                if (checkCollision(player.x, player.y, player.width, player.height)) {
+                    player.x = oldX;
+                }
+                var oldY = player.y;
+                player.y += player.vy;
+                if (checkCollision(player.x, player.y, player.width, player.height)) {
+                    player.y = oldY;
+                    player.vy = 0;
+                    player.onGround = true;
+                } else {
+                    player.onGround = false;
+                }
             }
 
             function updateCamera() {
-                var tx = player.x - canvas.width / 2 + player.width / 2; var ty = player.y - canvas.height / 2 + player.height / 2;
+                var tx = player.x - canvas.width / 2 + player.width / 2;
+                var ty = player.y - canvas.height / 2 + player.height / 2;
                 tx = Math.max(0, Math.min(tx, WORLD_WIDTH * BLOCK_SIZE - canvas.width));
                 ty = Math.max(0, Math.min(ty, WORLD_HEIGHT * BLOCK_SIZE - canvas.height));
-                camera.x += (tx - camera.x) * 0.1; camera.y += (ty - camera.y) * 0.1;
+                camera.x += (tx - camera.x) * 0.1;
+                camera.y += (ty - camera.y) * 0.1;
             }
-            // Draw player with better details
+
             function drawPlayer() {
                 var screenX = Math.floor(player.x - camera.x);
                 var screenY = Math.floor(player.y - camera.y);
@@ -322,51 +715,206 @@
             }
 
             function render() {
-                ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1), endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1),
-                    startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1), endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
-                for (var x = startX; x < endX; x++) { for (var y = startY; y < endY; y++) { drawBlock(x, y, world[x][y]); } }
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1),
+                    endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1),
+                    startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1),
+                    endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
+                for (var x = startX; x < endX; x++) {
+                    for (var y = startY; y < endY; y++) {
+                        drawBlock(x, y, world[x][y]);
+                    }
+                }
                 drawPlayer();
             }
 
-            function gameLoop() { updatePlayer(); updateCamera(); render(); setTimeout(gameLoop, 16); }
+            function gameLoop() {
+                updatePlayer();
+                updateCamera();
+                render();
+                setTimeout(gameLoop, 16);
+            }
 
-            function isInReach(wx, wy) { var px = player.x + player.width / 2, py = player.y + player.height / 2, bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2, by = wy * BLOCK_SIZE + BLOCK_SIZE / 2; return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH; }
+            function isInReach(wx, wy) {
+                var px = player.x + player.width / 2,
+                    py = player.y + player.height / 2,
+                    bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2,
+                    by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
+                return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH;
+            }
 
             function handleTouch(x, y) {
-                var wx = Math.floor((x + camera.x) / BLOCK_SIZE), wy = Math.floor((y + camera.y) / BLOCK_SIZE);
+                var wx = Math.floor((x + camera.x) / BLOCK_SIZE),
+                    wy = Math.floor((y + camera.y) / BLOCK_SIZE);
                 if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
-                    if (mode === 'mine') { if (world[wx][wy] !== BLOCKS.AIR) { world[wx][wy] = BLOCKS.AIR; } }
-                    else {
-                        if (world[wx][wy] === BLOCKS.AIR) {
-                            var px = Math.floor(player.x / BLOCK_SIZE), py = Math.floor(player.y / BLOCK_SIZE); var pw = Math.ceil(player.width / BLOCK_SIZE), ph = Math.ceil(player.height / BLOCK_SIZE);
-                            if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) { world[wx][wy] = selectedBlock; }
+                    if (mode === 'mine') {
+                        if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
+                            // Check if mining a beacon - remove all beam blocks above it
+                            if (world[wx][wy] === BLOCKS.BEACON) {
+                                for (var beamY = wy - 1; beamY >= 0; beamY--) {
+                                    if (world[wx][beamY] === BLOCKS.BEAM) {
+                                        world[wx][beamY] = BLOCKS.AIR;
+                                    }
+                                }
+                            }
+                            world[wx][wy] = BLOCKS.AIR;
+                            updatePlayerStats();
+                        }
+                    } else {
+                        if (world[wx][wy] === BLOCKS.AIR && selectedBlock !== BLOCKS.BEAM) {
+                            var px = Math.floor(player.x / BLOCK_SIZE),
+                                py = Math.floor(player.y / BLOCK_SIZE);
+                            var pw = Math.ceil(player.width / BLOCK_SIZE),
+                                ph = Math.ceil(player.height / BLOCK_SIZE);
+                            if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
+                                world[wx][wy] = selectedBlock;
+                                // Check if beacon was placed
+                                if (selectedBlock === BLOCKS.BEACON) {
+                                    checkBeaconActivation(wx, wy);
+                                }
+                                // Check if a base block (iron/gold/diamond) was placed - recheck all beacons
+                                if (selectedBlock === BLOCKS.IRON_BLOCK || selectedBlock === BLOCKS.GOLD_BLOCK || selectedBlock === BLOCKS.DIAMOND_BLOCK) {
+                                    checkAllBeacons();
+                                }
+                                updatePlayerStats();
+                            }
                         }
                     }
                 }
             }
 
-            var isTouching = false;
-            canvas.addEventListener('touchstart', function (e) { e.preventDefault(); isTouching = true; handleTouch(e.touches[0].clientX, e.touches[0].clientY); });
-            canvas.addEventListener('touchmove', function (e) { e.preventDefault(); if (isTouching) { handleTouch(e.touches[0].clientX, e.touches[0].clientY); } });
-            canvas.addEventListener('touchend', function (e) { e.preventDefault(); isTouching = false; });
-
-            function addButtonEvents(id, key) { var btn = document.getElementById(id); btn.addEventListener('touchstart', function (e) { e.preventDefault(); keys[key] = true; }); btn.addEventListener('touchend', function (e) { e.preventDefault(); keys[key] = false; }); }
-            addButtonEvents('leftBtn', 'left'); addButtonEvents('rightBtn', 'right'); addButtonEvents('jumpBtn', 'jump');
-
-            var modeBtn = document.getElementById('mode-indicator'); modeBtn.addEventListener('touchstart', function (e) { e.preventDefault(); mode = mode === 'mine' ? 'place' : 'mine'; this.textContent = mode === 'mine' ? 'MINE' : 'PLACE'; this.className = mode === 'mine' ? 'mine-mode' : 'place-mode'; });
-
-            function createInventory() {
-                var invDiv = document.getElementById('inventory'); for (var i = 0; i < inventory.length; i++) {
-                    var slot = document.createElement('div'); slot.className = 'inv-slot'; if (i === selectedSlot) { slot.className += ' selected'; }
-                    var blockCanvas = document.createElement('canvas'); blockCanvas.width = 28; blockCanvas.height = 28; var blockCtx = blockCanvas.getContext('2d'); var bt = inventory[i]; var colors = BLOCK_COLORS[bt]; if (colors) { blockCtx.fillStyle = colors[0]; blockCtx.fillRect(0, 0, 28, 28); if (bt === BLOCKS.GRASS) { blockCtx.fillStyle = BLOCK_COLORS[BLOCKS.DIRT][0]; blockCtx.fillRect(0, 5, 28, 23); } blockCtx.fillStyle = colors[1]; blockCtx.fillRect(0, 26, 28, 2); blockCtx.fillRect(26, 0, 2, 28); }
-                    slot.appendChild(blockCanvas); slot.setAttribute('data-index', i); slot.addEventListener('touchstart', function (e) { e.preventDefault(); var idx = parseInt(this.getAttribute('data-index'), 10); selectedSlot = idx; selectedBlock = inventory[idx]; var slots = invDiv.getElementsByClassName('inv-slot'); for (var j = 0; j < slots.length; j++) { slots[j].className = 'inv-slot'; } this.className = 'inv-slot selected'; }); invDiv.appendChild(slot);
+            function checkBeaconActivation(wx, wy) {
+                // Check if a beacon was just placed
+                if (world[wx][wy] === BLOCKS.BEACON) {
+                    // Check blocks underneath: center, left, and right
+                    var centerBlock = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
+                    var leftBlock = (wx - 1 >= 0 && wy + 1 < WORLD_HEIGHT) ? world[wx - 1][wy + 1] : BLOCKS.AIR;
+                    var rightBlock = (wx + 1 < WORLD_WIDTH && wy + 1 < WORLD_HEIGHT) ? world[wx + 1][wy + 1] : BLOCKS.AIR;
+                    // Check if all three blocks are iron, gold, or diamond blocks (can be mixed)
+                    var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
+                    var centerValid = validBlocks.indexOf(centerBlock) !== -1;
+                    var leftValid = validBlocks.indexOf(leftBlock) !== -1;
+                    var rightValid = validBlocks.indexOf(rightBlock) !== -1;
+                    if (centerValid && leftValid && rightValid) {
+                        // Activate beacon - place beam all the way to top
+                        for (var beamY = wy - 1; beamY >= 0; beamY--) {
+                            world[wx][beamY] = BLOCKS.BEAM;
+                        }
+                    }
                 }
             }
 
-            window.addEventListener('resize', resizeCanvas);
+            function checkAllBeacons() {
+                // Scan entire world for beacons and check each one
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    for (var y = 0; y < WORLD_HEIGHT; y++) {
+                        if (world[x][y] === BLOCKS.BEACON) {
+                            checkBeaconActivation(x, y);
+                        }
+                    }
+                }
+            }
 
-            initWorld(); createInventory(); selectedBlock = inventory[0]; gameLoop();
+            // Touch handlers for canvas
+            var isTouching = false;
+            canvas.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                isTouching = true;
+                handleTouch(e.touches[0].clientX, e.touches[0].clientY);
+            });
+            canvas.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+                if (isTouching) {
+                    handleTouch(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            });
+            canvas.addEventListener('touchend', function (e) {
+                e.preventDefault();
+                isTouching = false;
+            });
+
+            // Buttons events
+            function addButtonEvents(id, key) {
+                var btn = document.getElementById(id);
+                btn.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    keys[key] = true;
+                });
+                btn.addEventListener('touchend', function (e) {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+            }
+            addButtonEvents('leftBtn', 'left');
+            addButtonEvents('rightBtn', 'right');
+            addButtonEvents('jumpBtn', 'jump');
+
+            // Mode toggle
+            var modeBtn = document.getElementById('mode-indicator');
+            modeBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                mode = mode === 'mine' ? 'place' : 'mine';
+                this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
+                this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
+            });
+
+            // Inventory panel open/close
+            inventoryBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                inventoryPanel.style.display = 'block';
+            });
+            closeInventoryBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                inventoryPanel.style.display = 'none';
+            });
+
+            // Create grid inventory (shows all blocks)
+            function createInventory() {
+                var invDiv = document.getElementById('inventory');
+                invDiv.innerHTML = '';
+                for (var i = 0; i < ALL_BLOCKS.length; i++) {
+                    var bt = ALL_BLOCKS[i];
+                    var slot = document.createElement('div');
+                    slot.className = 'inv-slot';
+                    slot.setAttribute('data-block', bt);
+                    var c = document.createElement('canvas');
+                    c.width = 48;
+                    c.height = 48;
+                    var cctx = c.getContext('2d');
+                    drawBlockIcon(cctx, bt, 48);
+                    slot.appendChild(c);
+                    invDiv.appendChild(slot);
+                }
+                // Single touch handler for grid slots
+                invDiv.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    var el = e.target;
+                    while (el && !el.classList.contains('inv-slot')) {
+                        el = el.parentNode;
+                    }
+                    if (!el) return;
+                    var bt = parseInt(el.getAttribute('data-block'), 10);
+                    selectedBlock = bt;
+                    var slots = invDiv.getElementsByClassName('inv-slot');
+                    for (var s = 0; s < slots.length; s++) {
+                        slots[s].className = 'inv-slot';
+                    }
+                    el.className += ' selected';
+                    // update the small icon next to INV
+                    updateSelectedBlockIcon();
+                    // close inventory after select
+                    inventoryPanel.style.display = 'none';
+                });
+            }
+
+            // Start
+            window.addEventListener('resize', resizeCanvas);
+            initWorld();
+            selectedBlock = ALL_BLOCKS[0];
+            createInventory();
+            updateSelectedBlockIcon();
+            gameLoop();
         })();
     </script>
 </body>
