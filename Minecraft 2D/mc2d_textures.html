@@ -390,8 +390,8 @@
                 BLOCKS.GOLD_BLOCK,
                 BLOCKS.DIAMOND_ORE,
                 BLOCKS.DIAMOND_BLOCK,
-                BLOCKS.BEACON,
-                BLOCKS.BEAM
+                BLOCKS.BEACON
+                // BLOCKS.BEAM removed - not placeable
             ];
             // World & player
             var world = [],
@@ -665,22 +665,47 @@
                     wy = Math.floor((y + camera.y) / BLOCK_SIZE);
                 if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
                     if (mode === 'mine') {
-                        if (world[wx][wy] !== BLOCKS.AIR) {
+                        if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
                             world[wx][wy] = BLOCKS.AIR;
                         }
                     } else {
-                        if (world[wx][wy] === BLOCKS.AIR) {
+                        if (world[wx][wy] === BLOCKS.AIR && selectedBlock !== BLOCKS.BEAM) {
                             var px = Math.floor(player.x / BLOCK_SIZE),
                                 py = Math.floor(player.y / BLOCK_SIZE);
                             var pw = Math.ceil(player.width / BLOCK_SIZE),
                                 ph = Math.ceil(player.height / BLOCK_SIZE);
                             if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
                                 world[wx][wy] = selectedBlock;
+                                checkBeaconActivation(wx, wy);
                             }
                         }
                     }
                 }
             }
+
+            function checkBeaconActivation(wx, wy) {
+                // Check if a beacon was just placed
+                if (world[wx][wy] === BLOCKS.BEACON) {
+                    // Check blocks underneath: center, left, and right
+                    var centerBlock = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
+                    var leftBlock = (wx - 1 >= 0 && wy + 1 < WORLD_HEIGHT) ? world[wx - 1][wy + 1] : BLOCKS.AIR;
+                    var rightBlock = (wx + 1 < WORLD_WIDTH && wy + 1 < WORLD_HEIGHT) ? world[wx + 1][wy + 1] : BLOCKS.AIR;
+                    
+                    // Check if all three blocks are iron, gold, or diamond blocks
+                    var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
+                    var centerValid = validBlocks.indexOf(centerBlock) !== -1;
+                    var leftValid = validBlocks.indexOf(leftBlock) !== -1;
+                    var rightValid = validBlocks.indexOf(rightBlock) !== -1;
+                    
+                    if (centerValid && leftValid && rightValid) {
+                        // Activate beacon - place beam on top
+                        if (wy - 1 >= 0) {
+                            world[wx][wy - 1] = BLOCKS.BEAM;
+                        }
+                    }
+                }
+            }
+            
             // Touch handlers for canvas
             var isTouching = false;
             canvas.addEventListener('touchstart', function (e) {
