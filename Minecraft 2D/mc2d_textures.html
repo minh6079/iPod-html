@@ -151,8 +151,10 @@
         #mode-indicator {
             position: absolute;
             bottom: 27px;
-            left: 63%;
-            margin-left: -50px;
+            /* align with buttons */
+            left: 57%;
+            -webkit-transform: translateX(-50%);
+
             pointer-events: auto;
             padding: 8px 14px;
             background: rgba(0, 0, 0, 0.7);
@@ -162,7 +164,11 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
+
+            align-items: center;
+            justify-content: center;
         }
+
 
         #mode-indicator.mine-mode {
             background: rgba(200, 50, 50, 0.8);
@@ -309,15 +315,12 @@
             var JUMP_POWER = -12,
                 MOVE_SPEED = 3,
                 MAX_REACH = 4;
-            // Function to check if any beacon exists in the world and beaming
+            // Function to check if any beacon exists in the world
             function hasActiveBeacon() {
                 for (var x = 0; x < WORLD_WIDTH; x++) {
                     for (var y = 0; y < WORLD_HEIGHT; y++) {
                         if (world[x][y] === BLOCKS.BEACON) {
-                            // Check if this beacon has a beam above it
-                            if (y - 1 >= 0 && world[x][y - 1] === BLOCKS.BEAM) {
-                                return true;
-                            }
+                            return true;
                         }
                     }
                 }
@@ -736,18 +739,7 @@
                                     }
                                 }
                             }
-                            
-                            // Store block type before mining
-                            var minedBlock = world[wx][wy];
                             world[wx][wy] = BLOCKS.AIR;
-                            
-                            // If mined a base block, recheck all beacons
-                            if (minedBlock === BLOCKS.IRON_BLOCK || 
-                                minedBlock === BLOCKS.GOLD_BLOCK || 
-                                minedBlock === BLOCKS.DIAMOND_BLOCK) {
-                                checkAllBeacons();
-                            }
-                            
                             updatePlayerStats();
                         }
                     } else {
@@ -758,19 +750,14 @@
                                 ph = Math.ceil(player.height / BLOCK_SIZE);
                             if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
                                 world[wx][wy] = selectedBlock;
-                                
                                 // Check if beacon was placed
                                 if (selectedBlock === BLOCKS.BEACON) {
                                     checkBeaconActivation(wx, wy);
                                 }
-                                
                                 // Check if a base block (iron/gold/diamond) was placed - recheck all beacons
-                                if (selectedBlock === BLOCKS.IRON_BLOCK || 
-                                    selectedBlock === BLOCKS.GOLD_BLOCK || 
-                                    selectedBlock === BLOCKS.DIAMOND_BLOCK) {
+                                if (selectedBlock === BLOCKS.IRON_BLOCK || selectedBlock === BLOCKS.GOLD_BLOCK || selectedBlock === BLOCKS.DIAMOND_BLOCK) {
                                     checkAllBeacons();
                                 }
-                                
                                 updatePlayerStats();
                             }
                         }
@@ -804,29 +791,7 @@
                 for (var x = 0; x < WORLD_WIDTH; x++) {
                     for (var y = 0; y < WORLD_HEIGHT; y++) {
                         if (world[x][y] === BLOCKS.BEACON) {
-                            // Check blocks underneath
-                            var centerBlock = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
-                            var leftBlock = (x - 1 >= 0 && y + 1 < WORLD_HEIGHT) ? world[x - 1][y + 1] : BLOCKS.AIR;
-                            var rightBlock = (x + 1 < WORLD_WIDTH && y + 1 < WORLD_HEIGHT) ? world[x + 1][y + 1] : BLOCKS.AIR;
-                            
-                            var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
-                            var centerValid = validBlocks.indexOf(centerBlock) !== -1;
-                            var leftValid = validBlocks.indexOf(leftBlock) !== -1;
-                            var rightValid = validBlocks.indexOf(rightBlock) !== -1;
-                            
-                            if (centerValid && leftValid && rightValid) {
-                                // Activate beacon - place beam all the way to top
-                                for (var beamY = y - 1; beamY >= 0; beamY--) {
-                                    world[x][beamY] = BLOCKS.BEAM;
-                                }
-                            } else {
-                                // Deactivate beacon - remove all beams above
-                                for (var beamY = y - 1; beamY >= 0; beamY--) {
-                                    if (world[x][beamY] === BLOCKS.BEAM) {
-                                        world[x][beamY] = BLOCKS.AIR;
-                                    }
-                                }
-                            }
+                            checkBeaconActivation(x, y);
                         }
                     }
                 }
