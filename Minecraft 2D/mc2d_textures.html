@@ -371,8 +371,7 @@
                 RED_MUSHROOM: 25,
                 BROWN_MUSHROOM: 26,
                 DANDELION: 27,
-                POPPY: 28,
-                FIRE: 29
+                POPPY: 28
             };
             // Texture file mapping (must match available texture files)
             var TEXTURE_FILES = {
@@ -403,12 +402,11 @@
                 25: 'textures/red_mushroom.png',
                 26: 'textures/brown_mushroom.png',
                 27: 'textures/dandelion.png',
-                28: 'textures/poppy.png',
-                29: 'textures/fire.png
+                28: 'textures/poppy.png'
             };
             var textures = {};
             var texturesLoaded = 0;
-            var totalTextures = 29; // number of entries in TEXTURE_FILES
+            var totalTextures = 28; // number of entries in TEXTURE_FILES
             // Flat list of all blocks shown in the grid (order determines grid)
             var ALL_BLOCKS = [
                 BLOCKS.GRASS,
@@ -433,8 +431,8 @@
                 BLOCKS.GOLD_BLOCK,
                 BLOCKS.DIAMOND_ORE,
                 BLOCKS.DIAMOND_BLOCK,
-                BLOCKS.BEACON,
-                BLOCKS.FIRE
+                BLOCKS.BEACON
+                // BLOCKS.BEAM removed - not placeable
             ];
             // World & player
             var world = [],
@@ -616,7 +614,7 @@
                 for (var bx = left; bx <= right; bx++) {
                     for (var by = top; by <= bottom; by++) {
                         if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                            if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM && world[bx][by] !== BLOCKS.RED_MUSHROOM && world[bx][by] !== BLOCKS.BROWN_MUSHROOM && world[bx][by] !== BLOCKS.DANDELION && world[bx][by] !== BLOCKS.POPPY && world[bx][by] !== BLOCKS.FIRE) {
+                            if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM && world[bx][by] !== BLOCKS.RED_MUSHROOM && world[bx][by] !== BLOCKS.BROWN_MUSHROOM && world[bx][by] !== BLOCKS.DANDELION && world[bx][by] !== BLOCKS.POPPY) {
                                 return true;
                             }
                         } else if (by >= WORLD_HEIGHT) {
