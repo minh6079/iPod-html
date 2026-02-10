@@ -335,15 +335,15 @@
             MOVE_SPEED = 3;
             MAX_REACH = 4;
           }
-        }
-        var FLAMMABLE = [
-          BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
-          BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
-        ];
+        };
 
         function spreadFire() {
           // Collect all fire positions first, then spread
           // (avoid spreading from fire placed THIS tick)
+          var FLAMMABLE = [
+            BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+            BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+          ];
           var fires = [];
           for (var x = 0; x < WORLD_WIDTH; x++) {
             for (var y = 0; y < WORLD_HEIGHT; y++) {
