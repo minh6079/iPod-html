@@ -337,47 +337,46 @@
           }
         };
 
-function spreadFire() {
-    var FLAMMABLE = [
-        BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
-        BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
-    ];
-
-    var fires = [];
-    for (var x = 0; x < WORLD_WIDTH; x++) {
-        for (var y = 0; y < WORLD_HEIGHT; y++) {
-            if (world[x][y] === BLOCKS.FIRE) {
-                fires.push({ x: x, y: y });
+        function spreadFire() {
+          var FLAMMABLE = [
+            BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+            BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+          ];
+          var fires = [];
+          for (var x = 0; x < WORLD_WIDTH; x++) {
+            for (var y = 0; y < WORLD_HEIGHT; y++) {
+              if (world[x][y] === BLOCKS.FIRE) {
+                fires.push({
+                  x: x,
+                  y: y
+                });
+              }
             }
-        }
-    }
-
-    var neighbors = [[-1,0],[1,0],[0,-1],[0,1]];
-    for (var i = 0; i < fires.length; i++) {
-        var fx = fires[i].x, fy = fires[i].y;
-        for (var n = 0; n < neighbors.length; n++) {
-            var nx = fx + neighbors[n][0];
-            var ny = fy + neighbors[n][1];
-            if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue;
-            // 40% chance to spread to each neighbor
-            if (Math.random() > 0.4) continue;
-            var neighbor = world[nx][ny];
-            if (FLAMMABLE.indexOf(neighbor) !== -1) {
-                // Upward spread always allowed
-                // Sideways/downward: require solid block beneath target
-                if (ny >= fy) {
-                    var belowNY = ny + 1;
-                    if (belowNY >= WORLD_HEIGHT) continue;
-                    var below = world[nx][belowNY];
-                    if (below === BLOCKS.AIR || below === BLOCKS.BEACON) continue;
-                }
+          }
+          // Sideways only
+          var neighbors = [
+            [-1, 0],
+            [1, 0]
+          ];
+          for (var i = 0; i < fires.length; i++) {
+            var fx = fires[i].x,
+              fy = fires[i].y;
+            for (var n = 0; n < neighbors.length; n++) {
+              var nx = fx + neighbors[n][0];
+              var ny = fy;
+              if (nx < 0 || nx >= WORLD_WIDTH) continue;
+              // 40% chance
+              if (Math.random() > 0.4) continue;
+              // Target must be AIR
+              if (world[nx][ny] !== BLOCKS.AIR) continue;
+              // Block below target must be flammable (something to burn on)
+              var below = (ny + 1 < WORLD_HEIGHT) ? world[nx][ny + 1] : BLOCKS.AIR;
+              if (FLAMMABLE.indexOf(below) !== -1) {
                 world[nx][ny] = BLOCKS.FIRE;
+              }
             }
+          }
         }
-    }
-}
-
-setInterval(spreadFire, 3000);
         setInterval(spreadFire, 3000);
         // Block definitions
         var BLOCKS = {
