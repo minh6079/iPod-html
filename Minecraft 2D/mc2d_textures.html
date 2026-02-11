@@ -74,6 +74,36 @@
         background: rgba(0, 0, 0, 0.12);
         pointer-events: none;
       }
+      
+      #saveBtn {
+            position: absolute;
+            left: 8px;
+            top: 6px;
+            font-size: 14px;
+            height: 30px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: #fff;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        #loadBtn {
+            position: absolute;
+            left: 58px;
+            top: 6px;
+            font-size: 14px;
+            height: 30px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: #fff;
+            pointer-events: auto;
+            cursor: pointer;
+        }
 
       #inventory-panel {
         position: fixed;
@@ -271,6 +301,8 @@
     <canvas id="gameCanvas"></canvas>
     <div id="ui-container">
       <div id="top-bar">
+        <div id="saveBtn" class="btn">SAVE</div>
+        <div id="loadBtn" class="btn">LOAD</div>
         <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
         <div id="inventoryBtn" class="btn">INV</div>
       </div>
