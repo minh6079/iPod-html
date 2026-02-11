@@ -337,6 +337,23 @@
           }
         };
 
+        function cleanOrphanFire() {
+          var FLAMMABLE = [
+            BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+            BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+          ];
+          for (var x = 0; x < WORLD_WIDTH; x++) {
+            for (var y = 0; y < WORLD_HEIGHT; y++) {
+              if (world[x][y] === BLOCKS.FIRE) {
+                var below = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
+                if (FLAMMABLE.indexOf(below) === -1) {
+                  world[x][y] = BLOCKS.AIR;
+                }
+              }
+            }
+          }
+        }
+
         function spreadFire() {
           var FLAMMABLE = [
             BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
@@ -781,6 +798,8 @@
                 // Store block type before mining
                 var minedBlock = world[wx][wy];
                 world[wx][wy] = BLOCKS.AIR;
+                // Clean up orphaned fire after any block is mined
+                cleanOrphanFire();
                 // If mined a base block, recheck all beacons
                 if (minedBlock === BLOCKS.IRON_BLOCK || minedBlock === BLOCKS.GOLD_BLOCK || minedBlock === BLOCKS.DIAMOND_BLOCK) {
                   checkAllBeacons();
@@ -789,10 +808,14 @@
               }
             } else {
               if (world[wx][wy] === BLOCKS.AIR && selectedBlock !== BLOCKS.BEAM) {
-                // Fire requires a solid, non-beacon block directly below
+                // Fire requires a flammable block directly below
                 if (selectedBlock === BLOCKS.FIRE) {
                   var below = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
-                  if (below === BLOCKS.AIR || below === BLOCKS.BEACON) return;
+                  var FLAMMABLE_CHECK = [
+                    BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+                    BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+                  ];
+                  if (FLAMMABLE_CHECK.indexOf(below) === -1) return;
                 }
                 var px = Math.floor(player.x / BLOCK_SIZE),
                   py = Math.floor(player.y / BLOCK_SIZE);
