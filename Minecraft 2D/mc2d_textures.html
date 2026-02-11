@@ -604,23 +604,25 @@
 
         function saveWorld() {
           var parts = [];
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              var name = BLOCK_NAMES[world[x][y]] || 'AIR';
-              parts.push(x + '.' + y + ':' + name);
-            }
-          }
-          var output = parts.join(', ');
-          // Try clipboard, fall back to prompt
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(output).then(function() {
-              alert('World saved to clipboard!');
-            }).catch(function() {
-              prompt('Copy world data:', output);
-            });
-          } else {
-            prompt('Copy world data:', output);
-          }
+                for (var x = 0; x < WORLD_WIDTH; x++) {
+                    var y = 0;
+                    while (y < WORLD_HEIGHT) {
+                        var blockType = world[x][y];
+                        var name = BLOCK_NAMES[blockType] || 'AIR';
+                        var startY = y;
+                        // Find how far this same block runs
+                        while (y < WORLD_HEIGHT && world[x][y] === blockType) {
+                            y++;
+                        }
+                        var endY = y - 1;
+                        if (blockType === BLOCKS.AIR) continue;
+                        if (startY === endY) {
+                            parts.push(x + '.' + startY + ':' + name);
+                        } else {
+                            parts.push(x + '.' + startY + '=>' + x + '.' + endY + ':' + name);
+                        }
+                    }
+                }
         }
         document.getElementById('saveBtn').addEventListener('touchstart', function(e) {
           e.preventDefault();
