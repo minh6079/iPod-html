@@ -105,6 +105,21 @@
         cursor: pointer;
       }
 
+      #resetBtn {
+        position: absolute;
+        left: 135px;
+        top: 6px;
+        font-size: 14px;
+        height: 30px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-radius: 6px;
+        color: #fff;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
       #inventory-panel {
         position: fixed;
         top: 50px;
@@ -303,6 +318,7 @@
       <div id="top-bar">
         <div id="saveBtn" class="btn">SAVE</div>
         <div id="loadBtn" class="btn">LOAD</div>
+        <div id="resetBtn" class="btn">RST</div>
         <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
         <div id="inventoryBtn" class="btn">INV</div>
       </div>
@@ -596,13 +612,16 @@
             })(blockType);
           }
         }
-        // Block type to name lookup
-        var BLOCK_NAMES = {};
-        for (var key in BLOCKS) {
-          BLOCK_NAMES[BLOCKS[key]] = key;
-        }
 
         function saveWorld() {
+          var BLOCK_NAMES = {};
+          for (var key in BLOCKS) {
+            BLOCK_NAMES[BLOCKS[key]] = key;
+          }
+          var existing = localStorage.getItem('mc2d_world');
+          if (existing) {
+            if (!confirm('A saved world already exists. Overwrite it?')) return;
+          }
           var parts = [];
           for (var x = 0; x < WORLD_WIDTH; x++) {
             for (var y = 0; y < WORLD_HEIGHT; y++) {
@@ -610,17 +629,44 @@
               parts.push(x + '.' + y + ':' + name);
             }
           }
-          var output = parts.join(', ');
-          // Try clipboard, fall back to prompt
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(output).then(function() {
-              alert('World saved to clipboard!');
-            }).catch(function() {
-              prompt('Copy world data:', output);
-            });
-          } else {
-            prompt('Copy world data:', output);
+          var output = parts.join(',');
+          localStorage.setItem('mc2d_world', output);
+          alert('World saved!');
+        }
+
+        function loadWorld() {
+          var data = localStorage.getItem('mc2d_world');
+          if (!data) {
+            alert('No saved world found!');
+            return;
           }
+          if (!confirm('Replace current world with saved world?')) return;
+          for (var x = 0; x < WORLD_WIDTH; x++) {
+            for (var y = 0; y < WORLD_HEIGHT; y++) {
+              world[x][y] = BLOCKS.AIR;
+            }
+          }
+          var entries = data.split(',');
+          for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i].trim();
+            if (!entry) continue;
+            var dotIdx = entry.indexOf('.');
+            var colonIdx = entry.indexOf(':');
+            if (dotIdx === -1 || colonIdx === -1) continue;
+            var x = parseInt(entry.substring(0, dotIdx), 10);
+            var y = parseInt(entry.substring(dotIdx + 1, colonIdx), 10);
+            var name = entry.substring(colonIdx + 1);
+            if (BLOCKS[name] !== undefined) {
+              world[x][y] = BLOCKS[name];
+            }
+          }
+          alert('World loaded!');
+        }
+
+        function resetSave() {
+          if (!confirm('Delete saved world from storage?')) return;
+          localStorage.removeItem('mc2d_world');
+          alert('Save deleted!');
         }
         document.getElementById('saveBtn').addEventListener('touchstart', function(e) {
           e.preventDefault();
@@ -628,7 +674,11 @@
         });
         document.getElementById('loadBtn').addEventListener('touchstart', function(e) {
           e.preventDefault();
-          // Load: nothing yet
+          loadWorld();
+        });
+        document.getElementById('resetBtn').addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          resetSave();
         });
         // World generation
         function initWorld() {
