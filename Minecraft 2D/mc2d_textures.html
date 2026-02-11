@@ -74,36 +74,36 @@
         background: rgba(0, 0, 0, 0.12);
         pointer-events: none;
       }
-      
-      #saveBtn {
-            position: absolute;
-            left: 8px;
-            top: 6px;
-            font-size: 14px;
-            height: 30px;
-            padding: 6px 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 6px;
-            color: #fff;
-            pointer-events: auto;
-            cursor: pointer;
-        }
 
-        #loadBtn {
-            position: absolute;
-            left: 58px;
-            top: 6px;
-            font-size: 14px;
-            height: 30px;
-            padding: 6px 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 6px;
-            color: #fff;
-            pointer-events: auto;
-            cursor: pointer;
-        }
+      #saveBtn {
+        position: absolute;
+        left: 8px;
+        top: 6px;
+        font-size: 14px;
+        height: 30px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-radius: 6px;
+        color: #fff;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      #loadBtn {
+        position: absolute;
+        left: 70px;
+        top: 6px;
+        font-size: 14px;
+        height: 30px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-radius: 6px;
+        color: #fff;
+        pointer-events: auto;
+        cursor: pointer;
+      }
 
       #inventory-panel {
         position: fixed;
@@ -596,6 +596,40 @@
             })(blockType);
           }
         }
+        // Block type to name lookup
+        var BLOCK_NAMES = {};
+        for (var key in BLOCKS) {
+          BLOCK_NAMES[BLOCKS[key]] = key;
+        }
+
+        function saveWorld() {
+          var parts = [];
+          for (var x = 0; x < WORLD_WIDTH; x++) {
+            for (var y = 0; y < WORLD_HEIGHT; y++) {
+              var name = BLOCK_NAMES[world[x][y]] || 'AIR';
+              parts.push(x + '.' + y + ':' + name);
+            }
+          }
+          var output = parts.join(', ');
+          // Try clipboard, fall back to prompt
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(output).then(function() {
+              alert('World saved to clipboard!');
+            }).catch(function() {
+              prompt('Copy world data:', output);
+            });
+          } else {
+            prompt('Copy world data:', output);
+          }
+        }
+        document.getElementById('saveBtn').addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          saveWorld();
+        });
+        document.getElementById('loadBtn').addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          // Load: nothing yet
+        });
         // World generation
         function initWorld() {
           for (var x = 0; x < WORLD_WIDTH; x++) {
