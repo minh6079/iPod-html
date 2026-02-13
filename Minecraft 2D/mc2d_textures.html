@@ -418,28 +418,32 @@
               }
             }
           }
-          // Sideways only
           // Sideways and diagonal up only
           var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1]];
           for (var i = 0; i < fires.length; i++) {
-            var fx = fires[i].x,
-              fy = fires[i].y;
-            for (var n = 0; n < neighbors.length; n++) {
-              var nx = fx + neighbors[n][0];
-              var ny = fy;
-              if (nx < 0 || nx >= WORLD_WIDTH) continue;
-              // 40% chance
-              if (Math.random() > 0.4) continue;
-              // Target must be AIR
-              if (world[nx][ny] !== BLOCKS.AIR) continue;
-              // Block below target must be flammable (something to burn on)
-              var below = (ny + 1 < WORLD_HEIGHT) ? world[nx][ny + 1] : BLOCKS.AIR;
-              if (FLAMMABLE.indexOf(below) !== -1) {
-                world[nx][ny] = BLOCKS.FIRE;
+              var fx = fires[i].x, fy = fires[i].y;
+              // Shuffle neighbors for randomness
+              for (var s = neighbors.length - 1; s > 0; s--) {
+                  var r = Math.floor(Math.random() * (s + 1));
+                  var temp = neighbors[s];
+                  neighbors[s] = neighbors[r];
+                  neighbors[r] = temp;
               }
-            }
+              for (var n = 0; n < neighbors.length; n++) {
+                  var nx = fx + neighbors[n][0];
+                  var ny = fy + neighbors[n][1];  // ← FIX: use neighbor Y offset
+                  if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue;
+                  // 40% chance per neighbor
+                  if (Math.random() > 0.4) continue;
+                  // Target must be AIR
+                  if (world[nx][ny] !== BLOCKS.AIR) continue;
+                  // Block below target must be flammable
+                  var below = (ny + 1 < WORLD_HEIGHT) ? world[nx][ny + 1] : BLOCKS.AIR;
+                  if (FLAMMABLE.indexOf(below) !== -1) {
+                      world[nx][ny] = BLOCKS.FIRE;
+                  }
+              }
           }
-        }
         setInterval(spreadFire, 3000);
         // Block definitions
         var BLOCKS = {
