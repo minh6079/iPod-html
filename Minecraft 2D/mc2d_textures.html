@@ -419,10 +419,8 @@
             }
           }
           // Sideways only
-          var neighbors = [
-            [-1, 0],
-            [1, 0]
-          ];
+          // Sideways and diagonal up only
+          var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1]];
           for (var i = 0; i < fires.length; i++) {
             var fx = fires[i].x,
               fy = fires[i].y;
