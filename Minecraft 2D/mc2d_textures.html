@@ -419,7 +419,7 @@
             for (var i = 0; i < fires.length; i++) {
                 var fx = fires[i].x, fy = fires[i].y;
                 // Create and shuffle a fresh neighbor list for EACH fire
-                var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1]];
+                var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
                 for (var s = neighbors.length - 1; s > 0; s--) {
                     var r = Math.floor(Math.random() * (s + 1));
                     var temp = neighbors[s];
