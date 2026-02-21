@@ -1,0 +1,37 @@
+CACHE MANIFEST
+# v1
+
+CACHE:
+mc2d_textures.html
+textures/beacon.png
+textures/beam.png
+textures/brown_mushroom.png
+textures/coal_block.png
+textures/coal_ore.png
+textures/cobble_slab.png
+textures/cobblestone.png
+textures/dandelion.png
+textures/diamond_block.png
+textures/diamond_ore.png
+textures/dirt.png
+textures/fire.png
+textures/gold_block.png
+textures/gold_ore.png
+textures/grass.png
+textures/iron_block.png
+textures/iron_ore.png
+textures/leaves.png
+textures/mossy_cobblestone.png
+textures/oak_fence.png
+textures/oak_slab.png
+textures/oak_stairs_left.png
+textures/oak_stairs_right.png
+textures/planks.png
+textures/poppy.png
+textures/red_mushroom.png
+textures/stone.png
+textures/stone_slab.png
+textures/wood.png
+
+NETWORK:
+*
