@@ -659,13 +659,14 @@
 
         // Mobile touch events
         key.addEventListener('touchstart', function (e) {
+          e.preventDefault(); // Add this
           activeKey = this;
           touchProcessed = true;
           startGesture.call(this, e);
-        }, {
-          passive: true
-        });
+        }, false); // Change from {passive: true} to false
+
         key.addEventListener('touchmove', function (e) {
+          e.preventDefault(); // Add this
           if (this === activeKey) {
             var touch = e.touches[0];
             var xDiff = touch.clientX - startX;
@@ -698,9 +699,7 @@
               highlightLetter(this, 2);
             }
           }
-        }, {
-          passive: true
-        });
+        }, false); // Change from {passive: true} to false
         key.addEventListener('touchend', function (e) {
           if (this === activeKey) {
             endGesture.call(this, e);
