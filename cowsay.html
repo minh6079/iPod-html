@@ -21,9 +21,7 @@
     padding: 0;
   }
 
-  html, body {
-    height: 100%;
-  }
+  html, body { height: 100%; }
 
   body {
     background: #0a0a0a;
@@ -38,7 +36,6 @@
   }
 
   h1 {
-    font-family: 'Terminus', 'Courier New', monospace;
     font-size: 1.6rem;
     color: #3affa0;
     text-align: center;
@@ -69,6 +66,33 @@
     border-color: #3affa0;
     -webkit-box-shadow: 0 0 10px rgba(58,255,160,0.15);
     box-shadow: 0 0 10px rgba(58,255,160,0.15);
+  }
+
+  .row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  select {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
+    background: -webkit-linear-gradient(top, #0e1a13, #0b1510);
+    background: linear-gradient(to bottom, #0e1a13, #0b1510);
+    border: 1px solid #1e3a28;
+    border-left: 3px solid #3affa0;
+    color: #c8ffd6;
+    font-family: 'Terminus', 'Courier New', monospace;
+    font-size: 0.95rem;
+    padding: 10px 10px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
   }
 
   button {
@@ -105,62 +129,9 @@
     padding: 16px 14px;
   }
 
-  #outputWrap.visible {
-    display: block;
-  }
+  #outputWrap.visible { display: block; }
 
-  .controls {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    align-items: center;
-  }
-
-  select {
-    -webkit-box-flex: 1;
-    -webkit-flex: 1;
-    flex: 1;
-    background: -webkit-linear-gradient(top, #0e1a13, #0b1510);
-    background: linear-gradient(to bottom, #0e1a13, #0b1510);
-    border: 1px solid #1e3a28;
-    border-left: 3px solid #3affa0;
-    color: #c8ffd6;
-    font-family: 'Terminus', 'Courier New', monospace;
-    font-size: 1rem;
-    padding: 10px 12px;
-    outline: none;
-    cursor: pointer;
-    -webkit-appearance: none;
-    -webkit-border-radius: 0;
-    border-radius: 0;
-  }
-
-  .toggle {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    color: #3affa0;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    white-space: nowrap;
-  }
-
-  .toggle input[type=checkbox] {
-    width: 18px;
-    height: 18px;
-    accent-color: #3affa0;
-    cursor: pointer;
-  }
-
+  pre#output {
     font-family: 'Terminus', 'Courier New', monospace;
     font-size: 0.9rem;
     color: #c8ffd6;
@@ -178,7 +149,7 @@
 
 <textarea id="inputText" placeholder="what does the cow say?"></textarea>
 
-<div class="controls">
+<div class="row">
   <select id="eyeSelect">
     <option value="oo">oo  normal</option>
     <option value="@@">@@  dizzy</option>
@@ -190,10 +161,30 @@
     <option value="--">--  sleepy</option>
     <option value="~~">~~  wavy</option>
     <option value="??">??  confused</option>
+    <option value="88">88  sunglasses</option>
+    <option value="00">00  robot</option>
+    <option value="##">##  matrix</option>
+    <option value="$$">$$  money</option>
+    <option value="..">.   tired</option>
+    <option value=">>">&gt;&gt;  focused</option>
+    <option value="xx">xx  dead dizzy</option>
+    <option value="UU">UU  alien</option>
+    <option value="cc">cc  stoned</option>
+    <option value="!!">!!  startled</option>
+    <option value="vv">vv  chill</option>
+    <option value="II">II  hypnotized</option>
+    <option value="<<">^^  shifty</option>
   </select>
-  <label class="toggle">
-    <input type="checkbox" id="tongueToggle"> tongue
-  </label>
+  <select id="tongueSelect">
+    <option value="   ">no tongue</option>
+    <option value="U  ">U  lick</option>
+    <option value="J  ">J  curl</option>
+    <option value="~  ">~  wavy</option>
+    <option value="v  ">v  droop</option>
+    <option value="w  ">w  double</option>
+    <option value="u  ">u  round</option>
+    <option value="3  ">3  forked</option>
+  </select>
 </div>
 
 <button id="mooBtn">MOO</button>
@@ -239,19 +230,17 @@ function wrapText(text, width) {
 function buildBubble(lines, maxLen) {
   var result = [];
   result.push(' ' + repeatChar('_', maxLen + 2));
-
   if (lines.length === 1) {
     result.push('< ' + padEnd(lines[0], maxLen) + ' >');
   } else {
     for (var i = 0; i < lines.length; i++) {
       var l, r;
-      if (i === 0)                   { l = '/'; r = '\\'; }
-      else if (i === lines.length-1) { l = '\\'; r = '/'; }
-      else                           { l = '|'; r = '|'; }
+      if (i === 0)                    { l = '/'; r = '\\'; }
+      else if (i === lines.length-1)  { l = '\\'; r = '/'; }
+      else                            { l = '|'; r = '|'; }
       result.push(l + ' ' + padEnd(lines[i], maxLen) + ' ' + r);
     }
   }
-
   result.push(' ' + repeatChar('-', maxLen + 2));
   return result;
 }
@@ -269,14 +258,12 @@ function cowsay() {
   var bubble = buildBubble(wrapped, maxLen);
 
   var eyes = document.getElementById('eyeSelect').value;
-  var tongue = document.getElementById('tongueToggle').checked;
-
-  var tongueStr = tongue ? ' U ' : '   ';
+  var tongue = document.getElementById('tongueSelect').value;
 
   var cow = '         \\   ^__^\n' +
             '          \\  (' + eyes + ')\\_______\n' +
             '             (__)\\       )\\/\\\n' +
-            '              ' + tongueStr + '||----w |\n' +
+            '              ' + tongue + '||----w |\n' +
             '                 ||     ||';
 
   document.getElementById('output').textContent = bubble.join('\n') + '\n' + cow;
