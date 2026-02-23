@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>cowsay</title>
+<style>
+  @font-face {
+    font-family: 'Terminus';
+    src: url('https://db.onlinewebfonts.com/t/99124d4dffc6c59dc2b766d539c2a75f.woff2') format('woff2'),
+         url('https://db.onlinewebfonts.com/t/99124d4dffc6c59dc2b766d539c2a75f.woff') format('woff'),
+         url('https://db.onlinewebfonts.com/t/99124d4dffc6c59dc2b766d539c2a75f.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  * {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background: #0a0a0a;
+    background: -webkit-linear-gradient(135deg, #0a0a0a 0%, #0d1a12 50%, #0a120f 100%);
+    background: linear-gradient(135deg, #0a0a0a 0%, #0d1a12 50%, #0a120f 100%);
+    font-family: 'Terminus', 'Courier New', monospace;
+    color: #c8ffd6;
+    min-height: 100%;
+    padding: 24px 16px 40px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Terminus', 'Courier New', monospace;
+    font-size: 1.6rem;
+    color: #3affa0;
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+    text-shadow: 0 0 18px rgba(58, 255, 160, 0.4);
+  }
+
+  textarea {
+    width: 100%;
+    background: -webkit-linear-gradient(top, #0e1a13, #0b1510);
+    background: linear-gradient(to bottom, #0e1a13, #0b1510);
+    border: 1px solid #1e3a28;
+    border-left: 3px solid #3affa0;
+    color: #c8ffd6;
+    font-family: 'Terminus', 'Courier New', monospace;
+    font-size: 1rem;
+    padding: 12px 14px;
+    resize: none;
+    outline: none;
+    min-height: 72px;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+  }
+
+  textarea:focus {
+    border-color: #3affa0;
+    -webkit-box-shadow: 0 0 10px rgba(58,255,160,0.15);
+    box-shadow: 0 0 10px rgba(58,255,160,0.15);
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    background: -webkit-linear-gradient(top, #3affa0, #28cc7a);
+    background: linear-gradient(to bottom, #3affa0, #28cc7a);
+    color: #030f07;
+    border: none;
+    font-family: 'Terminus', 'Courier New', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    padding: 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active {
+    background: -webkit-linear-gradient(top, #28cc7a, #1a9955);
+    background: linear-gradient(to bottom, #28cc7a, #1a9955);
+  }
+
+  #outputWrap {
+    margin-top: 20px;
+    display: none;
+    background: -webkit-linear-gradient(top, #060f09, #080d08);
+    background: linear-gradient(to bottom, #060f09, #080d08);
+    border: 1px solid #1a2e1f;
+    border-left: 3px solid #3affa0;
+    padding: 16px 14px;
+  }
+
+  #outputWrap.visible {
+    display: block;
+  }
+
+  pre#output {
+    font-family: 'Terminus', 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #c8ffd6;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.4;
+    text-shadow: 0 0 8px rgba(58, 255, 160, 0.15);
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+</head>
+<body>
+
+<h1>cowsay</h1>
+
+<textarea id="inputText" placeholder="what does the cow say?"></textarea>
+<button id="mooBtn">MOO</button>
+
+<div id="outputWrap">
+  <pre id="output"></pre>
+</div>
+
+<script>
+var COLS = 40;
+
+function repeatChar(ch, n) {
+  var s = '';
+  for (var i = 0; i < n; i++) { s += ch; }
+  return s;
+}
+
+function padEnd(str, len) {
+  var s = str;
+  while (s.length < len) { s += ' '; }
+  return s;
+}
+
+function wrapText(text, width) {
+  var words = text.split(' ');
+  var lines = [];
+  var current = '';
+  for (var i = 0; i < words.length; i++) {
+    var word = words[i];
+    if (current.length === 0) {
+      current = word;
+    } else if (current.length + 1 + word.length <= width) {
+      current += ' ' + word;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current.length > 0) { lines.push(current); }
+  return lines;
+}
+
+function buildBubble(lines, maxLen) {
+  var result = [];
+  result.push(' ' + repeatChar('_', maxLen + 2));
+
+  if (lines.length === 1) {
+    result.push('< ' + padEnd(lines[0], maxLen) + ' >');
+  } else {
+    for (var i = 0; i < lines.length; i++) {
+      var l, r;
+      if (i === 0)                   { l = '/'; r = '\\'; }
+      else if (i === lines.length-1) { l = '\\'; r = '/'; }
+      else                           { l = '|'; r = '|'; }
+      result.push(l + ' ' + padEnd(lines[i], maxLen) + ' ' + r);
+    }
+  }
+
+  result.push(' ' + repeatChar('-', maxLen + 2));
+  return result;
+}
+
+function cowsay() {
+  var text = document.getElementById('inputText').value;
+  if (!text) { text = 'moo'; }
+
+  var wrapped = wrapText(text, COLS);
+  var maxLen = 0;
+  for (var i = 0; i < wrapped.length; i++) {
+    if (wrapped[i].length > maxLen) { maxLen = wrapped[i].length; }
+  }
+
+  var bubble = buildBubble(wrapped, maxLen);
+
+  var cow = '         \\   ^__^\n' +
+            '          \\  (oo)\\_______\n' +
+            '             (__)\\       )\\/\\\n' +
+            '                 ||----w |\n' +
+            '                 ||     ||';
+
+  document.getElementById('output').textContent = bubble.join('\n') + '\n' + cow;
+  document.getElementById('outputWrap').className = 'visible';
+}
+
+document.getElementById('mooBtn').onclick = cowsay;
+</script>
+</body>
+</html>
