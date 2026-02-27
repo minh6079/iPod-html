@@ -1,7 +1,8 @@
 # iPod-html
 HTML files for iPod touch<br>
 Include games and animations<br>
-Tested on iPod touch 4 iOS 6.1.6 Safari 6
+Tested on iPod touch 4 iOS 6.1.6 Safari 6<br>
+Localhosting: see <a href="https://github.com/minh6079/iPod-html/tree/local_hosting">Localhosting</a>
 ## Includes:
 - Animations
 - Games
