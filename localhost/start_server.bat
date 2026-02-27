@@ -1,0 +1,2 @@
+ipconfig
+python server.py
