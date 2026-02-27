@@ -38,6 +38,7 @@ Localhosting: see <a href="https://github.com/minh6079/iPod-html/tree/local_host
 
 # What do you need to do for the Gemini frontend:
 - Get an API key
+- Choose model
 - Press start chatting
 - Type prompt
 - Press send
