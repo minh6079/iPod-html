@@ -41,3 +41,13 @@ Tested on iPod touch 4 iOS 6.1.6 Safari 6
 - Type prompt
 - Press send
 - Repeat from type prompt
+
+---
+# Local hosting:
+ - Download the zip file from the main branch
+ - Extract it
+ - Download 4 files in the folder localhost
+ - Move them into the folder that also contains the index.html file
+ - Run start_server.bat
+ - On the device (iPod touch, iPhone, ...), go to the address <ip_number_in_ipconfig>:4443
+ - If that fails, try <ip_number_in_ipconfig>:8080
