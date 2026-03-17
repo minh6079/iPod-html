@@ -89,6 +89,11 @@
             background: #fff;
         }
         
+        #setup optgroup {
+            font-weight: bold;
+            color: #5f6368;
+        }
+        
         #setup input {
             width: 100%;
             padding: 12px;
@@ -307,12 +312,28 @@
             <h2>Welcome to Gemini</h2>
             <p>Choose model and enter API key</p>
             <select id="modelSelect">
-                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                <option value="gemma-3-4b-it">Gemma 3 4B</option>
-                <option value="gemma-3-1b-it">Gemma 3 1B</option>
-                <option value="gemma-3-12b-it">Gemma 3 12B</option>
-                <option value="gemma-3-27b-it">Gemma 3 27B</option>
+                <optgroup label="Gemini 3 Models">
+                    <option value="gemini-3-flash">Gemini 3 Flash</option>
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                    <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
+                </optgroup>
+                <optgroup label="Gemini 2.5 Models">
+                    <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </optgroup>
+                <optgroup label="Gemini 2 Models">
+                    <option value="gemini-2-flash">Gemini 2 Flash</option>
+                    <option value="gemini-2-flash-exp">Gemini 2 Flash Exp</option>
+                    <option value="gemini-2-flash-lite">Gemini 2 Flash Lite</option>
+                </optgroup>
+                <optgroup label="Gemma 3 Models">
+                    <option value="gemma-3-1b-it">Gemma 3 1B</option>
+                    <option value="gemma-3-2b-it">Gemma 3 2B</option>
+                    <option value="gemma-3-4b-it">Gemma 3 4B</option>
+                    <option value="gemma-3-12b-it">Gemma 3 12B</option>
+                    <option value="gemma-3-27b-it">Gemma 3 27B</option>
+                </optgroup>
             </select>
             <input type="password" id="key" placeholder="Paste your API key here">
             <button onclick="start()">Start Chatting</button>
@@ -402,6 +423,19 @@
             return html;
         }
         
+        function getModelDisplayName(model) {
+            // Convert model ID to display name
+            var name = model.replace('-it', '').replace(/-/g, ' ');
+            
+            // Capitalize each word
+            var words = name.split(' ');
+            for (var i = 0; i < words.length; i++) {
+                words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+            }
+            
+            return words.join(' ');
+        }
+        
         function start() {
             key = document.getElementById('key').value.replace(/\s/g, '');
             selectedModel = document.getElementById('modelSelect').value;
@@ -416,8 +450,7 @@
             document.getElementById('clear').className = '';
             
             // Add welcome message
-            var modelDisplayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
-            modelDisplayName = modelDisplayName.charAt(0).toUpperCase() + modelDisplayName.slice(1);
+            var modelDisplayName = getModelDisplayName(selectedModel);
             add('Welcome to AI Chat! You are chatting with ' + modelDisplayName + '. How can I help you today?', false, modelDisplayName);
             
             document.getElementById('input').focus();
@@ -494,8 +527,7 @@
             
             var lbl = document.createElement('div');
             lbl.className = 'label';
-            var modelDisplayName = selectedModel.replace('-it', '').replace(/-/g, ' ');
-            modelDisplayName = modelDisplayName.charAt(0).toUpperCase() + modelDisplayName.slice(1);
+            var modelDisplayName = getModelDisplayName(selectedModel);
             lbl.appendChild(document.createTextNode(modelDisplayName));
             streamDiv.appendChild(lbl);
             
