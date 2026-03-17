@@ -495,7 +495,7 @@ var nextPlayTime = 0;
 var isConnected = false;
 var currentGeminiEntry = null;
 var geminiTextBuf = '';
-var MODEL = 'models/gemini-2.5-flash-preview-native-audio-dialog';
+var MODEL = 'models/gemini-2.5-flash-preview-native-audio-dialog-001';
 
 // ── Compat check ─────────────────────────────────────
 if (!window.WebSocket) {
@@ -633,7 +633,7 @@ function connect() {
   document.getElementById('connect-btn').disabled = true;
   setStatus('', 'connecting\u2026');
 
-  var url = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=' + key;
+  var url = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + key;
 
   try { ws = new WebSocket(url); }
   catch(e) {
@@ -713,7 +713,9 @@ function connect() {
   };
 
   ws.onclose = function(evt) {
-    if (isConnected) logSystem('Disconnected' + (evt.reason ? ': ' + evt.reason : '.'));
+    var reason = evt.reason ? evt.reason : ('code ' + evt.code);
+    if (isConnected) logSystem('Disconnected: ' + reason);
+    else logSystem('Connection closed: ' + reason);
     resetUI();
   };
 }
