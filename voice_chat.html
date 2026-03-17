@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GEMINI LIVE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --green: #00ff88;
+  --green-dim: #00aa55;
+  --green-faint: #003322;
+  --amber: #ffcc00;
+  --red: #ff3344;
+  --bg: #050e09;
+  --panel: #081410;
+  --border: #00ff8844;
+  --text: #ccffe0;
+  --text-dim: #558866;
+}
+
+* { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* CRT scanlines overlay */
+body:before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.18) 2px,
+    rgba(0,0,0,0.18) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* vignette */
+body:after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+#app {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ── HEADER ── */
+#header {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+#header-top {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+#logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--green);
+  text-shadow: 0 0 12px var(--green), 0 0 30px var(--green-dim);
+}
+
+#logo span {
+  color: var(--amber);
+  text-shadow: 0 0 12px var(--amber);
+}
+
+#status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  display: inline-block;
+  margin-right: 6px;
+  -webkit-animation: pulse 2s infinite;
+  animation: pulse 2s infinite;
+}
+
+#status-dot.active { background: var(--green); }
+#status-dot.listening { background: var(--amber); -webkit-animation: fastpulse 0.5s infinite; animation: fastpulse 0.5s infinite; }
+#status-dot.error { background: var(--red); -webkit-animation: none; animation: none; }
+
+@-webkit-keyframes pulse {
+  0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+}
+@-webkit-keyframes fastpulse {
+  0%, 100% { opacity: 0.3; } 50% { opacity: 1; }
+}
+@keyframes fastpulse {
+  0%, 100% { opacity: 0.3; } 50% { opacity: 1; }
+}
+
+#status-text {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+/* ── API KEY ROW ── */
+#apikey-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+#apikey-input {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  background: var(--green-faint);
+  border: 1px solid var(--border);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  letter-spacing: 1px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+}
+
+#apikey-input:focus {
+  border-color: var(--green);
+  -webkit-box-shadow: 0 0 8px var(--green-dim);
+  box-shadow: 0 0 8px var(--green-dim);
+}
+
+#apikey-input::-webkit-input-placeholder { color: var(--text-dim); }
+
+#save-btn {
+  background: var(--green-faint);
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+#save-btn:active { background: var(--green-dim); color: var(--bg); }
+
+#model-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+#model-label { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; white-space: nowrap; }
+
+#model-select {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  background: var(--green-faint);
+  border: 1px solid var(--border);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 4px 6px;
+  outline: none;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+}
+
+/* ── COMPAT WARNING ── */
+#compat-warn {
+  display: none;
+  background: #1a0a00;
+  border-top: 1px solid #ff6600;
+  border-bottom: 1px solid #ff6600;
+  color: #ff9900;
+  padding: 5px 14px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+/* ── ORB / WAVEFORM ── */
+#orb-container {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  padding: 14px 0 10px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+#orb {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--green-dim);
+  position: relative;
+  -webkit-box-shadow: 0 0 20px var(--green-dim), inset 0 0 20px rgba(0,255,136,0.06);
+  box-shadow: 0 0 20px var(--green-dim), inset 0 0 20px rgba(0,255,136,0.06);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+#orb.thinking {
+  border-color: var(--amber);
+  -webkit-box-shadow: 0 0 20px var(--amber), inset 0 0 20px rgba(255,204,0,0.08);
+  box-shadow: 0 0 20px var(--amber), inset 0 0 20px rgba(255,204,0,0.08);
+  -webkit-animation: orbspin 1.5s linear infinite;
+  animation: orbspin 1.5s linear infinite;
+}
+
+#orb.listening {
+  border-color: var(--green);
+  -webkit-box-shadow: 0 0 30px var(--green), inset 0 0 20px rgba(0,255,136,0.15);
+  box-shadow: 0 0 30px var(--green), inset 0 0 20px rgba(0,255,136,0.15);
+}
+
+@-webkit-keyframes orbspin {
+  0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); }
+}
+@keyframes orbspin {
+  0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+}
+
+/* waveform bars inside orb */
+#waveform {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 3px;
+  height: 30px;
+}
+
+.wbar {
+  width: 4px;
+  background: var(--green);
+  border-radius: 2px;
+  height: 4px;
+  -webkit-transition: height 0.1s;
+  transition: height 0.1s;
+}
+
+.wbar.b1 { -webkit-animation: wb1 1.2s ease-in-out infinite; animation: wb1 1.2s ease-in-out infinite; }
+.wbar.b2 { -webkit-animation: wb2 0.9s ease-in-out infinite; animation: wb2 0.9s ease-in-out infinite; }
+.wbar.b3 { -webkit-animation: wb3 1.4s ease-in-out infinite; animation: wb3 1.4s ease-in-out infinite; }
+.wbar.b4 { -webkit-animation: wb4 0.8s ease-in-out infinite; animation: wb4 0.8s ease-in-out infinite; }
+.wbar.b5 { -webkit-animation: wb5 1.1s ease-in-out infinite; animation: wb5 1.1s ease-in-out infinite; }
+
+@-webkit-keyframes wb1 { 0%,100%{height:4px} 50%{height:18px} }
+@keyframes wb1 { 0%,100%{height:4px} 50%{height:18px} }
+@-webkit-keyframes wb2 { 0%,100%{height:8px} 50%{height:26px} }
+@keyframes wb2 { 0%,100%{height:8px} 50%{height:26px} }
+@-webkit-keyframes wb3 { 0%,100%{height:12px} 50%{height:30px} }
+@keyframes wb3 { 0%,100%{height:12px} 50%{height:30px} }
+@-webkit-keyframes wb4 { 0%,100%{height:6px} 50%{height:22px} }
+@keyframes wb4 { 0%,100%{height:6px} 50%{height:22px} }
+@-webkit-keyframes wb5 { 0%,100%{height:4px} 50%{height:14px} }
+@keyframes wb5 { 0%,100%{height:4px} 50%{height:14px} }
+
+#orb:not(.listening) .wbar { -webkit-animation: none; animation: none; height: 4px; }
+#orb.thinking .wbar { background: var(--amber); height: 4px; -webkit-animation: none; animation: none; }
+
+/* ── CHAT LOG ── */
+#chat-log {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.msg {
+  margin-bottom: 10px;
+  max-width: 90%;
+  -webkit-animation: msgfade 0.3s ease;
+  animation: msgfade 0.3s ease;
+}
+
+@-webkit-keyframes msgfade { from { opacity: 0; -webkit-transform: translateY(6px); } to { opacity: 1; -webkit-transform: translateY(0); } }
+@keyframes msgfade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.msg.user { margin-left: auto; text-align: right; }
+.msg.assistant { margin-right: auto; text-align: left; }
+
+.msg-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+  color: var(--text-dim);
+}
+
+.msg.user .msg-label { color: var(--amber); }
+.msg.assistant .msg-label { color: var(--green-dim); }
+
+.msg-bubble {
+  display: inline-block;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.msg.user .msg-bubble {
+  background: #0d1f14;
+  border: 1px solid var(--amber);
+  color: #ffe099;
+  -webkit-border-radius: 6px 2px 6px 6px;
+  border-radius: 6px 2px 6px 6px;
+  -webkit-box-shadow: 0 0 8px rgba(255,204,0,0.15);
+  box-shadow: 0 0 8px rgba(255,204,0,0.15);
+}
+
+.msg.assistant .msg-bubble {
+  background: #071510;
+  border: 1px solid var(--border);
+  color: var(--text);
+  -webkit-border-radius: 2px 6px 6px 6px;
+  border-radius: 2px 6px 6px 6px;
+  -webkit-box-shadow: 0 0 8px rgba(0,255,136,0.06);
+  box-shadow: 0 0 8px rgba(0,255,136,0.06);
+}
+
+.msg.system .msg-bubble {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.msg.system { max-width: 100%; margin: 4px auto; text-align: center; }
+
+/* typing dots */
+.typing-dots span {
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  margin: 0 2px;
+  -webkit-animation: dotbounce 1.2s infinite;
+  animation: dotbounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { -webkit-animation-delay: 0.2s; animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { -webkit-animation-delay: 0.4s; animation-delay: 0.4s; }
+@-webkit-keyframes dotbounce { 0%,80%,100%{opacity:0.3;-webkit-transform:scale(0.8)} 40%{opacity:1;-webkit-transform:scale(1.2)} }
+@keyframes dotbounce { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.2)} }
+
+/* ── INPUT AREA ── */
+#input-area {
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  padding: 8px 10px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+#input-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 6px;
+  -webkit-box-align: flex-end;
+  -webkit-align-items: flex-end;
+  align-items: flex-end;
+}
+
+#text-input {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  background: var(--green-faint);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+  min-height: 36px;
+  max-height: 90px;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+#text-input:focus {
+  border-color: var(--green-dim);
+  -webkit-box-shadow: 0 0 6px rgba(0,255,136,0.2);
+  box-shadow: 0 0 6px rgba(0,255,136,0.2);
+}
+
+#text-input::-webkit-input-placeholder { color: var(--text-dim); }
+
+.btn-icon {
+  width: 36px; height: 36px;
+  background: var(--green-faint);
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  font-size: 16px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  -webkit-transition: all 0.15s;
+  transition: all 0.15s;
+}
+
+.btn-icon:active { background: var(--green-dim); color: var(--bg); }
+.btn-icon:disabled, .btn-icon.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+#mic-btn.recording {
+  background: rgba(255,204,0,0.15);
+  border-color: var(--amber);
+  color: var(--amber);
+  -webkit-box-shadow: 0 0 12px rgba(255,204,0,0.3);
+  box-shadow: 0 0 12px rgba(255,204,0,0.3);
+}
+
+#tts-btn.active {
+  background: rgba(0,255,136,0.12);
+  border-color: var(--green);
+  -webkit-box-shadow: 0 0 8px var(--green-dim);
+  box-shadow: 0 0 8px var(--green-dim);
+}
+
+#footer-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding: 0 2px;
+}
+
+#footer-left { color: var(--text-dim); font-size: 10px; letter-spacing: 0.5px; }
+#tts-label { color: var(--text-dim); font-size: 10px; letter-spacing: 0.5px; cursor: pointer; }
+#tts-label.active { color: var(--green-dim); }
+
+/* scrollbar */
+#chat-log::-webkit-scrollbar { width: 4px; }
+#chat-log::-webkit-scrollbar-track { background: transparent; }
+#chat-log::-webkit-scrollbar-thumb { background: var(--green-faint); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="header-top">
+      <div id="logo">GEM<span>INI</span></div>
+      <div>
+        <span id="status-dot"></span>
+        <span id="status-text">OFFLINE</span>
+      </div>
+    </div>
+    <div id="apikey-row">
+      <input id="apikey-input" type="password" placeholder="Paste Gemini API key..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <button id="save-btn" onclick="saveKey()">SAVE</button>
+    </div>
+    <div id="model-row">
+      <span id="model-label">MODEL:</span>
+      <select id="model-select">
+        <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro (preview)</option>
+        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- COMPAT WARNING -->
+  <div id="compat-warn">
+    &#9888; This browser does not support voice input. Text mode only.
+  </div>
+
+  <!-- ORB -->
+  <div id="orb-container">
+    <div id="orb">
+      <div id="waveform">
+        <div class="wbar b1"></div>
+        <div class="wbar b2"></div>
+        <div class="wbar b3"></div>
+        <div class="wbar b4"></div>
+        <div class="wbar b5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT LOG -->
+  <div id="chat-log"></div>
+
+  <!-- INPUT -->
+  <div id="input-area">
+    <div id="input-row">
+      <textarea id="text-input" placeholder="Type a message..." rows="1"></textarea>
+      <button class="btn-icon" id="mic-btn" title="Voice input">&#127908;</button>
+      <button class="btn-icon" id="send-btn" title="Send" onclick="sendMessage()">&#9658;</button>
+    </div>
+    <div id="footer-row">
+      <span id="footer-left">ENTER to send &nbsp;|&nbsp; SHIFT+ENTER newline</span>
+      <span id="tts-label" onclick="toggleTTS()">&#128266; TTS: <span id="tts-state">OFF</span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────
+var apiKey = '';
+var ttsEnabled = false;
+var isListening = false;
+var isThinking = false;
+var speechRecognizer = null;
+var voiceSupported = false;
+var history = []; // [{role, parts}]
+var typingMsgEl = null;
+
+// ─── COMPAT CHECK ─────────────────────────────────
+(function checkCompat() {
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec || !window.speechSynthesis) {
+    document.getElementById('compat-warn').style.display = 'block';
+    document.getElementById('mic-btn').className = 'btn-icon disabled';
+    document.getElementById('mic-btn').setAttribute('disabled', 'disabled');
+    voiceSupported = false;
+  } else {
+    voiceSupported = true;
+    initSpeech();
+  }
+  // TTS check
+  if (!window.speechSynthesis) {
+    document.getElementById('tts-label').style.display = 'none';
+  }
+})();
+
+// ─── SPEECH RECOGNITION ───────────────────────────
+function initSpeech() {
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  speechRecognizer = new SpeechRec();
+  speechRecognizer.continuous = false;
+  speechRecognizer.interimResults = false;
+  speechRecognizer.lang = 'en-US';
+
+  speechRecognizer.onstart = function() {
+    isListening = true;
+    setStatus('LISTENING', 'listening');
+    document.getElementById('orb').className = 'listening';
+    document.getElementById('mic-btn').className = 'btn-icon recording';
+  };
+
+  speechRecognizer.onresult = function(e) {
+    var transcript = e.results[0][0].transcript;
+    document.getElementById('text-input').value = transcript;
+  };
+
+  speechRecognizer.onend = function() {
+    isListening = false;
+    document.getElementById('mic-btn').className = 'btn-icon';
+    document.getElementById('orb').className = '';
+    if (apiKey) {
+      setStatus('READY', 'active');
+    } else {
+      setStatus('OFFLINE', '');
+    }
+    var val = document.getElementById('text-input').value;
+    if (val && val.trim() !== '') {
+      sendMessage();
+    }
+  };
+
+  speechRecognizer.onerror = function(e) {
+    isListening = false;
+    document.getElementById('mic-btn').className = 'btn-icon';
+    document.getElementById('orb').className = '';
+    setStatus('MIC ERROR', 'error');
+    appendSystemMsg('Voice error: ' + e.error);
+    setTimeout(function() {
+      if (apiKey) setStatus('READY', 'active');
+      else setStatus('OFFLINE', '');
+    }, 2000);
+  };
+}
+
+function toggleMic() {
+  if (!voiceSupported) return;
+  if (isListening) {
+    speechRecognizer.stop();
+  } else {
+    if (!apiKey) {
+      appendSystemMsg('Enter your API key first.');
+      return;
+    }
+    try {
+      speechRecognizer.start();
+    } catch(e) {
+      appendSystemMsg('Could not start microphone: ' + e.message);
+    }
+  }
+}
+
+document.getElementById('mic-btn').onclick = toggleMic;
+
+// ─── API KEY ──────────────────────────────────────
+function saveKey() {
+  var val = document.getElementById('apikey-input').value;
+  if (!val || val.trim() === '') {
+    appendSystemMsg('Please enter an API key.');
+    return;
+  }
+  apiKey = val.trim();
+  document.getElementById('apikey-input').value = '••••••••••••••••';
+  setStatus('READY', 'active');
+  appendSystemMsg('API key saved. Ready.');
+}
+
+// ─── STATUS ───────────────────────────────────────
+function setStatus(text, state) {
+  document.getElementById('status-text').textContent = text;
+  var dot = document.getElementById('status-dot');
+  dot.className = state ? 'status-dot ' + state : 'status-dot';
+  // re-apply id
+  dot.id = 'status-dot';
+}
+
+// ─── TTS ──────────────────────────────────────────
+function toggleTTS() {
+  if (!window.speechSynthesis) return;
+  ttsEnabled = !ttsEnabled;
+  document.getElementById('tts-state').textContent = ttsEnabled ? 'ON' : 'OFF';
+  var lbl = document.getElementById('tts-label');
+  lbl.className = ttsEnabled ? 'active' : '';
+}
+
+function speak(text) {
+  if (!ttsEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var utter = new window.SpeechSynthesisUtterance(text);
+  utter.rate = 1.0;
+  utter.pitch = 1.0;
+  window.speechSynthesis.speak(utter);
+}
+
+// ─── CHAT UI ─────────────────────────────────────
+function appendMsg(role, text) {
+  var log = document.getElementById('chat-log');
+  var div = document.createElement('div');
+  div.className = 'msg ' + role;
+
+  var label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'user' ? 'YOU' : 'GEMINI';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+
+  div.appendChild(label);
+  div.appendChild(bubble);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function appendSystemMsg(text) {
+  var log = document.getElementById('chat-log');
+  var div = document.createElement('div');
+  div.className = 'msg system';
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = '— ' + text + ' —';
+  div.appendChild(bubble);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function showTyping() {
+  var log = document.getElementById('chat-log');
+  var div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = '__typing__';
+
+  var label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = 'GEMINI';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble typing-dots';
+  bubble.innerHTML = '<span></span><span></span><span></span>';
+
+  div.appendChild(label);
+  div.appendChild(bubble);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  typingMsgEl = div;
+}
+
+function removeTyping() {
+  if (typingMsgEl && typingMsgEl.parentNode) {
+    typingMsgEl.parentNode.removeChild(typingMsgEl);
+  }
+  typingMsgEl = null;
+}
+
+// ─── SEND MESSAGE ─────────────────────────────────
+function sendMessage() {
+  var input = document.getElementById('text-input');
+  var text = input.value;
+  if (!text || text.trim() === '') return;
+  if (!apiKey) {
+    appendSystemMsg('Enter your API key first.');
+    return;
+  }
+  if (isThinking) return;
+
+  var userText = text.trim();
+  input.value = '';
+  input.style.height = 'auto';
+
+  appendMsg('user', userText);
+
+  history.push({
+    role: 'user',
+    parts: [{ text: userText }]
+  });
+
+  callGemini();
+}
+
+// ─── GEMINI API CALL (XHR for ES5 compat) ─────────
+function callGemini() {
+  var model = document.getElementById('model-select').value;
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+            model + ':generateContent?key=' + apiKey;
+
+  isThinking = true;
+  setStatus('THINKING', 'active');
+  document.getElementById('orb').className = 'thinking';
+  showTyping();
+
+  var payload = JSON.stringify({ contents: history });
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', url, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    isThinking = false;
+    removeTyping();
+    document.getElementById('orb').className = '';
+    setStatus('READY', 'active');
+
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var reply = data.candidates &&
+                    data.candidates[0] &&
+                    data.candidates[0].content &&
+                    data.candidates[0].content.parts &&
+                    data.candidates[0].content.parts[0] &&
+                    data.candidates[0].content.parts[0].text
+                    ? data.candidates[0].content.parts[0].text
+                    : '[No response]';
+
+        history.push({
+          role: 'model',
+          parts: [{ text: reply }]
+        });
+
+        appendMsg('assistant', reply);
+        speak(reply);
+      } catch(e) {
+        appendSystemMsg('Parse error: ' + e.message);
+      }
+    } else {
+      var errMsg = 'API error ' + xhr.status;
+      try {
+        var errData = JSON.parse(xhr.responseText);
+        if (errData.error && errData.error.message) {
+          errMsg += ': ' + errData.error.message;
+        }
+      } catch(e2) {}
+      appendSystemMsg(errMsg);
+      setStatus('ERROR', 'error');
+      setTimeout(function() { setStatus('READY', 'active'); }, 3000);
+    }
+  };
+
+  xhr.onerror = function() {
+    isThinking = false;
+    removeTyping();
+    document.getElementById('orb').className = '';
+    appendSystemMsg('Network error. Check connection.');
+    setStatus('ERROR', 'error');
+    setTimeout(function() { setStatus('READY', 'active'); }, 3000);
+  };
+
+  xhr.send(payload);
+}
+
+// ─── TEXTAREA AUTO RESIZE + ENTER KEY ────────────
+var textInput = document.getElementById('text-input');
+
+textInput.onkeydown = function(e) {
+  e = e || window.event;
+  if (e.keyCode === 13 && !e.shiftKey) {
+    e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+    sendMessage();
+  }
+};
+
+textInput.oninput = function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+};
+
+// ─── WELCOME ──────────────────────────────────────
+appendSystemMsg('GEMINI LIVE v1.0 — Enter API key to begin');
+</script>
+</body>
+</html>
