@@ -489,7 +489,13 @@ function enqueuePCM(b64) {
   }
 }
 
+// Adaptive overhead: tracks how long playChunk() itself takes to run,
+// and subtracts that from the next delay so chunks line up cleanly.
+var avgOverheadMs = 20; // rolling average of scheduling overhead
+
 function playChunk() {
+  var t0 = Date.now();
+
   if (chunkQueue.length === 0) {
     chunkPlaying = false;
     if (turnComplete) {
@@ -521,9 +527,13 @@ function playChunk() {
     return;
   }
 
-  // Schedule next chunk to start exactly when this one ends
-  // Subtract ~20ms for decode+scheduling overhead on slow devices
-  var nextDelay = durMs > 30 ? durMs - 20 : durMs;
+  // Measure how long this function took, update rolling average
+  var elapsed = Date.now() - t0;
+  avgOverheadMs = Math.round(avgOverheadMs * 0.7 + elapsed * 0.3);
+
+  // Fire next chunk early by the overhead so it starts right on time
+  var nextDelay = durMs - avgOverheadMs;
+  if (nextDelay < 0) nextDelay = 0;
   setTimeout(playChunk, nextDelay);
 }
 
@@ -534,6 +544,7 @@ function resetAudio() {
   isPlaying = false;
   nextPlayTime = 0;
   turnComplete = false;
+  avgOverheadMs = 20;
 }
 
 // ── Connect ───────────────────────────────────────────
