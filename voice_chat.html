@@ -524,6 +524,15 @@ function connect() {
   document.getElementById('connect-btn').disabled = true;
   setStatus('', 'connecting...');
 
+  // iOS requires audio context to be unlocked from a user gesture.
+  // Do it NOW while we're inside the button tap handler.
+  ensureAudio();
+  var silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+  var silentSrc = audioCtx.createBufferSource();
+  silentSrc.buffer = silentBuf;
+  silentSrc.connect(audioCtx.destination);
+  silentSrc.start(0);
+
   var url = WS_BASE + '?key=' + key;
 
   try {
@@ -705,6 +714,14 @@ function sendText() {
   var text = document.getElementById('msg-input').value;
   text = text ? text.replace(/^\s+|\s+$/g, '') : '';
   if (!text) return;
+
+  // Re-unlock audio on every send (iOS may suspend context)
+  if (audioCtx) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var sb = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    var ss = audioCtx.createBufferSource();
+    ss.buffer = sb; ss.connect(audioCtx.destination); ss.start(0);
+  }
 
   // Clear any in-progress audio
   audioQueue = [];
