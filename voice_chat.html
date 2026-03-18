@@ -465,6 +465,11 @@ function decodePCM(b64) {
   }
 }
 
+// Simple sequential player — decode and play one chunk at a time.
+// Each chunk triggers the next via setTimeout(durMs) — no clock drift.
+var chunkQueue = []; // raw b64 strings
+var chunkPlaying = false;
+
 function enqueuePCM(b64) {
   ensureAudio();
   if (!isPlaying) {
@@ -473,99 +478,62 @@ function enqueuePCM(b64) {
     setRing('speaking');
     setStatus('speaking', 'speaking');
   }
-  b64Queue.push(b64);
-  if (!decoding) decodeNext();
+  chunkQueue.push(b64);
+  if (!chunkPlaying) playChunk();
 }
 
-function decodeNext() {
-  if (b64Queue.length === 0) { decoding = false; return; }
-  decoding = true;
-  var b64 = b64Queue.shift();
-  setTimeout(function() {
-    var buf = decodePCM(b64);
-    if (buf) {
-      pcmQueue.push(buf);
-      if (!processingChunk) playNext();
+function playChunk() {
+  if (chunkQueue.length === 0) {
+    chunkPlaying = false;
+    // All chunks played — check if turn is done
+    if (turnComplete) {
+      isPlaying = false;
+      setRing(''); setStatus('ready', 'ready'); finishGemEntry();
     }
-    decodeNext();
-  }, 0);
-}
-
-function playNext() {
-  if (pcmQueue.length === 0) { processingChunk = false; return; }
-  processingChunk = true;
-  // Drain entire pcmQueue — schedule all at once
-  while (pcmQueue.length > 0) {
-    scheduleOne(pcmQueue.shift());
+    return;
   }
-}
+  chunkPlaying = true;
+  var b64 = chunkQueue.shift();
+  var buf = decodePCM(b64);
+  if (!buf) { playChunk(); return; } // skip bad chunk, try next
 
-function scheduleOne(buf) {
+  var durMs = Math.round(buf.duration * 1000);
+
   try {
     var src = audioCtx.createBufferSource();
     src.buffer = buf;
     src.connect(audioCtx.destination);
-    pendingChunks++;
-    var durMs = Math.ceil(buf.duration * 1000);
 
     if (typeof src.noteOn === 'function') {
-      // iOS 6: wall-clock scheduling
-      var nowMs = Date.now();
-      if (iosNextTime < nowMs) iosNextTime = nowMs + 20;
-      var delayMs = iosNextTime - nowMs;
-      var fireAt = iosNextTime; // capture before advancing
-      iosNextTime += durMs;
-      (function(node, d) {
-        setTimeout(function() { try { node.noteOn(0); } catch(e) {} }, d);
-      })(src, delayMs);
-      // finishDelay = time from now until this chunk finishes playing
-      var finishDelay = (fireAt - Date.now()) + durMs + 200;
-      (function(fd) {
-        setTimeout(function() {
-          pendingChunks--;
-          if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
-            isPlaying = false; processingChunk = false;
-            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-          }
-        }, fd > 0 ? fd : 200);
-      })(finishDelay);
+      src.noteOn(0);
     } else {
-      // Modern: audio clock
-      var nowAudio = audioCtx.currentTime;
-      if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
+      var now = audioCtx.currentTime;
+      if (nextPlayTime < now) nextPlayTime = now + 0.02;
       src.start(nextPlayTime);
       nextPlayTime += buf.duration;
-      if ('onended' in src) {
-        src.onended = function() {
-          pendingChunks--;
-          if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
-            isPlaying = false; processingChunk = false;
-            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-          }
-        };
-      } else {
-        (function(d) {
-          setTimeout(function() {
-            pendingChunks--;
-            if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
-              isPlaying = false; processingChunk = false;
-              setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-            }
-          }, d + 200);
-        })(durMs);
-      }
     }
   } catch(e) {
     logSystem('play err: ' + e.message);
-    pendingChunks--;
+    setTimeout(playChunk, 0);
+    return;
   }
+
+  // After this chunk's duration, play the next one
+  setTimeout(playChunk, durMs);
 }
 
 function resetAudio() {
-  pcmQueue = []; b64Queue = [];
-  pendingChunks = 0; processingChunk = false; decoding = false;
-  isPlaying = false; nextPlayTime = 0; iosNextTime = 0;
+  chunkQueue = [];
+  chunkPlaying = false;
+  isPlaying = false;
+  nextPlayTime = 0;
+  iosNextTime = 0;
   turnComplete = false;
+  pendingChunks = 0;
+  processingChunk = false;
+  decoding = false;
+  pcmQueue = [];
+  b64Queue = [];
 }
 
 // ── Connect ───────────────────────────────────────────
@@ -661,8 +629,9 @@ function connect() {
       }
       if (sc.turnComplete) {
         turnComplete = true;
-        // If audio already done, wrap up immediately
-        if (!isPlaying && pendingChunks <= 0 && pcmQueue.length === 0 && b64Queue.length === 0) {
+        // If all chunks already played, wrap up now
+        if (!chunkPlaying && chunkQueue.length === 0) {
+          isPlaying = false;
           setRing(''); setStatus('ready', 'ready'); finishGemEntry();
         }
       }
