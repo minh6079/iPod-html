@@ -170,6 +170,7 @@ html, body {
 /* ── LOG ── */
 #log {
   display: none;
+  padding-bottom: 8px;
   position: absolute; left: 0; right: 0;
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch; padding: 6px 10px;
@@ -296,6 +297,8 @@ function layout() {
   var logEl     = document.getElementById('log');
   var inputArea = document.getElementById('input-area');
   var inputH    = inputArea.offsetHeight || 72;
+  // add a few px buffer so last message clears the input area
+  var logBottom  = inputH + 6;
   var topH      = 44;
 
   // setup card fills screen via CSS; vis/log only shown when connected
@@ -303,7 +306,9 @@ function layout() {
 
   visWrap.style.top = visTop + 'px';
   logEl.style.top   = (visTop + 100 + 4) + 'px';
-  logEl.style.bottom = inputH + 'px';
+  logEl.style.bottom = logBottom + 'px';
+  // keep scroll at bottom after resize
+  logEl.scrollTop = logEl.scrollHeight;
 }
 
 window.onresize = layout;
