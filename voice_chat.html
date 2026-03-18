@@ -327,6 +327,7 @@ var turnComplete    = false;
 var thinkingEl      = null;
 var b64Queue        = [];
 var decoding        = false;
+var iosNextTime     = 0;
 
 var WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent';
 
@@ -443,9 +444,7 @@ function decodePCM(b64) {
       samples = int16.length;
       buf = audioCtx.createBuffer(1, samples, 24000);
       ch = buf.getChannelData(0);
-      for (i = 0; i < samples; i++) {
-        ch[i] = int16[i] / 32768.0;
-      }
+      for (i = 0; i < samples; i++) { ch[i] = int16[i] / 32768.0; }
     } else {
       var bin = atob(b64);
       samples = bin.length >> 1;
@@ -493,12 +492,9 @@ function decodeNext() {
 }
 
 function playNext() {
-  if (pcmQueue.length === 0) {
-    processingChunk = false;
-    checkDone();
-    return;
-  }
+  if (pcmQueue.length === 0) { processingChunk = false; return; }
   processingChunk = true;
+  // Drain entire pcmQueue — schedule all at once
   while (pcmQueue.length > 0) {
     scheduleOne(pcmQueue.shift());
   }
@@ -513,49 +509,55 @@ function scheduleOne(buf) {
     var durMs = Math.ceil(buf.duration * 1000);
 
     if (typeof src.noteOn === 'function') {
+      // iOS 6: wall-clock scheduling
       var nowMs = Date.now();
       if (iosNextTime < nowMs) iosNextTime = nowMs + 20;
       var delayMs = iosNextTime - nowMs;
+      var fireAt = iosNextTime; // capture before advancing
       iosNextTime += durMs;
       (function(node, d) {
         setTimeout(function() { try { node.noteOn(0); } catch(e) {} }, d);
       })(src, delayMs);
-      var finishDelay = (iosNextTime - Date.now()) + 150;
+      // finishDelay = time from now until this chunk finishes playing
+      var finishDelay = (fireAt - Date.now()) + durMs + 200;
       (function(fd) {
         setTimeout(function() {
           pendingChunks--;
-          checkDone();
-        }, fd);
-      })(finishDelay > 0 ? finishDelay : 150);
+          if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
+            isPlaying = false; processingChunk = false;
+            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+          }
+        }, fd > 0 ? fd : 200);
+      })(finishDelay);
     } else {
+      // Modern: audio clock
       var nowAudio = audioCtx.currentTime;
       if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
       src.start(nextPlayTime);
       nextPlayTime += buf.duration;
       if ('onended' in src) {
-        src.onended = function() { pendingChunks--; checkDone(); };
+        src.onended = function() {
+          pendingChunks--;
+          if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
+            isPlaying = false; processingChunk = false;
+            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+          }
+        };
       } else {
         (function(d) {
-          setTimeout(function() { pendingChunks--; checkDone(); }, d + 150);
+          setTimeout(function() {
+            pendingChunks--;
+            if (pendingChunks <= 0 && !decoding && b64Queue.length === 0 && turnComplete) {
+              isPlaying = false; processingChunk = false;
+              setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+            }
+          }, d + 200);
         })(durMs);
       }
     }
   } catch(e) {
     logSystem('play err: ' + e.message);
     pendingChunks--;
-  }
-}
-
-var iosNextTime = 0;
-
-function checkDone() {
-  if (turnComplete && pendingChunks <= 0 &&
-      pcmQueue.length === 0 && b64Queue.length === 0) {
-    isPlaying = false;
-    processingChunk = false;
-    setRing('');
-    setStatus('ready', 'ready');
-    finishGemEntry();
   }
 }
 
@@ -659,7 +661,10 @@ function connect() {
       }
       if (sc.turnComplete) {
         turnComplete = true;
-        checkDone();
+        // If audio already done, wrap up immediately
+        if (!isPlaying && pendingChunks <= 0 && pcmQueue.length === 0 && b64Queue.length === 0) {
+          setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+        }
       }
     }
   };
