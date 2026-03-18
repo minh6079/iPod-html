@@ -465,77 +465,92 @@ function decodePCM(b64) {
   }
 }
 
-// Audio player — pre-decode queue, play sequentially with no gaps.
-// Decodes ALL queued b64 chunks immediately on arrival into AudioBuffers.
-// Plays them one at a time: noteOn(0) then setTimeout(next, durMs).
-// Pre-decoding means next buffer is always ready before current finishes.
-var chunkQueue = []; // pre-decoded AudioBuffers
-var b64Inbox   = []; // raw b64 arriving from WS before decode
+// Audio player — decode immediately, schedule all buffers up front.
+// Modern: audio clock (perfect gapless).
+// iOS noteOn: schedule all chunks at once using wall-clock offsets,
+//             each fires at the right absolute time via setTimeout.
+var chunkQueue   = [];
+var b64Inbox     = [];
 var chunkPlaying = false;
+var scheduledMs  = 0; // total ms of audio scheduled from iosOrigin
+var iosOrigin    = 0; // Date.now() when first chunk was scheduled
 
 function enqueuePCM(b64) {
   ensureAudio();
   if (!isPlaying) {
     isPlaying = true;
+    iosOrigin = Date.now() + 50; // 50ms startup buffer
+    scheduledMs = 0;
     hideThinking();
     setRing('speaking');
     setStatus('speaking', 'speaking');
   }
-  // Decode immediately — XHR+Int16Array is fast, don't defer
   var buf = decodePCM(b64);
-  if (buf) {
-    chunkQueue.push(buf);
-    if (!chunkPlaying) playChunk();
+  if (!buf) return;
+
+  if (typeof audioCtx.createBufferSource().noteOn === 'function') {
+    // iOS: schedule this chunk at its absolute wall-clock time
+    scheduleIOS(buf);
+  } else {
+    // Modern: use audio clock
+    scheduleModern(buf);
+    chunkQueue.push(buf); // track for turnComplete
+    chunkPlaying = true;
   }
 }
 
-// Adaptive overhead: tracks how long playChunk() itself takes to run,
-// and subtracts that from the next delay so chunks line up cleanly.
-var avgOverheadMs = 20; // rolling average of scheduling overhead
-
-function playChunk() {
-  var t0 = Date.now();
-
-  if (chunkQueue.length === 0) {
-    chunkPlaying = false;
-    if (turnComplete) {
-      isPlaying = false;
-      setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-    }
-    return;
-  }
-  chunkPlaying = true;
-  var buf = chunkQueue.shift();
+function scheduleIOS(buf) {
   var durMs = Math.round(buf.duration * 1000);
+  var fireAt = iosOrigin + scheduledMs;
+  scheduledMs += durMs;
+  var finishAt = iosOrigin + scheduledMs;
+  var nowMs = Date.now();
 
-  try {
-    var src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    src.connect(audioCtx.destination);
+  var delayMs = fireAt - nowMs;
+  if (delayMs < 0) delayMs = 0;
 
-    if (typeof src.noteOn === 'function') {
-      src.noteOn(0);
-    } else {
-      var now = audioCtx.currentTime;
-      if (nextPlayTime < now) nextPlayTime = now + 0.02;
-      src.start(nextPlayTime);
-      nextPlayTime += buf.duration;
-    }
-  } catch(e) {
-    logSystem('play err: ' + e.message);
-    setTimeout(playChunk, 10);
-    return;
-  }
+  (function(b, d, fa) {
+    setTimeout(function() {
+      try {
+        var src = audioCtx.createBufferSource();
+        src.buffer = b;
+        src.connect(audioCtx.destination);
+        src.noteOn(0);
+      } catch(e) {}
+    }, d);
+    // Mark done after this chunk finishes
+    setTimeout(function() {
+      chunkQueue.push(null); // sentinel
+      checkAllDone();
+    }, fa - Date.now() + 100);
+  })(buf, delayMs, finishAt);
 
-  // Measure how long this function took, update rolling average
-  var elapsed = Date.now() - t0;
-  avgOverheadMs = Math.round(avgOverheadMs * 0.7 + elapsed * 0.3);
-
-  // Fire next chunk early by the overhead so it starts right on time
-  var nextDelay = durMs - avgOverheadMs;
-  if (nextDelay < 0) nextDelay = 0;
-  setTimeout(playChunk, nextDelay);
+  chunkPlaying = true;
 }
+
+function scheduleModern(buf) {
+  var src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.connect(audioCtx.destination);
+  var now = audioCtx.currentTime;
+  if (nextPlayTime < now) nextPlayTime = now + 0.05;
+  src.start(nextPlayTime);
+  nextPlayTime += buf.duration;
+  src.onended = function() {
+    chunkQueue.pop();
+    checkAllDone();
+  };
+}
+
+function checkAllDone() {
+  if (turnComplete && chunkQueue.length === 0 && !b64Inbox.length) {
+    chunkPlaying = false;
+    isPlaying = false;
+    setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+  }
+}
+
+function playChunk() {} // unused, kept for safety
 
 function resetAudio() {
   chunkQueue = [];
@@ -543,8 +558,9 @@ function resetAudio() {
   chunkPlaying = false;
   isPlaying = false;
   nextPlayTime = 0;
+  scheduledMs = 0;
+  iosOrigin = 0;
   turnComplete = false;
-  avgOverheadMs = 20;
 }
 
 // ── Connect ───────────────────────────────────────────
@@ -640,11 +656,7 @@ function connect() {
       }
       if (sc.turnComplete) {
         turnComplete = true;
-        // If all chunks already played, wrap up now
-        if (!chunkPlaying && chunkQueue.length === 0) {
-          isPlaying = false;
-          setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-        }
+        checkAllDone();
       }
     }
   };
