@@ -396,6 +396,9 @@ function finishGemEntry() {
 }
 
 // ── Audio (PCM16 LE @ 24kHz) ──────────────────────────
+// Uses continuous scheduled playback — no gaps between chunks.
+// Avoids copyToChannel (not on iOS 6) and DataView loop (slow).
+
 function ensureAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
@@ -405,47 +408,71 @@ function ensureAudio() {
   }
 }
 
-function enqueuePCM(b64) {
-  ensureAudio();
+function pcmToFloat32(b64) {
+  // atob -> byte array via charCodeAt (ES5, no TextDecoder needed)
   var bin = atob(b64);
   var len = bin.length;
-  var bytes = new Uint8Array(len);
-  for (var i = 0; i < len; i++) {
-    bytes[i] = bin.charCodeAt(i);
-  }
-  var samples = Math.floor(len / 2);
+  var samples = len >> 1; // divide by 2
   var f32 = new Float32Array(samples);
-  var view = new DataView(bytes.buffer);
-  for (var j = 0; j < samples; j++) {
-    f32[j] = view.getInt16(j * 2, true) / 32768.0;
+  for (var i = 0; i < samples; i++) {
+    // read two bytes little-endian, convert signed int16 to float
+    var lo = bin.charCodeAt(i * 2) & 0xFF;
+    var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
+    var s  = (hi << 8) | lo;
+    if (s >= 0x8000) s -= 0x10000; // sign extend
+    f32[i] = s / 32768.0;
   }
-  var buf = audioCtx.createBuffer(1, f32.length, 24000);
-  buf.copyToChannel(f32, 0);
-  audioQueue.push(buf);
-  if (!isPlaying) drainQueue();
+  return f32;
 }
 
-function drainQueue() {
-  if (audioQueue.length === 0) {
+function makeBuffer(f32) {
+  var buf = audioCtx.createBuffer(1, f32.length, 24000);
+  // copyToChannel missing on iOS 6 — use getChannelData instead
+  var ch = buf.getChannelData(0);
+  for (var i = 0; i < f32.length; i++) {
+    ch[i] = f32[i];
+  }
+  return buf;
+}
+
+function enqueuePCM(b64) {
+  ensureAudio();
+  var f32 = pcmToFloat32(b64);
+  var buf = makeBuffer(f32);
+  // Schedule immediately at nextPlayTime — continuous, no gaps
+  var now = audioCtx.currentTime;
+  if (nextPlayTime < now) nextPlayTime = now + 0.02; // tiny buffer
+  var src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.connect(audioCtx.destination);
+  src.start(nextPlayTime);
+  nextPlayTime += buf.duration;
+  // Track last source to know when speaking ends
+  lastSrc = src;
+  src.onended = onChunkEnded;
+  pendingChunks++;
+  if (!isPlaying) {
+    isPlaying = true;
+    setRing('speaking');
+    setStatus('speaking', 'speaking');
+  }
+}
+
+var pendingChunks = 0;
+var lastSrc = null;
+
+function onChunkEnded() {
+  pendingChunks--;
+  if (pendingChunks <= 0) {
+    pendingChunks = 0;
     isPlaying = false;
     setRing('');
     setStatus('ready', 'ready');
     finishGemEntry();
-    return;
   }
-  isPlaying = true;
-  setRing('speaking');
-  setStatus('speaking', 'speaking');
-  var buf = audioQueue.shift();
-  var src = audioCtx.createBufferSource();
-  src.buffer = buf;
-  src.connect(audioCtx.destination);
-  var now = audioCtx.currentTime;
-  if (nextPlayTime < now) nextPlayTime = now;
-  src.start(nextPlayTime);
-  nextPlayTime += buf.duration;
-  src.onended = drainQueue;
 }
+
+function drainQueue() {} // kept for compatibility, no longer used
 
 // ── Connect ───────────────────────────────────────────
 function connect() {
@@ -590,6 +617,8 @@ function resetUI() {
   audioQueue = [];
   isPlaying = false;
   nextPlayTime = 0;
+  pendingChunks = 0;
+  lastSrc = null;
   setRing('');
   setStatus('', 'offline');
   document.getElementById('setup-card').style.display = 'block';
@@ -614,6 +643,8 @@ function sendText() {
   audioQueue = [];
   isPlaying = false;
   nextPlayTime = 0;
+  pendingChunks = 0;
+  lastSrc = null;
   finishGemEntry();
 
   logUser(text);
