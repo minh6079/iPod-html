@@ -525,13 +525,15 @@ function connect() {
   setStatus('', 'connecting...');
 
   // iOS requires audio context to be unlocked from a user gesture.
-  // Do it NOW while we're inside the button tap handler.
-  ensureAudio();
-  var silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-  var silentSrc = audioCtx.createBufferSource();
-  silentSrc.buffer = silentBuf;
-  silentSrc.connect(audioCtx.destination);
-  silentSrc.start(0);
+  // Wrap in try/catch so any error here never blocks the WebSocket connect.
+  try {
+    ensureAudio();
+    var silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    var silentSrc = audioCtx.createBufferSource();
+    silentSrc.buffer = silentBuf;
+    silentSrc.connect(audioCtx.destination);
+    silentSrc.start(0);
+  } catch(e) {}
 
   var url = WS_BASE + '?key=' + key;
 
