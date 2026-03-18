@@ -70,10 +70,12 @@ html, body {
 
 /* ── SETUP CARD ── */
 #setup-card {
-  position: absolute; top: 54px; left: 10px; right: 10px;
+  position: absolute; top: 54px; left: 10px; right: 10px; bottom: 10px;
   background: #fff; border: 1px solid #e8e6e0;
   -webkit-border-radius: 10px; border-radius: 10px;
-  padding: 14px 14px 10px; overflow: hidden;
+  padding: 14px 14px 14px;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 #setup-title {
   font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
@@ -110,6 +112,7 @@ html, body {
 /* ── VISUALIZER ── */
 #vis-wrap {
   position: absolute; left: 0; right: 0; height: 100px; text-align: center;
+  display: none;
 }
 #vis-ring {
   display: inline-block; width: 80px; height: 80px;
@@ -166,6 +169,7 @@ html, body {
 
 /* ── LOG ── */
 #log {
+  display: none;
   position: absolute; left: 0; right: 0;
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch; padding: 6px 10px;
@@ -294,8 +298,8 @@ function layout() {
   var inputH    = inputArea.offsetHeight || 72;
   var topH      = 44;
 
-  var setupH    = (setupCard.style.display !== 'none') ? (setupCard.offsetHeight || 0) : 0;
-  var visTop    = topH + (setupH > 0 ? setupH + 20 : 8);
+  // setup card fills screen via CSS; vis/log only shown when connected
+  var visTop    = topH + 8;
 
   visWrap.style.top = visTop + 'px';
   logEl.style.top   = (visTop + 100 + 4) + 'px';
@@ -502,6 +506,8 @@ function connect() {
       isConnected = true;
       setStatus('ready', 'ready');
       document.getElementById('setup-card').style.display = 'none';
+      document.getElementById('vis-wrap').style.display = 'block';
+      document.getElementById('log').style.display = 'block';
       document.getElementById('disc-btn').style.display = 'inline-block';
       document.getElementById('msg-input').disabled = false;
       document.getElementById('send-btn').disabled = false;
@@ -580,6 +586,8 @@ function resetUI() {
   setRing('');
   setStatus('', 'offline');
   document.getElementById('setup-card').style.display = 'block';
+  document.getElementById('vis-wrap').style.display = 'none';
+  document.getElementById('log').style.display = 'none';
   document.getElementById('disc-btn').style.display = 'none';
   document.getElementById('msg-input').disabled = true;
   document.getElementById('send-btn').disabled = true;
