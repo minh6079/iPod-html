@@ -222,6 +222,21 @@ html, body {
 #send-btn:disabled { opacity: 0.3; }
 #hint { font-size: 10px; color: #a8a49e; font-family: 'DM Mono', monospace; text-align: center; margin-top: 5px; }
 
+.thinking-dots { display: inline-block; padding: 2px 0; }
+.thinking-dots span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: #f97316;
+  -webkit-border-radius: 50%; border-radius: 50%;
+  margin-right: 4px;
+  -webkit-animation: thdot 1.2s ease-in-out infinite;
+  animation: thdot 1.2s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2) { -webkit-animation-delay: 0.2s; animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { -webkit-animation-delay: 0.4s; animation-delay: 0.4s; }
+@-webkit-keyframes thdot { 0%,80%,100%{opacity:0.2;-webkit-transform:scale(0.8)} 40%{opacity:1;-webkit-transform:scale(1.1)} }
+@keyframes thdot { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.1)} }
+
 #log::-webkit-scrollbar { width: 3px; }
 #log::-webkit-scrollbar-track { background: transparent; }
 #log::-webkit-scrollbar-thumb { background: #d0cdc5; -webkit-border-radius: 2px; border-radius: 2px; }
@@ -399,80 +414,101 @@ function finishGemEntry() {
 // Uses continuous scheduled playback — no gaps between chunks.
 // Avoids copyToChannel (not on iOS 6) and DataView loop (slow).
 
+// iOS 6 webkitAudioContext ignores sampleRate option — create without it
+// to avoid silent resampling bugs. We handle rate mismatch via buffer sampleRate arg.
 function ensureAudio() {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      audioCtx = new window.webkitAudioContext();
+    }
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-function pcmToFloat32(b64) {
-  // atob -> byte array via charCodeAt (ES5, no TextDecoder needed)
-  var bin = atob(b64);
-  var len = bin.length;
-  var samples = len >> 1; // divide by 2
-  var f32 = new Float32Array(samples);
-  for (var i = 0; i < samples; i++) {
-    // read two bytes little-endian, convert signed int16 to float
-    var lo = bin.charCodeAt(i * 2) & 0xFF;
-    var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
-    var s  = (hi << 8) | lo;
-    if (s >= 0x8000) s -= 0x10000; // sign extend
-    f32[i] = s / 32768.0;
-  }
-  return f32;
-}
-
-function makeBuffer(f32) {
-  var buf = audioCtx.createBuffer(1, f32.length, 24000);
-  // copyToChannel missing on iOS 6 — use getChannelData instead
-  var ch = buf.getChannelData(0);
-  for (var i = 0; i < f32.length; i++) {
-    ch[i] = f32[i];
-  }
-  return buf;
-}
+// Raw b64 chunk queue — defer decode until just before play
+var rawQueue = [];
+var pendingChunks = 0;
+var lastSrc = null;
+var processingChunk = false;
 
 function enqueuePCM(b64) {
   ensureAudio();
-  var f32 = pcmToFloat32(b64);
-  var buf = makeBuffer(f32);
-  // Schedule immediately at nextPlayTime — continuous, no gaps
-  var now = audioCtx.currentTime;
-  if (nextPlayTime < now) nextPlayTime = now + 0.02; // tiny buffer
-  var src = audioCtx.createBufferSource();
-  src.buffer = buf;
-  src.connect(audioCtx.destination);
-  src.start(nextPlayTime);
-  nextPlayTime += buf.duration;
-  // Track last source to know when speaking ends
-  lastSrc = src;
-  src.onended = onChunkEnded;
-  pendingChunks++;
+  rawQueue.push(b64);
   if (!isPlaying) {
     isPlaying = true;
     setRing('speaking');
     setStatus('speaking', 'speaking');
   }
+  if (!processingChunk) scheduleNext();
 }
 
-var pendingChunks = 0;
-var lastSrc = null;
+function scheduleNext() {
+  if (rawQueue.length === 0) {
+    processingChunk = false;
+    return;
+  }
+  processingChunk = true;
+  // Use setTimeout(0) to yield to browser between chunks — prevents UI freeze
+  setTimeout(function() {
+    if (rawQueue.length === 0) { processingChunk = false; return; }
+    var b64 = rawQueue.shift();
+    var buf = decodePCM(b64);
+    if (!buf) { scheduleNext(); return; }
+
+    var now = audioCtx.currentTime;
+    if (nextPlayTime < now) nextPlayTime = now + 0.05;
+
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(nextPlayTime);
+    nextPlayTime += buf.duration;
+    pendingChunks++;
+    lastSrc = src;
+    src.onended = onChunkEnded;
+
+    // Schedule next decode after a short yield
+    setTimeout(scheduleNext, 0);
+  }, 0);
+}
+
+function decodePCM(b64) {
+  try {
+    var bin = atob(b64);
+    var len = bin.length;
+    var samples = len >> 1;
+    // Create buffer at Gemini's native rate (24000)
+    // webkitAudioContext will resample to device rate automatically
+    var buf = audioCtx.createBuffer(1, samples, 24000);
+    var ch = buf.getChannelData(0);
+    for (var i = 0; i < samples; i++) {
+      var lo = bin.charCodeAt(i * 2) & 0xFF;
+      var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
+      var s  = (hi << 8) | lo;
+      if (s >= 0x8000) s -= 0x10000;
+      ch[i] = s / 32768.0;
+    }
+    return buf;
+  } catch(e) {
+    return null;
+  }
+}
 
 function onChunkEnded() {
   pendingChunks--;
-  if (pendingChunks <= 0) {
+  if (pendingChunks <= 0 && rawQueue.length === 0) {
     pendingChunks = 0;
     isPlaying = false;
+    processingChunk = false;
     setRing('');
     setStatus('ready', 'ready');
     finishGemEntry();
   }
 }
 
-function drainQueue() {} // kept for compatibility, no longer used
+function drainQueue() {}
 
 // ── Connect ───────────────────────────────────────────
 function connect() {
@@ -562,6 +598,7 @@ function connect() {
         setRing('');
         setStatus('ready', 'ready');
         finishGemEntry();
+        hideThinking();
         logSystem('- interrupted -');
         return;
       }
@@ -572,7 +609,7 @@ function connect() {
           var p = parts[i];
           // Native audio chunks
           if (p.inlineData && p.inlineData.mimeType && p.inlineData.mimeType.indexOf('audio') !== -1) {
-            if (!isPlaying) { setRing('thinking'); setStatus('', 'receiving...'); }
+            if (!isPlaying) { hideThinking(); setRing('thinking'); setStatus('', 'receiving...'); }
             enqueuePCM(p.inlineData.data);
           }
           // Text transcript
@@ -619,6 +656,8 @@ function resetUI() {
   nextPlayTime = 0;
   pendingChunks = 0;
   lastSrc = null;
+  rawQueue = [];
+  processingChunk = false;
   setRing('');
   setStatus('', 'offline');
   document.getElementById('setup-card').style.display = 'block';
@@ -630,6 +669,34 @@ function resetUI() {
   document.getElementById('send-btn').disabled = true;
   document.getElementById('connect-btn').disabled = false;
   layout();
+}
+
+// ── Thinking indicator ───────────────────────────────
+var thinkingEl = null;
+
+function showThinking() {
+  hideThinking();
+  var logEl = document.getElementById('log');
+  thinkingEl = document.createElement('div');
+  thinkingEl.className = 'entry gemini';
+  thinkingEl.id = '__thinking__';
+  var lb = document.createElement('div');
+  lb.className = 'entry-label';
+  lb.textContent = 'Gemini';
+  var bd = document.createElement('div');
+  bd.className = 'thinking-dots';
+  bd.innerHTML = '<span></span><span></span><span></span>';
+  thinkingEl.appendChild(lb);
+  thinkingEl.appendChild(bd);
+  logEl.appendChild(thinkingEl);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function hideThinking() {
+  if (thinkingEl && thinkingEl.parentNode) {
+    thinkingEl.parentNode.removeChild(thinkingEl);
+  }
+  thinkingEl = null;
 }
 
 // ── Send text ─────────────────────────────────────────
@@ -645,6 +712,8 @@ function sendText() {
   nextPlayTime = 0;
   pendingChunks = 0;
   lastSrc = null;
+  rawQueue = [];
+  processingChunk = false;
   finishGemEntry();
 
   logUser(text);
@@ -653,6 +722,7 @@ function sendText() {
 
   setRing('thinking');
   setStatus('', 'thinking...');
+  showThinking();
 
   // ── CORRECT client message format per Google docs ──
   // Key is "clientContent" (camelCase), turns use "role"+"parts"
