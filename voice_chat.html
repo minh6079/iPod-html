@@ -304,8 +304,9 @@ function layout() {
   var inputVisible = inputArea.style.display !== 'none';
   var inputH   = inputVisible ? (inputArea.offsetHeight || 72) : 0;
   var logBottom = inputH + (inputVisible ? 6 : 0);
-  visWrap.style.top = '52px';
-  logEl.style.top   = '156px';
+  var visTop   = 52;
+  visWrap.style.top = visTop + 'px';
+  logEl.style.top   = (visTop + 100 + 4) + 'px';
   logEl.style.bottom = logBottom + 'px';
   logEl.scrollTop = logEl.scrollHeight;
 }
@@ -315,28 +316,17 @@ window.onresize = layout;
 var ws              = null;
 var audioCtx        = null;
 var isPlaying       = false;
-var nextPlayTime    = 0;   // audio clock (modern browsers)
-var iosStartMs      = 0;   // wall-clock origin when first chunk plays (iOS)
-var iosOffsetMs     = 0;   // how many ms of audio scheduled so far (iOS)
+var nextPlayTime    = 0;
 var isConnected     = false;
 var currentGemEntry = null;
-var gemTextEl       = null;
 var gemTextBuf      = '';
+var pcmQueue        = [];
 var pendingChunks   = 0;
+var processingChunk = false;
 var turnComplete    = false;
 var thinkingEl      = null;
-var useNoteOn       = false; // detected on first play
-
-// Pre-computed lookup: int16 -> float32 (eliminates division loop)
-var INT16_TO_F32 = null;
-function buildLUT() {
-  if (INT16_TO_F32) return;
-  INT16_TO_F32 = new Float32Array(65536);
-  for (var i = 0; i < 65536; i++) {
-    var s = i < 32768 ? i : i - 65536;
-    INT16_TO_F32[i] = s / 32768.0;
-  }
-}
+var b64Queue        = [];
+var decoding        = false;
 
 var WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent';
 
@@ -354,16 +344,16 @@ function setRing(cls) {
 }
 
 // ── Log ───────────────────────────────────────────────
-var logEl = null;
-function getLog() { if (!logEl) logEl = document.getElementById('log'); return logEl; }
-
 function logSystem(msg) {
+  var logEl = document.getElementById('log');
   var el = document.createElement('div');
   el.className = 'entry system';
   el.textContent = msg;
-  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
+  logEl.appendChild(el);
+  logEl.scrollTop = logEl.scrollHeight;
 }
 function logUser(text) {
+  var logEl = document.getElementById('log');
   var el = document.createElement('div');
   el.className = 'entry user';
   var lb = document.createElement('div');
@@ -372,42 +362,48 @@ function logUser(text) {
   var bd = document.createElement('div');
   bd.textContent = text;
   el.appendChild(lb); el.appendChild(bd);
-  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
+  logEl.appendChild(el);
+  logEl.scrollTop = logEl.scrollHeight;
 }
 function startGemEntry() {
   gemTextBuf = '';
-  var el = document.createElement('div');
-  el.className = 'entry gemini';
+  var logEl = document.getElementById('log');
+  currentGemEntry = document.createElement('div');
+  currentGemEntry.className = 'entry gemini';
   var lb = document.createElement('div');
   lb.className = 'entry-label';
   lb.textContent = 'Gemini';
-  gemTextEl = document.createElement('span');
-  el.appendChild(lb); el.appendChild(gemTextEl);
-  currentGemEntry = el;
-  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
+  var bd = document.createElement('span');
+  bd.className = 'body';
+  currentGemEntry.appendChild(lb);
+  currentGemEntry.appendChild(bd);
+  logEl.appendChild(currentGemEntry);
+  logEl.scrollTop = logEl.scrollHeight;
 }
 function appendGemText(text) {
   if (!currentGemEntry) startGemEntry();
   gemTextBuf += text;
-  gemTextEl.textContent = gemTextBuf;
-  var l = getLog(); l.scrollTop = l.scrollHeight;
+  currentGemEntry.querySelector('.body').textContent = gemTextBuf;
+  document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
 }
-function finishGemEntry() { currentGemEntry = null; gemTextEl = null; gemTextBuf = ''; }
+function finishGemEntry() { currentGemEntry = null; gemTextBuf = ''; }
 
 // ── Thinking ──────────────────────────────────────────
 function showThinking() {
   hideThinking();
-  var el = document.createElement('div');
-  el.className = 'entry gemini';
+  var logEl = document.getElementById('log');
+  thinkingEl = document.createElement('div');
+  thinkingEl.className = 'entry gemini';
   var lb = document.createElement('div');
   lb.className = 'entry-label';
   lb.textContent = 'Gemini';
   var bd = document.createElement('div');
   bd.className = 'thinking-dots';
   bd.innerHTML = '<span></span><span></span><span></span>';
-  el.appendChild(lb); el.appendChild(bd);
-  thinkingEl = el;
-  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
+  thinkingEl.appendChild(lb);
+  thinkingEl.appendChild(bd);
+  logEl.appendChild(thinkingEl);
+  logEl.scrollTop = logEl.scrollHeight;
 }
 function hideThinking() {
   if (thinkingEl && thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
@@ -419,24 +415,18 @@ function ensureAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch(e) { audioCtx = new window.webkitAudioContext(); }
-    buildLUT();
-    // Silent looping buffer — keeps iOS context alive
     try {
       var sb = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
       var kn = audioCtx.createBufferSource();
       kn.buffer = sb; kn.loop = true;
       var gn = audioCtx.createGain(); gn.gain.value = 0;
       kn.connect(gn); gn.connect(audioCtx.destination);
-      if (typeof kn.noteOn === 'function') { useNoteOn = true; kn.noteOn(0); }
-      else kn.start(0);
+      if (typeof kn.noteOn === 'function') kn.noteOn(0); else kn.start(0);
     } catch(e) {}
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-// Decode base64 PCM16LE -> AudioBuffer @ 24000Hz
-// Strategy: XHR arraybuffer (native, fast) -> Int16Array -> LUT float32
-// Falls back to charCodeAt if XHR data-URL fails
 function decodePCM(b64) {
   var ab = null;
   try {
@@ -446,7 +436,6 @@ function decodePCM(b64) {
     xhr.send();
     ab = xhr.response;
   } catch(e) {}
-
   try {
     var samples, ch, i, buf;
     if (ab) {
@@ -454,12 +443,10 @@ function decodePCM(b64) {
       samples = int16.length;
       buf = audioCtx.createBuffer(1, samples, 24000);
       ch = buf.getChannelData(0);
-      // LUT lookup: no division, no branching — fastest possible
       for (i = 0; i < samples; i++) {
-        ch[i] = INT16_TO_F32[int16[i] & 0xFFFF];
+        ch[i] = int16[i] / 32768.0;
       }
     } else {
-      // Fallback: charCodeAt
       var bin = atob(b64);
       samples = bin.length >> 1;
       buf = audioCtx.createBuffer(1, samples, 24000);
@@ -467,7 +454,9 @@ function decodePCM(b64) {
       for (i = 0; i < samples; i++) {
         var lo = bin.charCodeAt(i * 2) & 0xFF;
         var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
-        ch[i] = INT16_TO_F32[(hi << 8) | lo];
+        var s  = (hi << 8) | lo;
+        if (s >= 0x8000) s -= 0x10000;
+        ch[i] = s / 32768.0;
       }
     }
     return buf;
@@ -477,76 +466,6 @@ function decodePCM(b64) {
   }
 }
 
-// Schedule a decoded buffer for playback immediately
-// iOS: uses wall-clock setTimeout chain anchored to a single start time
-// Modern: uses audio clock for perfect gapless scheduling
-function scheduleBuffer(buf) {
-  try {
-    var src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    src.connect(audioCtx.destination);
-    var durMs = buf.duration * 1000;
-    pendingChunks++;
-
-    if (useNoteOn) {
-      // iOS 6: anchor wall-clock to first chunk's real play time
-      var nowMs = Date.now();
-      if (iosStartMs === 0) {
-        iosStartMs = nowMs + 30; // 30ms startup buffer
-        iosOffsetMs = 0;
-      }
-      var fireAt = iosStartMs + iosOffsetMs;
-      var delayMs = fireAt - nowMs;
-      if (delayMs < 0) delayMs = 0;
-      iosOffsetMs += durMs;
-      // Capture src in closure
-      (function(node, d) {
-        setTimeout(function() {
-          try { node.noteOn(0); } catch(e) {}
-        }, d);
-      })(src, delayMs);
-      // Mark done slightly after this chunk should finish
-      var finishAt = iosStartMs + iosOffsetMs - nowMs + 80;
-      (function(fc) {
-        setTimeout(function() {
-          pendingChunks--;
-          checkDone();
-        }, fc);
-      })(finishAt > 0 ? finishAt : 80);
-    } else {
-      // Modern audio clock
-      var nowAudio = audioCtx.currentTime;
-      if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
-      src.start(nextPlayTime);
-      nextPlayTime += buf.duration;
-      // onended for done tracking
-      if ('onended' in src) {
-        src.onended = function() { pendingChunks--; checkDone(); };
-      } else {
-        (function(d) {
-          setTimeout(function() { pendingChunks--; checkDone(); }, d);
-        })(Math.ceil(durMs) + 80);
-      }
-    }
-  } catch(e) {
-    logSystem('play err: ' + e.message);
-    pendingChunks--;
-  }
-}
-
-function checkDone() {
-  if (pendingChunks <= 0 && turnComplete) {
-    pendingChunks = 0;
-    isPlaying = false;
-    setRing('');
-    setStatus('ready', 'ready');
-    finishGemEntry();
-  }
-}
-
-// Incoming b64 chunk: decode synchronously then schedule immediately.
-// No setTimeout yielding — we want minimum latency.
-// XHR decode is already native/fast; LUT lookup is ~0.3ms for 30k samples.
 function enqueuePCM(b64) {
   ensureAudio();
   if (!isPlaying) {
@@ -555,16 +474,107 @@ function enqueuePCM(b64) {
     setRing('speaking');
     setStatus('speaking', 'speaking');
   }
-  var buf = decodePCM(b64);
-  if (buf) scheduleBuffer(buf);
+  b64Queue.push(b64);
+  if (!decoding) decodeNext();
 }
 
+function decodeNext() {
+  if (b64Queue.length === 0) { decoding = false; return; }
+  decoding = true;
+  var b64 = b64Queue.shift();
+  setTimeout(function() {
+    var buf = decodePCM(b64);
+    if (buf) {
+      pcmQueue.push(buf);
+      if (!processingChunk) playNext();
+    }
+    decodeNext();
+  }, 0);
+}
+
+function playNext() {
+  if (pcmQueue.length === 0) {
+    processingChunk = false;
+    if (turnComplete && pendingChunks <= 0 && b64Queue.length === 0) {
+      isPlaying = false;
+      setRing('');
+      setStatus('ready', 'ready');
+      finishGemEntry();
+    }
+    return;
+  }
+  processingChunk = true;
+  while (pcmQueue.length > 0) {
+    scheduleOne(pcmQueue.shift());
+  }
+}
+
+function scheduleOne(buf) {
+  try {
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    pendingChunks++;
+    var durMs = Math.ceil(buf.duration * 1000);
+
+    if (typeof src.noteOn === 'function') {
+      var nowMs = Date.now();
+      if (iosNextTime < nowMs) iosNextTime = nowMs + 20;
+      var delayMs = iosNextTime - nowMs;
+      iosNextTime += durMs;
+      (function(node, d) {
+        setTimeout(function() { try { node.noteOn(0); } catch(e) {} }, d);
+      })(src, delayMs);
+      var finishDelay = (iosNextTime - Date.now()) + 100;
+      (function(fd) {
+        setTimeout(function() {
+          pendingChunks--;
+          if (pendingChunks <= 0 && pcmQueue.length === 0 &&
+              b64Queue.length === 0 && turnComplete) {
+            isPlaying = false; processingChunk = false;
+            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+          }
+        }, fd);
+      })(finishDelay);
+    } else {
+      var nowAudio = audioCtx.currentTime;
+      if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
+      src.start(nextPlayTime);
+      nextPlayTime += buf.duration;
+      if ('onended' in src) {
+        src.onended = function() {
+          pendingChunks--;
+          if (pendingChunks <= 0 && pcmQueue.length === 0 &&
+              b64Queue.length === 0 && turnComplete) {
+            isPlaying = false; processingChunk = false;
+            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+          }
+        };
+      } else {
+        (function(d) {
+          setTimeout(function() {
+            pendingChunks--;
+            if (pendingChunks <= 0 && pcmQueue.length === 0 &&
+                b64Queue.length === 0 && turnComplete) {
+              isPlaying = false; processingChunk = false;
+              setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+            }
+          }, d + 100);
+        })(durMs);
+      }
+    }
+  } catch(e) {
+    logSystem('play err: ' + e.message);
+    pendingChunks--;
+  }
+}
+
+var iosNextTime = 0;
+
 function resetAudio() {
-  isPlaying = false;
-  nextPlayTime = 0;
-  iosStartMs = 0;
-  iosOffsetMs = 0;
-  pendingChunks = 0;
+  pcmQueue = []; b64Queue = [];
+  pendingChunks = 0; processingChunk = false; decoding = false;
+  isPlaying = false; nextPlayTime = 0; iosNextTime = 0;
   turnComplete = false;
 }
 
@@ -582,13 +592,12 @@ function connect() {
   document.getElementById('connect-btn').disabled = true;
   setStatus('', 'connecting...');
 
-  // Unlock audio from user gesture
   try {
     ensureAudio();
     var ub = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
     var us = audioCtx.createBufferSource();
     us.buffer = ub; us.connect(audioCtx.destination);
-    if (useNoteOn) us.noteOn(0); else us.start(0);
+    if (typeof us.noteOn === 'function') us.noteOn(0); else us.start(0);
   } catch(e) {}
 
   var url = WS_BASE + '?key=' + key;
@@ -662,7 +671,9 @@ function connect() {
       }
       if (sc.turnComplete) {
         turnComplete = true;
-        checkDone();
+        if (!isPlaying && pendingChunks <= 0 && pcmQueue.length === 0 && b64Queue.length === 0) {
+          setRing(''); setStatus('ready', 'ready'); finishGemEntry();
+        }
       }
     }
   };
@@ -702,14 +713,13 @@ function sendText() {
   text = text ? text.replace(/^\s+|\s+$/g, '') : '';
   if (!text) return;
 
-  // Re-unlock audio on send tap (iOS may have suspended)
   try {
     if (audioCtx) {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       var sb = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
       var ss = audioCtx.createBufferSource();
       ss.buffer = sb; ss.connect(audioCtx.destination);
-      if (useNoteOn) ss.noteOn(0); else ss.start(0);
+      if (typeof ss.noteOn === 'function') ss.noteOn(0); else ss.start(0);
     }
   } catch(e) {}
 
