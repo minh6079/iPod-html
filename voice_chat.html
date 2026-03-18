@@ -495,12 +495,7 @@ function decodeNext() {
 function playNext() {
   if (pcmQueue.length === 0) {
     processingChunk = false;
-    if (turnComplete && pendingChunks <= 0 && b64Queue.length === 0) {
-      isPlaying = false;
-      setRing('');
-      setStatus('ready', 'ready');
-      finishGemEntry();
-    }
+    checkDone();
     return;
   }
   processingChunk = true;
@@ -525,41 +520,23 @@ function scheduleOne(buf) {
       (function(node, d) {
         setTimeout(function() { try { node.noteOn(0); } catch(e) {} }, d);
       })(src, delayMs);
-      var finishDelay = (iosNextTime - Date.now()) + 100;
+      var finishDelay = (iosNextTime - Date.now()) + 150;
       (function(fd) {
         setTimeout(function() {
           pendingChunks--;
-          if (pendingChunks <= 0 && pcmQueue.length === 0 &&
-              b64Queue.length === 0 && turnComplete) {
-            isPlaying = false; processingChunk = false;
-            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-          }
+          checkDone();
         }, fd);
-      })(finishDelay);
+      })(finishDelay > 0 ? finishDelay : 150);
     } else {
       var nowAudio = audioCtx.currentTime;
       if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
       src.start(nextPlayTime);
       nextPlayTime += buf.duration;
       if ('onended' in src) {
-        src.onended = function() {
-          pendingChunks--;
-          if (pendingChunks <= 0 && pcmQueue.length === 0 &&
-              b64Queue.length === 0 && turnComplete) {
-            isPlaying = false; processingChunk = false;
-            setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-          }
-        };
+        src.onended = function() { pendingChunks--; checkDone(); };
       } else {
         (function(d) {
-          setTimeout(function() {
-            pendingChunks--;
-            if (pendingChunks <= 0 && pcmQueue.length === 0 &&
-                b64Queue.length === 0 && turnComplete) {
-              isPlaying = false; processingChunk = false;
-              setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-            }
-          }, d + 100);
+          setTimeout(function() { pendingChunks--; checkDone(); }, d + 150);
         })(durMs);
       }
     }
@@ -570,6 +547,17 @@ function scheduleOne(buf) {
 }
 
 var iosNextTime = 0;
+
+function checkDone() {
+  if (turnComplete && pendingChunks <= 0 &&
+      pcmQueue.length === 0 && b64Queue.length === 0) {
+    isPlaying = false;
+    processingChunk = false;
+    setRing('');
+    setStatus('ready', 'ready');
+    finishGemEntry();
+  }
+}
 
 function resetAudio() {
   pcmQueue = []; b64Queue = [];
@@ -671,9 +659,7 @@ function connect() {
       }
       if (sc.turnComplete) {
         turnComplete = true;
-        if (!isPlaying && pendingChunks <= 0 && pcmQueue.length === 0 && b64Queue.length === 0) {
-          setRing(''); setStatus('ready', 'ready'); finishGemEntry();
-        }
+        checkDone();
       }
     }
   };
