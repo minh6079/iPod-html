@@ -5,15 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gemini Audio</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
-
 * { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   width: 100%; height: 100%;
   background: #f7f6f3;
   color: #1a1917;
-  font-family: 'DM Sans', sans-serif;
+  font-family: -apple-system, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-text-size-adjust: none;
@@ -23,7 +21,6 @@ html, body {
 
 #app { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
 
-/* ── TOPBAR ── */
 #topbar {
   position: absolute; top: 0; left: 0; right: 0; height: 44px;
   background: #fff; border-bottom: 1px solid #e8e6e0; overflow: hidden;
@@ -31,14 +28,14 @@ html, body {
 #brand {
   position: absolute; top: 0; left: 12px;
   height: 44px; line-height: 44px;
-  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+  font-family: Courier, monospace; font-size: 12px; font-weight: 500;
   letter-spacing: 0.08em; color: #6b6760; text-transform: uppercase;
 }
 #topbar-right { position: absolute; top: 7px; right: 10px; }
 
 #conn-pill {
   display: inline-block;
-  font-size: 11px; font-family: 'DM Mono', monospace;
+  font-size: 11px; font-family: Courier, monospace;
   color: #a8a49e; background: #e8e6e0;
   padding: 4px 10px 4px 22px;
   -webkit-border-radius: 100px; border-radius: 100px;
@@ -63,12 +60,11 @@ html, body {
 #disc-btn {
   display: none; background: none;
   border: 1px solid #d0cdc5; color: #6b6760;
-  font-family: 'DM Mono', monospace; font-size: 10px;
+  font-family: Courier, monospace; font-size: 10px;
   padding: 3px 8px; -webkit-border-radius: 100px; border-radius: 100px;
   margin-right: 6px; vertical-align: middle; cursor: pointer; -webkit-appearance: none;
 }
 
-/* ── SETUP CARD ── */
 #setup-card {
   position: absolute; top: 54px; left: 10px; right: 10px; bottom: 10px;
   background: #fff; border: 1px solid #e8e6e0;
@@ -78,19 +74,19 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 #setup-title {
-  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  font-family: Courier, monospace; font-size: 11px; font-weight: 500;
   color: #a8a49e; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;
 }
 .field { margin-bottom: 8px; }
 .field label {
   display: block; font-size: 11px; color: #a8a49e;
-  font-family: 'DM Mono', monospace; margin-bottom: 3px;
+  font-family: Courier, monospace; margin-bottom: 3px;
 }
 .field input, .field select {
   display: block; width: 100%;
   background: #f7f6f3; border: 1px solid #d0cdc5;
   -webkit-border-radius: 7px; border-radius: 7px;
-  color: #1a1917; font-family: 'DM Mono', monospace; font-size: 12px;
+  color: #1a1917; font-family: Courier, monospace; font-size: 12px;
   padding: 8px 10px; outline: none;
   -webkit-appearance: none; appearance: none;
   -webkit-box-shadow: none; box-shadow: none;
@@ -102,14 +98,13 @@ html, body {
   display: block; width: 100%;
   background: #1a1917; color: #f7f6f3; border: none;
   -webkit-border-radius: 7px; border-radius: 7px;
-  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500;
   padding: 10px; margin-top: 4px; cursor: pointer; text-align: center;
   -webkit-appearance: none;
 }
 #connect-btn:active { opacity: 0.7; }
 #connect-btn:disabled { opacity: 0.4; }
 
-/* ── VISUALIZER ── */
 #vis-wrap {
   position: absolute; left: 0; right: 0; height: 100px; text-align: center;
   display: none;
@@ -167,13 +162,11 @@ html, body {
 @-webkit-keyframes tk{0%,100%{height:4px}50%{height:9px}}
 @keyframes tk{0%,100%{height:4px}50%{height:9px}}
 
-/* ── LOG ── */
 #log {
   display: none;
-  padding-bottom: 8px;
   position: absolute; left: 0; right: 0;
   overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; padding: 6px 10px;
+  -webkit-overflow-scrolling: touch; padding: 6px 10px 8px;
 }
 .entry {
   padding: 8px 10px; -webkit-border-radius: 7px; border-radius: 7px;
@@ -184,12 +177,11 @@ html, body {
 @keyframes fadeup{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .entry.user   { background: #fff; border: 1px solid #e8e6e0; margin-left: 28px; }
 .entry.gemini { background: #fff8f4; border: 1px solid #fde8d8; margin-right: 28px; color: #7c3415; }
-.entry.system { background: none; border: none; text-align: center; font-size: 11px; color: #a8a49e; font-family: 'DM Mono', monospace; padding: 3px 0; margin: 0; }
-.entry-label { font-size: 10px; font-family: 'DM Mono', monospace; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 3px; color: #a8a49e; }
+.entry.system { background: none; border: none; text-align: center; font-size: 11px; color: #a8a49e; font-family: Courier, monospace; padding: 3px 0; margin: 0; }
+.entry-label { font-size: 10px; font-family: Courier, monospace; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 3px; color: #a8a49e; }
 .entry.gemini .entry-label { color: #f97316; }
 .entry.user   .entry-label { color: #2563eb; }
 
-/* ── INPUT ── */
 #input-area {
   position: absolute; left: 0; right: 0; bottom: 0;
   background: #fff; border-top: 1px solid #e8e6e0; padding: 8px 10px 14px;
@@ -201,7 +193,7 @@ html, body {
   padding: 9px 46px 9px 12px;
   background: #f7f6f3; border: 1px solid #d0cdc5;
   -webkit-border-radius: 7px; border-radius: 7px;
-  color: #1a1917; font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: #1a1917; font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 14px;
   line-height: 1.4; outline: none; resize: none;
   min-height: 40px; max-height: 90px;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -220,17 +212,15 @@ html, body {
 }
 #send-btn:active { opacity: 0.7; }
 #send-btn:disabled { opacity: 0.3; }
-#hint { font-size: 10px; color: #a8a49e; font-family: 'DM Mono', monospace; text-align: center; margin-top: 5px; }
+#hint { font-size: 10px; color: #a8a49e; font-family: Courier, monospace; text-align: center; margin-top: 5px; }
 
 .thinking-dots { display: inline-block; padding: 2px 0; }
 .thinking-dots span {
-  display: inline-block;
-  width: 6px; height: 6px;
+  display: inline-block; width: 6px; height: 6px;
   background: #f97316;
   -webkit-border-radius: 50%; border-radius: 50%;
   margin-right: 4px;
-  -webkit-animation: thdot 1.2s ease-in-out infinite;
-  animation: thdot 1.2s ease-in-out infinite;
+  -webkit-animation: thdot 1.2s ease-in-out infinite; animation: thdot 1.2s ease-in-out infinite;
 }
 .thinking-dots span:nth-child(2) { -webkit-animation-delay: 0.2s; animation-delay: 0.2s; }
 .thinking-dots span:nth-child(3) { -webkit-animation-delay: 0.4s; animation-delay: 0.4s; }
@@ -308,38 +298,46 @@ html, body {
 <script>
 // ── Layout ────────────────────────────────────────────
 function layout() {
-  var setupCard = document.getElementById('setup-card');
   var visWrap   = document.getElementById('vis-wrap');
   var logEl     = document.getElementById('log');
   var inputArea = document.getElementById('input-area');
   var inputVisible = inputArea.style.display !== 'none';
-  var inputH    = inputVisible ? (inputArea.offsetHeight || 72) : 0;
-  var logBottom  = inputH + (inputVisible ? 6 : 0);
-  var topH      = 44;
-
-  // setup card fills screen via CSS; vis/log only shown when connected
-  var visTop    = topH + 8;
-
-  visWrap.style.top = visTop + 'px';
-  logEl.style.top   = (visTop + 100 + 4) + 'px';
+  var inputH   = inputVisible ? (inputArea.offsetHeight || 72) : 0;
+  var logBottom = inputH + (inputVisible ? 6 : 0);
+  visWrap.style.top = '52px';
+  logEl.style.top   = '156px';
   logEl.style.bottom = logBottom + 'px';
-  // keep scroll at bottom after resize
   logEl.scrollTop = logEl.scrollHeight;
 }
-
 window.onresize = layout;
 
 // ── State ─────────────────────────────────────────────
-var ws               = null;
-var audioCtx         = null;
-var audioQueue       = [];
-var isPlaying        = false;
-var nextPlayTime     = 0;
-var isConnected      = false;
-var currentGemEntry  = null;
-var gemTextBuf       = '';
+var ws              = null;
+var audioCtx        = null;
+var isPlaying       = false;
+var nextPlayTime    = 0;   // audio clock (modern browsers)
+var iosStartMs      = 0;   // wall-clock origin when first chunk plays (iOS)
+var iosOffsetMs     = 0;   // how many ms of audio scheduled so far (iOS)
+var isConnected     = false;
+var currentGemEntry = null;
+var gemTextEl       = null;
+var gemTextBuf      = '';
+var pendingChunks   = 0;
+var turnComplete    = false;
+var thinkingEl      = null;
+var useNoteOn       = false; // detected on first play
 
-// ── WS endpoint — v1alpha required for native audio models
+// Pre-computed lookup: int16 -> float32 (eliminates division loop)
+var INT16_TO_F32 = null;
+function buildLUT() {
+  if (INT16_TO_F32) return;
+  INT16_TO_F32 = new Float32Array(65536);
+  for (var i = 0; i < 65536; i++) {
+    var s = i < 32768 ? i : i - 65536;
+    INT16_TO_F32[i] = s / 32768.0;
+  }
+}
+
 var WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent';
 
 // ── Status ────────────────────────────────────────────
@@ -349,7 +347,6 @@ function setStatus(cls, label) {
   pill.id = 'conn-pill';
   document.getElementById('conn-label').textContent = label;
 }
-
 function setRing(cls) {
   var r = document.getElementById('vis-ring');
   r.className = cls || '';
@@ -357,17 +354,16 @@ function setRing(cls) {
 }
 
 // ── Log ───────────────────────────────────────────────
+var logEl = null;
+function getLog() { if (!logEl) logEl = document.getElementById('log'); return logEl; }
+
 function logSystem(msg) {
-  var logEl = document.getElementById('log');
   var el = document.createElement('div');
   el.className = 'entry system';
   el.textContent = msg;
-  logEl.appendChild(el);
-  logEl.scrollTop = logEl.scrollHeight;
+  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
 }
-
 function logUser(text) {
-  var logEl = document.getElementById('log');
   var el = document.createElement('div');
   el.className = 'entry user';
   var lb = document.createElement('div');
@@ -375,140 +371,202 @@ function logUser(text) {
   lb.textContent = 'You';
   var bd = document.createElement('div');
   bd.textContent = text;
-  el.appendChild(lb);
-  el.appendChild(bd);
-  logEl.appendChild(el);
-  logEl.scrollTop = logEl.scrollHeight;
+  el.appendChild(lb); el.appendChild(bd);
+  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
 }
-
 function startGemEntry() {
   gemTextBuf = '';
-  var logEl = document.getElementById('log');
-  currentGemEntry = document.createElement('div');
-  currentGemEntry.className = 'entry gemini';
+  var el = document.createElement('div');
+  el.className = 'entry gemini';
   var lb = document.createElement('div');
   lb.className = 'entry-label';
   lb.textContent = 'Gemini';
-  var bd = document.createElement('span');
-  bd.className = 'body';
-  currentGemEntry.appendChild(lb);
-  currentGemEntry.appendChild(bd);
-  logEl.appendChild(currentGemEntry);
-  logEl.scrollTop = logEl.scrollHeight;
+  gemTextEl = document.createElement('span');
+  el.appendChild(lb); el.appendChild(gemTextEl);
+  currentGemEntry = el;
+  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
 }
-
 function appendGemText(text) {
   if (!currentGemEntry) startGemEntry();
   gemTextBuf += text;
-  currentGemEntry.querySelector('.body').textContent = gemTextBuf;
-  var logEl = document.getElementById('log');
-  logEl.scrollTop = logEl.scrollHeight;
+  gemTextEl.textContent = gemTextBuf;
+  var l = getLog(); l.scrollTop = l.scrollHeight;
+}
+function finishGemEntry() { currentGemEntry = null; gemTextEl = null; gemTextBuf = ''; }
+
+// ── Thinking ──────────────────────────────────────────
+function showThinking() {
+  hideThinking();
+  var el = document.createElement('div');
+  el.className = 'entry gemini';
+  var lb = document.createElement('div');
+  lb.className = 'entry-label';
+  lb.textContent = 'Gemini';
+  var bd = document.createElement('div');
+  bd.className = 'thinking-dots';
+  bd.innerHTML = '<span></span><span></span><span></span>';
+  el.appendChild(lb); el.appendChild(bd);
+  thinkingEl = el;
+  var l = getLog(); l.appendChild(el); l.scrollTop = l.scrollHeight;
+}
+function hideThinking() {
+  if (thinkingEl && thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
+  thinkingEl = null;
 }
 
-function finishGemEntry() {
-  currentGemEntry = null;
-  gemTextBuf = '';
-}
-
-// ── Audio (PCM16 LE @ 24kHz) ──────────────────────────
-// Uses continuous scheduled playback — no gaps between chunks.
-// Avoids copyToChannel (not on iOS 6) and DataView loop (slow).
-
-// iOS 6 webkitAudioContext ignores sampleRate option — create without it
-// to avoid silent resampling bugs. We handle rate mismatch via buffer sampleRate arg.
+// ── Audio ─────────────────────────────────────────────
 function ensureAudio() {
   if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { audioCtx = new window.webkitAudioContext(); }
+    buildLUT();
+    // Silent looping buffer — keeps iOS context alive
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch(e) {
-      audioCtx = new window.webkitAudioContext();
-    }
+      var sb = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+      var kn = audioCtx.createBufferSource();
+      kn.buffer = sb; kn.loop = true;
+      var gn = audioCtx.createGain(); gn.gain.value = 0;
+      kn.connect(gn); gn.connect(audioCtx.destination);
+      if (typeof kn.noteOn === 'function') { useNoteOn = true; kn.noteOn(0); }
+      else kn.start(0);
+    } catch(e) {}
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-// Raw b64 chunk queue — defer decode until just before play
-var rawQueue = [];
-var pendingChunks = 0;
-var lastSrc = null;
-var processingChunk = false;
-
-function enqueuePCM(b64) {
-  ensureAudio();
-  rawQueue.push(b64);
-  if (!isPlaying) {
-    isPlaying = true;
-    setRing('speaking');
-    setStatus('speaking', 'speaking');
-  }
-  if (!processingChunk) scheduleNext();
-}
-
-function scheduleNext() {
-  if (rawQueue.length === 0) {
-    processingChunk = false;
-    return;
-  }
-  processingChunk = true;
-  // Use setTimeout(0) to yield to browser between chunks — prevents UI freeze
-  setTimeout(function() {
-    if (rawQueue.length === 0) { processingChunk = false; return; }
-    var b64 = rawQueue.shift();
-    var buf = decodePCM(b64);
-    if (!buf) { scheduleNext(); return; }
-
-    var now = audioCtx.currentTime;
-    if (nextPlayTime < now) nextPlayTime = now + 0.05;
-
-    var src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    src.connect(audioCtx.destination);
-    src.start(nextPlayTime);
-    nextPlayTime += buf.duration;
-    pendingChunks++;
-    lastSrc = src;
-    src.onended = onChunkEnded;
-
-    // Schedule next decode after a short yield
-    setTimeout(scheduleNext, 0);
-  }, 0);
-}
-
+// Decode base64 PCM16LE -> AudioBuffer @ 24000Hz
+// Strategy: XHR arraybuffer (native, fast) -> Int16Array -> LUT float32
+// Falls back to charCodeAt if XHR data-URL fails
 function decodePCM(b64) {
+  var ab = null;
   try {
-    var bin = atob(b64);
-    var len = bin.length;
-    var samples = len >> 1;
-    // Create buffer at Gemini's native rate (24000)
-    // webkitAudioContext will resample to device rate automatically
-    var buf = audioCtx.createBuffer(1, samples, 24000);
-    var ch = buf.getChannelData(0);
-    for (var i = 0; i < samples; i++) {
-      var lo = bin.charCodeAt(i * 2) & 0xFF;
-      var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
-      var s  = (hi << 8) | lo;
-      if (s >= 0x8000) s -= 0x10000;
-      ch[i] = s / 32768.0;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'data:application/octet-stream;base64,' + b64, false);
+    xhr.responseType = 'arraybuffer';
+    xhr.send();
+    ab = xhr.response;
+  } catch(e) {}
+
+  try {
+    var samples, ch, i, buf;
+    if (ab) {
+      var int16 = new Int16Array(ab);
+      samples = int16.length;
+      buf = audioCtx.createBuffer(1, samples, 24000);
+      ch = buf.getChannelData(0);
+      // LUT lookup: no division, no branching — fastest possible
+      for (i = 0; i < samples; i++) {
+        ch[i] = INT16_TO_F32[int16[i] & 0xFFFF];
+      }
+    } else {
+      // Fallback: charCodeAt
+      var bin = atob(b64);
+      samples = bin.length >> 1;
+      buf = audioCtx.createBuffer(1, samples, 24000);
+      ch = buf.getChannelData(0);
+      for (i = 0; i < samples; i++) {
+        var lo = bin.charCodeAt(i * 2) & 0xFF;
+        var hi = bin.charCodeAt(i * 2 + 1) & 0xFF;
+        ch[i] = INT16_TO_F32[(hi << 8) | lo];
+      }
     }
     return buf;
   } catch(e) {
+    logSystem('decode err: ' + e.message);
     return null;
   }
 }
 
-function onChunkEnded() {
-  pendingChunks--;
-  if (pendingChunks <= 0 && rawQueue.length === 0) {
+// Schedule a decoded buffer for playback immediately
+// iOS: uses wall-clock setTimeout chain anchored to a single start time
+// Modern: uses audio clock for perfect gapless scheduling
+function scheduleBuffer(buf) {
+  try {
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    var durMs = buf.duration * 1000;
+    pendingChunks++;
+
+    if (useNoteOn) {
+      // iOS 6: anchor wall-clock to first chunk's real play time
+      var nowMs = Date.now();
+      if (iosStartMs === 0) {
+        iosStartMs = nowMs + 30; // 30ms startup buffer
+        iosOffsetMs = 0;
+      }
+      var fireAt = iosStartMs + iosOffsetMs;
+      var delayMs = fireAt - nowMs;
+      if (delayMs < 0) delayMs = 0;
+      iosOffsetMs += durMs;
+      // Capture src in closure
+      (function(node, d) {
+        setTimeout(function() {
+          try { node.noteOn(0); } catch(e) {}
+        }, d);
+      })(src, delayMs);
+      // Mark done slightly after this chunk should finish
+      var finishAt = iosStartMs + iosOffsetMs - nowMs + 80;
+      (function(fc) {
+        setTimeout(function() {
+          pendingChunks--;
+          checkDone();
+        }, fc);
+      })(finishAt > 0 ? finishAt : 80);
+    } else {
+      // Modern audio clock
+      var nowAudio = audioCtx.currentTime;
+      if (nextPlayTime < nowAudio) nextPlayTime = nowAudio + 0.02;
+      src.start(nextPlayTime);
+      nextPlayTime += buf.duration;
+      // onended for done tracking
+      if ('onended' in src) {
+        src.onended = function() { pendingChunks--; checkDone(); };
+      } else {
+        (function(d) {
+          setTimeout(function() { pendingChunks--; checkDone(); }, d);
+        })(Math.ceil(durMs) + 80);
+      }
+    }
+  } catch(e) {
+    logSystem('play err: ' + e.message);
+    pendingChunks--;
+  }
+}
+
+function checkDone() {
+  if (pendingChunks <= 0 && turnComplete) {
     pendingChunks = 0;
     isPlaying = false;
-    processingChunk = false;
     setRing('');
     setStatus('ready', 'ready');
     finishGemEntry();
   }
 }
 
-function drainQueue() {}
+// Incoming b64 chunk: decode synchronously then schedule immediately.
+// No setTimeout yielding — we want minimum latency.
+// XHR decode is already native/fast; LUT lookup is ~0.3ms for 30k samples.
+function enqueuePCM(b64) {
+  ensureAudio();
+  if (!isPlaying) {
+    isPlaying = true;
+    hideThinking();
+    setRing('speaking');
+    setStatus('speaking', 'speaking');
+  }
+  var buf = decodePCM(b64);
+  if (buf) scheduleBuffer(buf);
+}
+
+function resetAudio() {
+  isPlaying = false;
+  nextPlayTime = 0;
+  iosStartMs = 0;
+  iosOffsetMs = 0;
+  pendingChunks = 0;
+  turnComplete = false;
+}
 
 // ── Connect ───────────────────────────────────────────
 function connect() {
@@ -524,22 +582,18 @@ function connect() {
   document.getElementById('connect-btn').disabled = true;
   setStatus('', 'connecting...');
 
-  // iOS requires audio context to be unlocked from a user gesture.
-  // Wrap in try/catch so any error here never blocks the WebSocket connect.
+  // Unlock audio from user gesture
   try {
     ensureAudio();
-    var silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-    var silentSrc = audioCtx.createBufferSource();
-    silentSrc.buffer = silentBuf;
-    silentSrc.connect(audioCtx.destination);
-    silentSrc.start(0);
+    var ub = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    var us = audioCtx.createBufferSource();
+    us.buffer = ub; us.connect(audioCtx.destination);
+    if (useNoteOn) us.noteOn(0); else us.start(0);
   } catch(e) {}
 
   var url = WS_BASE + '?key=' + key;
-
-  try {
-    ws = new WebSocket(url);
-  } catch(e) {
+  try { ws = new WebSocket(url); }
+  catch(e) {
     setStatus('error', 'error');
     logSystem('WebSocket error: ' + e.message);
     document.getElementById('connect-btn').disabled = false;
@@ -549,39 +603,26 @@ function connect() {
   ws.binaryType = 'arraybuffer';
 
   ws.onopen = function() {
-    // ── CORRECT setup message format per Google docs ──
-    // Fields are camelCase. Top-level key is "setup".
-    var setupMsg = {
+    ws.send(JSON.stringify({
       setup: {
         model: 'models/' + model,
         generationConfig: {
           responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: voice
-              }
-            }
-          }
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
         },
-        systemInstruction: {
-          parts: [{ text: sysTxt }]
-        }
+        systemInstruction: { parts: [{ text: sysTxt }] }
       }
-    };
-    ws.send(JSON.stringify(setupMsg));
+    }));
   };
 
   ws.onmessage = function(evt) {
-    var raw = evt.data;
     var data;
     try {
-      data = (typeof raw === 'string') ? JSON.parse(raw) : JSON.parse(String.fromCharCode.apply(null, new Uint8Array(raw)));
-    } catch(e) {
-      return;
-    }
+      data = (typeof evt.data === 'string')
+        ? JSON.parse(evt.data)
+        : JSON.parse(String.fromCharCode.apply(null, new Uint8Array(evt.data)));
+    } catch(e) { return; }
 
-    // Setup complete confirmation
     if (data.setupComplete !== undefined) {
       isConnected = true;
       setStatus('ready', 'ready');
@@ -598,79 +639,51 @@ function connect() {
       return;
     }
 
-    // Server content
     if (data.serverContent) {
       var sc = data.serverContent;
-
       if (sc.interrupted) {
-        audioQueue = [];
-        isPlaying = false;
-        nextPlayTime = 0;
-        setRing('');
-        setStatus('ready', 'ready');
-        finishGemEntry();
-        hideThinking();
+        resetAudio(); setRing(''); setStatus('ready', 'ready');
+        hideThinking(); finishGemEntry();
         logSystem('- interrupted -');
         return;
       }
-
       if (sc.modelTurn && sc.modelTurn.parts) {
-        var parts = sc.modelTurn.parts;
-        for (var i = 0; i < parts.length; i++) {
-          var p = parts[i];
-          // Native audio chunks
-          if (p.inlineData && p.inlineData.mimeType && p.inlineData.mimeType.indexOf('audio') !== -1) {
-            if (!isPlaying) { hideThinking(); setRing('thinking'); setStatus('', 'receiving...'); }
+        for (var i = 0; i < sc.modelTurn.parts.length; i++) {
+          var p = sc.modelTurn.parts[i];
+          if (p.inlineData && p.inlineData.mimeType &&
+              p.inlineData.mimeType.indexOf('audio') !== -1) {
             enqueuePCM(p.inlineData.data);
           }
-          // Text transcript
-          if (p.text) {
-            appendGemText(p.text);
-          }
+          if (p.text) appendGemText(p.text);
         }
       }
-
-      // Output transcription (separate from modelTurn in some responses)
       if (sc.outputTranscription && sc.outputTranscription.text) {
         appendGemText(sc.outputTranscription.text);
       }
+      if (sc.turnComplete) {
+        turnComplete = true;
+        checkDone();
+      }
     }
   };
 
-  ws.onerror = function(e) {
-    setStatus('error', 'error');
-    logSystem('Connection error.');
-    resetUI();
-  };
-
+  ws.onerror = function() { setStatus('error', 'error'); logSystem('Connection error.'); resetUI(); };
   ws.onclose = function(evt) {
-    var info = 'code=' + evt.code + (evt.reason ? ' reason=' + evt.reason : '');
-    if (isConnected) {
-      logSystem('Disconnected. ' + info);
-    } else {
-      logSystem('Failed to connect. ' + info);
-    }
+    var info = 'code=' + evt.code + (evt.reason ? ' ' + evt.reason : '');
+    logSystem(isConnected ? 'Disconnected. ' + info : 'Failed. ' + info);
     resetUI();
   };
 }
 
 function disconnect() {
   if (ws) { try { ws.close(); } catch(e) {} ws = null; }
-  resetUI();
-  logSystem('Disconnected.');
+  resetUI(); logSystem('Disconnected.');
 }
 
 function resetUI() {
   isConnected = false;
-  audioQueue = [];
-  isPlaying = false;
-  nextPlayTime = 0;
-  pendingChunks = 0;
-  lastSrc = null;
-  rawQueue = [];
-  processingChunk = false;
-  setRing('');
-  setStatus('', 'offline');
+  resetAudio(); finishGemEntry(); hideThinking();
+  setRing(''); setStatus('', 'offline');
   document.getElementById('setup-card').style.display = 'block';
   document.getElementById('vis-wrap').style.display = 'none';
   document.getElementById('log').style.display = 'none';
@@ -682,92 +695,48 @@ function resetUI() {
   layout();
 }
 
-// ── Thinking indicator ───────────────────────────────
-var thinkingEl = null;
-
-function showThinking() {
-  hideThinking();
-  var logEl = document.getElementById('log');
-  thinkingEl = document.createElement('div');
-  thinkingEl.className = 'entry gemini';
-  thinkingEl.id = '__thinking__';
-  var lb = document.createElement('div');
-  lb.className = 'entry-label';
-  lb.textContent = 'Gemini';
-  var bd = document.createElement('div');
-  bd.className = 'thinking-dots';
-  bd.innerHTML = '<span></span><span></span><span></span>';
-  thinkingEl.appendChild(lb);
-  thinkingEl.appendChild(bd);
-  logEl.appendChild(thinkingEl);
-  logEl.scrollTop = logEl.scrollHeight;
-}
-
-function hideThinking() {
-  if (thinkingEl && thinkingEl.parentNode) {
-    thinkingEl.parentNode.removeChild(thinkingEl);
-  }
-  thinkingEl = null;
-}
-
-// ── Send text ─────────────────────────────────────────
+// ── Send ──────────────────────────────────────────────
 function sendText() {
   if (!isConnected || !ws || ws.readyState !== 1) return;
   var text = document.getElementById('msg-input').value;
   text = text ? text.replace(/^\s+|\s+$/g, '') : '';
   if (!text) return;
 
-  // Re-unlock audio on every send (iOS may suspend context)
-  if (audioCtx) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    var sb = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-    var ss = audioCtx.createBufferSource();
-    ss.buffer = sb; ss.connect(audioCtx.destination); ss.start(0);
-  }
+  // Re-unlock audio on send tap (iOS may have suspended)
+  try {
+    if (audioCtx) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var sb = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+      var ss = audioCtx.createBufferSource();
+      ss.buffer = sb; ss.connect(audioCtx.destination);
+      if (useNoteOn) ss.noteOn(0); else ss.start(0);
+    }
+  } catch(e) {}
 
-  // Clear any in-progress audio
-  audioQueue = [];
-  isPlaying = false;
-  nextPlayTime = 0;
-  pendingChunks = 0;
-  lastSrc = null;
-  rawQueue = [];
-  processingChunk = false;
-  finishGemEntry();
-
+  resetAudio(); finishGemEntry(); hideThinking();
   logUser(text);
   document.getElementById('msg-input').value = '';
   document.getElementById('msg-input').style.height = 'auto';
-
-  setRing('thinking');
-  setStatus('', 'thinking...');
+  setRing('thinking'); setStatus('', 'thinking...');
   showThinking();
 
-  // ── CORRECT client message format per Google docs ──
-  // Key is "clientContent" (camelCase), turns use "role"+"parts"
-  var msg = {
+  ws.send(JSON.stringify({
     clientContent: {
-      turns: [
-        { role: 'user', parts: [{ text: text }] }
-      ],
+      turns: [{ role: 'user', parts: [{ text: text }] }],
       turnComplete: true
     }
-  };
-  ws.send(JSON.stringify(msg));
+  }));
 }
 
 // ── Textarea ──────────────────────────────────────────
 var msgInput = document.getElementById('msg-input');
-
 msgInput.onkeydown = function(e) {
   e = e || window.event;
-  var key = e.keyCode || e.which;
-  if (key === 13 && !e.shiftKey) {
-    if (e.preventDefault) { e.preventDefault(); } else { e.returnValue = false; }
+  if ((e.keyCode || e.which) === 13 && !e.shiftKey) {
+    if (e.preventDefault) e.preventDefault(); else e.returnValue = false;
     sendText();
   }
 };
-
 msgInput.oninput = function() {
   this.style.height = 'auto';
   var h = this.scrollHeight;
