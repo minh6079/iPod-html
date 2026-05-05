@@ -776,7 +776,38 @@
           var sx = x * BLOCK_SIZE - camera.x;
           var sy = y * BLOCK_SIZE - camera.y;
           if (textures[t]) {
-            ctx.drawImage(textures[t], sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+            // Fence: auto-crop width based on left/right neighbors so it "connects"
+            if (t === BLOCKS.OAK_FENCE) {
+              var leftT = x > 0 ? world[x - 1][y] : BLOCKS.AIR;
+              var rightT = x < WORLD_WIDTH - 1 ? world[x + 1][y] : BLOCKS.AIR;
+              var connectLeft = !isPassableBlock(leftT);
+              var connectRight = !isPassableBlock(rightT);
+
+              // Default fence body thickness = 50% of block width, centered.
+              // If connected on a side, extend to that edge (75% total width).
+              var bodyWFrac = 0.5;
+              var bodyXFrac = 0.25;
+              if (connectLeft && connectRight) {
+                bodyWFrac = 1;
+                bodyXFrac = 0;
+              } else if (connectLeft && !connectRight) {
+                bodyWFrac = 0.75;
+                bodyXFrac = 0;
+              } else if (!connectLeft && connectRight) {
+                bodyWFrac = 0.75;
+                bodyXFrac = 0.25;
+              }
+
+              var img = textures[t];
+              var srcX = Math.floor(img.width * bodyXFrac);
+              var srcW = Math.max(1, Math.floor(img.width * bodyWFrac));
+              var dstX = sx + bodyXFrac * BLOCK_SIZE;
+              var dstW = bodyWFrac * BLOCK_SIZE;
+
+              ctx.drawImage(img, srcX, 0, srcW, img.height, dstX, sy, dstW, BLOCK_SIZE);
+            } else {
+              ctx.drawImage(textures[t], sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+            }
           } else {
             // fallback: simple colored block if texture missing
             ctx.fillStyle = '#666';
