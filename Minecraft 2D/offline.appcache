@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# v3
+# v4
 
 CACHE:
 mc2d_textures.html
@@ -32,6 +32,7 @@ textures/red_mushroom.png
 textures/stone.png
 textures/stone_slab.png
 textures/wood.png
+textures/glass.png
 
 NETWORK:
 *
