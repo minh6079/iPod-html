@@ -784,23 +784,121 @@
           }
         }
 
-        function checkCollision(x, y, w, h) {
-          var left = Math.floor(x / BLOCK_SIZE),
-            right = Math.floor((x + w) / BLOCK_SIZE),
-            top = Math.floor(y / BLOCK_SIZE),
-            bottom = Math.floor((y + h) / BLOCK_SIZE);
+        function isPassableBlock(t) {
+          return (
+            t === BLOCKS.AIR ||
+            t === BLOCKS.BEAM ||
+            t === BLOCKS.RED_MUSHROOM ||
+            t === BLOCKS.BROWN_MUSHROOM ||
+            t === BLOCKS.DANDELION ||
+            t === BLOCKS.POPPY ||
+            t === BLOCKS.FIRE
+          );
+        }
+
+        function aabbIntersects(ax, ay, aw, ah, bx, by, bw, bh) {
+          return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+        }
+
+        function getSolidRectsForBlock(t, bx, by, outRects) {
+          var baseX = bx * BLOCK_SIZE;
+          var baseY = by * BLOCK_SIZE;
+
+          // Full blocks (default)
+          if (
+            t !== BLOCKS.OAK_SLAB &&
+            t !== BLOCKS.STONE_SLAB &&
+            t !== BLOCKS.COBBLE_SLAB &&
+            t !== BLOCKS.OAK_STAIRS_LEFT &&
+            t !== BLOCKS.OAK_STAIRS_RIGHT
+          ) {
+            outRects.push({ x: baseX, y: baseY, w: BLOCK_SIZE, h: BLOCK_SIZE });
+            return;
+          }
+
+          // Bottom slabs: solid bottom half
+          if (t === BLOCKS.OAK_SLAB || t === BLOCKS.STONE_SLAB || t === BLOCKS.COBBLE_SLAB) {
+            outRects.push({ x: baseX, y: baseY + BLOCK_SIZE / 2, w: BLOCK_SIZE, h: BLOCK_SIZE / 2 });
+            return;
+          }
+
+          // Stairs: approximate as 4 "step" slices (ES5 + cheap)
+          var slices = 4;
+          var sliceW = BLOCK_SIZE / slices;
+          var i, height, rx, ry, rh;
+
+          if (t === BLOCKS.OAK_STAIRS_RIGHT) {
+            // Rise to the right
+            for (i = 0; i < slices; i++) {
+              height = ((i + 1) / slices) * BLOCK_SIZE;
+              rx = baseX + i * sliceW;
+              ry = baseY + (BLOCK_SIZE - height);
+              rh = height;
+              outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
+            }
+            return;
+          }
+
+          if (t === BLOCKS.OAK_STAIRS_LEFT) {
+            // Rise to the left
+            for (i = 0; i < slices; i++) {
+              height = ((i + 1) / slices) * BLOCK_SIZE;
+              rx = baseX + (slices - 1 - i) * sliceW;
+              ry = baseY + (BLOCK_SIZE - height);
+              rh = height;
+              outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
+            }
+          }
+        }
+
+        function collidesAt(x, y, w, h) {
+          var left = Math.floor(x / BLOCK_SIZE);
+          var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
+          var top = Math.floor(y / BLOCK_SIZE);
+          var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
+
+          var rects = [];
           for (var bx = left; bx <= right; bx++) {
             for (var by = top; by <= bottom; by++) {
               if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                if (world[bx][by] !== BLOCKS.AIR && world[bx][by] !== BLOCKS.BEAM && world[bx][by] !== BLOCKS.RED_MUSHROOM && world[bx][by] !== BLOCKS.BROWN_MUSHROOM && world[bx][by] !== BLOCKS.DANDELION && world[bx][by] !== BLOCKS.POPPY && world[bx][by] !== BLOCKS.FIRE) {
-                  return true;
+                var t = world[bx][by];
+                if (!isPassableBlock(t)) {
+                  getSolidRectsForBlock(t, bx, by, rects);
                 }
               } else if (by >= WORLD_HEIGHT) {
-                return true;
+                return true; // below world = solid
               }
             }
           }
+
+          for (var i = 0; i < rects.length; i++) {
+            var r = rects[i];
+            if (aabbIntersects(x, y, w, h, r.x, r.y, r.w, r.h)) return true;
+          }
           return false;
+        }
+
+        function collectSolidRectsNear(x, y, w, h) {
+          var left = Math.floor(x / BLOCK_SIZE);
+          var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
+          var top = Math.floor(y / BLOCK_SIZE);
+          var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
+
+          var rects = [];
+          for (var bx = left; bx <= right; bx++) {
+            for (var by = top; by <= bottom; by++) {
+              if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+                var t = world[bx][by];
+                if (!isPassableBlock(t)) {
+                  getSolidRectsForBlock(t, bx, by, rects);
+                }
+              } else if (by >= WORLD_HEIGHT) {
+                // treat below world as solid "floor"
+                rects.push({ x: bx * BLOCK_SIZE, y: WORLD_HEIGHT * BLOCK_SIZE, w: BLOCK_SIZE, h: BLOCK_SIZE });
+              }
+            }
+          }
+          return rects;
         }
 
         function updatePlayer() {
@@ -827,19 +925,79 @@
           } else if (player.vy > 0) {
             player.vy = 0;
           }
+          // Horizontal move (+ optional step-up onto slabs/stairs)
           var oldX = player.x;
-          player.x += player.vx;
-          if (checkCollision(player.x, player.y, player.width, player.height)) {
-            player.x = oldX;
-          }
           var oldY = player.y;
+          player.x += player.vx;
+
+          if (collidesAt(player.x, player.y, player.width, player.height)) {
+            // Try "step up" so you can walk onto slabs/stairs smoothly.
+            // iPod-era friendly: small loop, no fancy math.
+            var maxStep = Math.floor(BLOCK_SIZE / 2); // enough for half slabs
+            var stepped = false;
+            for (var step = 1; step <= maxStep; step++) {
+              if (!collidesAt(player.x, player.y - step, player.width, player.height)) {
+                player.y = player.y - step;
+                stepped = true;
+                break;
+              }
+            }
+            if (!stepped) {
+              player.x = oldX;
+              player.y = oldY;
+            }
+          }
+
+          // Vertical move + resolution
           player.y += player.vy;
-          if (checkCollision(player.x, player.y, player.width, player.height)) {
-            player.y = oldY;
-            player.vy = 0;
-            player.onGround = true;
-          } else {
+
+          var rects = collectSolidRectsNear(player.x, player.y, player.width, player.height);
+          var hit = false;
+          var bestFix = 0;
+
+          if (player.vy > 0) {
+            // Falling: snap to the top of the collided shape (prevents ground jitter)
+            for (var i = 0; i < rects.length; i++) {
+              var r = rects[i];
+              if (!aabbIntersects(player.x, player.y, player.width, player.height, r.x, r.y, r.w, r.h)) continue;
+              // Only consider surfaces below our feet (landing)
+              if (oldY + player.height <= r.y + 0.001) {
+                var fixUp = (player.y + player.height) - r.y;
+                if (fixUp > bestFix) {
+                  bestFix = fixUp;
+                  hit = true;
+                }
+              }
+            }
+            if (hit) {
+              player.y -= bestFix;
+              player.vy = 0;
+              player.onGround = true;
+            } else {
+              player.onGround = false;
+            }
+          } else if (player.vy < 0) {
+            // Jumping: snap to the bottom of the collided shape
+            for (var j = 0; j < rects.length; j++) {
+              var r2 = rects[j];
+              if (!aabbIntersects(player.x, player.y, player.width, player.height, r2.x, r2.y, r2.w, r2.h)) continue;
+              // Only consider ceilings above our head
+              if (oldY >= r2.y + r2.h - 0.001) {
+                var fixDown = (r2.y + r2.h) - player.y;
+                if (fixDown > bestFix) {
+                  bestFix = fixDown;
+                  hit = true;
+                }
+              }
+            }
+            if (hit) {
+              player.y += bestFix;
+              player.vy = 0;
+            }
             player.onGround = false;
+          } else {
+            // No vertical motion: keep onGround stable
+            player.onGround = collidesAt(player.x, player.y + 1, player.width, player.height);
           }
         }
 
