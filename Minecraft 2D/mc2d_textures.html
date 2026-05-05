@@ -476,7 +476,8 @@
           BROWN_MUSHROOM: 26,
           DANDELION: 27,
           POPPY: 28,
-          FIRE: 29
+          FIRE: 29,
+          GLASS: 30
         };
         // Texture file mapping (must match available texture files)
         var TEXTURE_FILES = {
@@ -508,11 +509,12 @@
           26: 'textures/brown_mushroom.png',
           27: 'textures/dandelion.png',
           28: 'textures/poppy.png',
-          29: 'textures/fire.png'
+          29: 'textures/fire.png',
+          30: 'textures/glass.png',
         };
         var textures = {};
         var texturesLoaded = 0;
-        var totalTextures = 29; // number of entries in TEXTURE_FILES
+        var totalTextures = 30; // number of entries in TEXTURE_FILES
         // Flat list of all blocks shown in the grid (order determines grid)
         var ALL_BLOCKS = [
           BLOCKS.GRASS,
@@ -542,7 +544,8 @@
           BLOCKS.RED_MUSHROOM,
           BLOCKS.BROWN_MUSHROOM,
           BLOCKS.DANDELION,
-          BLOCKS.POPPY
+          BLOCKS.POPPY,
+          BLOCKS.GLASS
         ];
         // World & player
         var world = [],
