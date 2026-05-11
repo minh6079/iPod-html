@@ -1,1307 +1,1314 @@
 <!DOCTYPE html>
 <html manifest="offline.appcache">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=320, user-scalable=no" />
-    <title>2D Minecraft ES5 iPod</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        -webkit-user-select: none;
-        -webkit-touch-callout: none;
-      }
 
-      body {
-        background: #000;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=320, user-scalable=no" />
+  <title>2D Minecraft ES5 iPod</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
 
-      canvas {
-        display: block;
-        background: #87CEEB;
-        -webkit-image-rendering: optimize-contrast;
-        image-rendering: pixelated;
-      }
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
 
-      #ui-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 100;
-      }
+    canvas {
+      display: block;
+      background: #87CEEB;
+      -webkit-image-rendering: optimize-contrast;
+      image-rendering: pixelated;
+    }
 
-      #top-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 40px;
-        background: rgba(0, 0, 0, 0.6);
-        white-space: nowrap;
-        pointer-events: auto;
-      }
+    #ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
 
-      #inventoryBtn {
-        position: absolute;
-        right: 8px;
-        top: 6px;
-        font-size: 14px;
-        height: 30px;
-        padding: 6px 10px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        border-radius: 6px;
-        color: #fff;
-        pointer-events: auto;
-        cursor: pointer;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-      }
+    #top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
+      pointer-events: auto;
+    }
 
-      #selectedBlockIcon {
-        position: absolute;
-        right: 70px;
-        top: 8px;
-        width: 24px;
-        height: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        background: rgba(0, 0, 0, 0.12);
-        pointer-events: none;
-      }
+    #inventoryBtn {
+      position: absolute;
+      right: 8px;
+      top: 6px;
+      font-size: 14px;
+      height: 30px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      color: #fff;
+      pointer-events: auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    }
 
-      #saveBtn {
-        position: absolute;
-        left: 8px;
-        top: 6px;
-        font-size: 14px;
-        height: 30px;
-        padding: 6px 10px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        border-radius: 6px;
-        color: #fff;
-        pointer-events: auto;
-        cursor: pointer;
-      }
+    #selectedBlockIcon {
+      position: absolute;
+      right: 70px;
+      top: 8px;
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.12);
+      pointer-events: none;
+    }
 
-      #loadBtn {
-        position: absolute;
-        left: 70px;
-        top: 6px;
-        font-size: 14px;
-        height: 30px;
-        padding: 6px 10px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        border-radius: 6px;
-        color: #fff;
-        pointer-events: auto;
-        cursor: pointer;
-      }
+    #saveBtn {
+      position: absolute;
+      left: 8px;
+      top: 6px;
+      font-size: 14px;
+      height: 30px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      color: #fff;
+      pointer-events: auto;
+      cursor: pointer;
+    }
 
-      #resetBtn {
-        position: absolute;
-        left: 135px;
-        top: 6px;
-        font-size: 14px;
-        height: 30px;
-        padding: 6px 10px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        border-radius: 6px;
-        color: #fff;
-        pointer-events: auto;
-        cursor: pointer;
-      }
+    #loadBtn {
+      position: absolute;
+      left: 70px;
+      top: 6px;
+      font-size: 14px;
+      height: 30px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      color: #fff;
+      pointer-events: auto;
+      cursor: pointer;
+    }
 
-      #inventory-panel {
-        position: fixed;
-        top: 50px;
-        left: 10px;
-        right: 10px;
-        bottom: 100px;
-        background: rgba(0, 0, 0, 0.92);
-        border: 2px solid rgba(255, 255, 255, 0.6);
-        border-radius: 10px;
-        z-index: 500;
-        display: none;
-        pointer-events: auto;
-        -webkit-overflow-scrolling: touch;
-      }
+    #resetBtn {
+      position: absolute;
+      left: 135px;
+      top: 6px;
+      font-size: 14px;
+      height: 30px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      color: #fff;
+      pointer-events: auto;
+      cursor: pointer;
+    }
 
-      #inventory-header {
-        height: 40px;
-        background: rgba(255, 255, 255, 0.04);
-        border-bottom: 2px solid rgba(255, 255, 255, 0.06);
-        color: white;
-        font-weight: bold;
-        padding: 8px 12px;
-        position: relative;
-        font-size: 16px;
-        line-height: 24px;
-      }
+    #inventory-panel {
+      position: fixed;
+      top: 50px;
+      left: 10px;
+      right: 10px;
+      bottom: 100px;
+      background: rgba(0, 0, 0, 0.92);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 10px;
+      z-index: 500;
+      display: none;
+      pointer-events: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-      #closeInventory {
-        position: absolute;
-        right: 12px;
-        top: 8px;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.03);
-      }
+    #inventory-header {
+      height: 40px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+      color: white;
+      font-weight: bold;
+      padding: 8px 12px;
+      position: relative;
+      font-size: 16px;
+      line-height: 24px;
+    }
 
-      #inventory {
-        padding: 10px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        height: calc(100% - 40px);
-        text-align: left;
-      }
+    #closeInventory {
+      position: absolute;
+      right: 12px;
+      top: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+    }
 
-      .inv-slot {
-        width: 35px;
-        height: 35px;
-        margin: 4px;
-        border: 2px solid rgba(255, 255, 255, 0.15);
-        border-radius: 6px;
-        background: rgba(0, 0, 0, 0.25);
-        position: relative;
-        cursor: pointer;
-        pointer-events: auto;
-        display: inline-block;
-        vertical-align: top;
-      }
+    #inventory {
+      padding: 10px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      height: calc(100% - 40px);
+      text-align: left;
+    }
 
-      .inv-slot.selected {
-        border-color: #fff;
-        background: rgba(255, 255, 255, 0.12);
-      }
+    .inv-slot {
+      width: 35px;
+      height: 35px;
+      margin: 4px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      position: relative;
+      cursor: pointer;
+      pointer-events: auto;
+      display: inline-block;
+      vertical-align: top;
+    }
 
-      .inv-slot canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-        image-rendering: pixelated;
-      }
+    .inv-slot.selected {
+      border-color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
 
-      #mode-indicator {
-        position: absolute;
-        bottom: 27px;
-        /* align with buttons */
-        left: 57%;
-        -webkit-transform: translateX(-50%);
-        pointer-events: auto;
-        padding: 8px 14px;
-        background: rgba(0, 0, 0, 0.7);
-        color: #fff;
-        border: 2px solid rgba(255, 255, 255, 0.6);
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        align-items: center;
-        justify-content: center;
-      }
+    .inv-slot canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
 
-      #mode-indicator.mine-mode {
-        background: rgba(200, 50, 50, 0.8);
-        border-color: #ff6b6b;
-      }
+    #mode-indicator {
+      position: absolute;
+      bottom: 27px;
+      /* align with buttons */
+      left: 57%;
+      -webkit-transform: translateX(-50%);
+      pointer-events: auto;
+      padding: 8px 14px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
 
-      #mode-indicator.place-mode {
-        background: rgba(50, 150, 50, 0.8);
-        border-color: #6bff6b;
-      }
+    #mode-indicator.mine-mode {
+      background: rgba(200, 50, 50, 0.8);
+      border-color: #ff6b6b;
+    }
 
-      #controls {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 90px;
-        background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
-        pointer-events: none;
-      }
+    #mode-indicator.place-mode {
+      background: rgba(50, 150, 50, 0.8);
+      border-color: #6bff6b;
+    }
 
-      .btn {
-        position: absolute;
-        padding: 10px 14px;
-        background: rgba(255, 255, 255, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.6);
-        border-radius: 8px;
-        font-size: 20px;
-        color: white;
-        text-align: center;
-        font-weight: bold;
-        pointer-events: auto;
-        cursor: pointer;
-      }
+    #controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 90px;
+      background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
 
-      .btn:active {
-        background: rgba(255, 255, 255, 0.6);
-        -webkit-transform: scale(0.95);
-      }
+    .btn {
+      position: absolute;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      font-size: 20px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      pointer-events: auto;
+      cursor: pointer;
+    }
 
-      #leftBtn,
-      #rightBtn {
-        width: 50px;
-        height: 50px;
-        bottom: 20px;
-      }
+    .btn:active {
+      background: rgba(255, 255, 255, 0.6);
+      -webkit-transform: scale(0.95);
+    }
 
-      #leftBtn {
-        left: 10px;
-      }
+    #leftBtn,
+    #rightBtn {
+      width: 50px;
+      height: 50px;
+      bottom: 20px;
+    }
 
-      #rightBtn {
-        left: 65px;
-      }
+    #leftBtn {
+      left: 10px;
+    }
 
-      #jumpBtn {
-        right: 10px;
-        bottom: 20px;
-        width: 60px;
-        height: 60px;
-        font-size: 28px;
-        background: rgba(255, 200, 50, 0.4);
-        border-color: rgba(255, 220, 100, 0.8);
-      }
+    #rightBtn {
+      left: 65px;
+    }
 
-      #jumpBtn:active {
-        background: rgba(255, 220, 100, 0.7);
-      }
+    #jumpBtn {
+      right: 10px;
+      bottom: 20px;
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      background: rgba(255, 200, 50, 0.4);
+      border-color: rgba(255, 220, 100, 0.8);
+    }
 
-      #reach-indicator {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 6px;
-        height: 6px;
-        margin-left: -3px;
-        margin-top: -3px;
-        pointer-events: none;
-      }
+    #jumpBtn:active {
+      background: rgba(255, 220, 100, 0.7);
+    }
 
-      #reach-indicator::before,
-      #reach-indicator::after {
-        content: '';
-        position: absolute;
-        background: rgba(255, 255, 255, 0.8);
-      }
+    #reach-indicator {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      margin-left: -3px;
+      margin-top: -3px;
+      pointer-events: none;
+    }
 
-      #reach-indicator::before {
-        left: 0;
-        top: 2px;
-        width: 6px;
-        height: 2px;
-      }
+    #reach-indicator::before,
+    #reach-indicator::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.8);
+    }
 
-      #reach-indicator::after {
-        left: 2px;
-        top: 0;
-        width: 2px;
-        height: 6px;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="ui-container">
-      <div id="top-bar">
-        <div id="saveBtn" class="btn">SAVE</div>
-        <div id="loadBtn" class="btn">LOAD</div>
-        <div id="resetBtn" class="btn">RST</div>
-        <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
-        <div id="inventoryBtn" class="btn">INV</div>
-      </div>
-      <div id="inventory-panel">
-        <div id="inventory-header">
-          <span>Inventory</span>
-          <div id="closeInventory">✕</div>
-        </div>
-        <div id="inventory"></div>
-      </div>
-      <div id="reach-indicator"></div>
-      <div id="controls">
-        <div class="btn" id="leftBtn">◄</div>
-        <div class="btn" id="rightBtn">►</div>
-        <div id="mode-indicator" class="mine-mode">MINE</div>
-        <div class="btn" id="jumpBtn">▲</div>
-      </div>
+    #reach-indicator::before {
+      left: 0;
+      top: 2px;
+      width: 6px;
+      height: 2px;
+    }
+
+    #reach-indicator::after {
+      left: 2px;
+      top: 0;
+      width: 2px;
+      height: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="ui-container">
+    <div id="top-bar">
+      <div id="saveBtn" class="btn">SAVE</div>
+      <div id="loadBtn" class="btn">LOAD</div>
+      <div id="resetBtn" class="btn">RST</div>
+      <canvas id="selectedBlockIcon" width="24" height="24"></canvas>
+      <div id="inventoryBtn" class="btn">INV</div>
     </div>
-    <script>
-      (function() {
-        // Canvas setup
-        var canvas = document.getElementById('gameCanvas');
-        var ctx = canvas.getContext('2d');
+    <div id="inventory-panel">
+      <div id="inventory-header">
+        <span>Inventory</span>
+        <div id="closeInventory">✕</div>
+      </div>
+      <div id="inventory"></div>
+    </div>
+    <div id="reach-indicator"></div>
+    <div id="controls">
+      <div class="btn" id="leftBtn">◄</div>
+      <div class="btn" id="rightBtn">►</div>
+      <div id="mode-indicator" class="mine-mode">MINE</div>
+      <div class="btn" id="jumpBtn">▲</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // Canvas setup
+      var canvas = document.getElementById('gameCanvas');
+      var ctx = canvas.getContext('2d');
 
-        function resizeCanvas() {
-          canvas.width = 320;
-          canvas.height = 480;
+      function resizeCanvas() {
+        canvas.width = 320;
+        canvas.height = 480;
+      }
+      resizeCanvas();
+      // Base constants (never change)
+      var BLOCK_SIZE = 16,
+        WORLD_WIDTH = 120,
+        WORLD_HEIGHT = 60,
+        GRAVITY = 0.8,
+        MAX_FALL_SPEED = 15;
+      // Dynamic constants (change based on beacons)
+      var JUMP_POWER = -12,
+        MOVE_SPEED = 3,
+        MAX_REACH = 4;
+      // Function to check if any beacon exists in the world and beaming
+      function hasActiveBeacon() {
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            if (world[x][y] === BLOCKS.BEACON) {
+              // Check if this beacon has a beam above it
+              if (y - 1 >= 0 && world[x][y - 1] === BLOCKS.BEAM) {
+                return true;
+              }
+            }
+          }
         }
-        resizeCanvas();
-        // Base constants (never change)
-        var BLOCK_SIZE = 16,
-          WORLD_WIDTH = 120,
-          WORLD_HEIGHT = 60,
-          GRAVITY = 0.8,
-          MAX_FALL_SPEED = 15;
-        // Dynamic constants (change based on beacons)
-        var JUMP_POWER = -12,
-          MOVE_SPEED = 3,
+        return false;
+      }
+      // Function to update player stats based on beacon presence
+      function updatePlayerStats() {
+        if (hasActiveBeacon()) {
+          JUMP_POWER = -15;
+          MOVE_SPEED = 5;
+          MAX_REACH = 5;
+        } else {
+          JUMP_POWER = -12;
+          MOVE_SPEED = 3;
           MAX_REACH = 4;
-        // Function to check if any beacon exists in the world and beaming
-        function hasActiveBeacon() {
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              if (world[x][y] === BLOCKS.BEACON) {
-                // Check if this beacon has a beam above it
-                if (y - 1 >= 0 && world[x][y - 1] === BLOCKS.BEAM) {
-                  return true;
-                }
-              }
-            }
-          }
-          return false;
         }
-        // Function to update player stats based on beacon presence
-        function updatePlayerStats() {
-          if (hasActiveBeacon()) {
-            JUMP_POWER = -15;
-            MOVE_SPEED = 5;
-            MAX_REACH = 5;
-          } else {
-            JUMP_POWER = -12;
-            MOVE_SPEED = 3;
-            MAX_REACH = 4;
-          }
-        };
+      };
 
-        function cleanOrphanFire() {
-          var FLAMMABLE = [
-            BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
-            BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
-          ];
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              if (world[x][y] === BLOCKS.FIRE) {
-                var below = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
-                if (FLAMMABLE.indexOf(below) === -1) {
-                  world[x][y] = BLOCKS.AIR;
-                }
-              }
-            }
-          }
-        }
-
-        function spreadFire() {
-            var FLAMMABLE = [
-                BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
-                BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
-            ];
-            var fires = [];
-            for (var x = 0; x < WORLD_WIDTH; x++) {
-                for (var y = 0; y < WORLD_HEIGHT; y++) {
-                    if (world[x][y] === BLOCKS.FIRE) {
-                        fires.push({ x: x, y: y });
-                    }
-                }
-            }
-            
-            for (var i = 0; i < fires.length; i++) {
-                var fx = fires[i].x, fy = fires[i].y;
-                // Create and shuffle a fresh neighbor list for EACH fire
-                var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
-                for (var s = neighbors.length - 1; s > 0; s--) {
-                    var r = Math.floor(Math.random() * (s + 1));
-                    var temp = neighbors[s];
-                    neighbors[s] = neighbors[r];
-                    neighbors[r] = temp;
-                }
-                
-                for (var n = 0; n < neighbors.length; n++) {
-                    var nx = fx + neighbors[n][0];
-                    var ny = fy + neighbors[n][1];
-                    if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue;
-                    // 40% chance per neighbor
-                    if (Math.random() > 0.4) continue;
-                    // Target must be AIR
-                    if (world[nx][ny] !== BLOCKS.AIR) continue;
-                    // Block below target must be flammable
-                    var below = (ny + 1 < WORLD_HEIGHT) ? world[nx][ny + 1] : BLOCKS.AIR;
-                    if (FLAMMABLE.indexOf(below) !== -1) {
-                        world[nx][ny] = BLOCKS.FIRE;
-                    }
-                }
-            }
-        }
-        
-        setInterval(spreadFire, 3000);
-        // Block definitions
-        var BLOCKS = {
-          AIR: 0,
-          GRASS: 1,
-          DIRT: 2,
-          STONE: 3,
-          WOOD: 4,
-          LEAVES: 5,
-          PLANKS: 6,
-          COBBLESTONE: 7,
-          COAL_ORE: 8,
-          IRON_ORE: 9,
-          GOLD_ORE: 10,
-          DIAMOND_ORE: 11,
-          MOSSY_COBBLESTONE: 12,
-          OAK_STAIRS_LEFT: 13,
-          OAK_STAIRS_RIGHT: 14,
-          OAK_FENCE: 15,
-          OAK_SLAB: 16,
-          STONE_SLAB: 17,
-          COBBLE_SLAB: 18,
-          COAL_BLOCK: 19,
-          IRON_BLOCK: 20,
-          GOLD_BLOCK: 21,
-          DIAMOND_BLOCK: 22,
-          BEACON: 23,
-          BEAM: 24,
-          RED_MUSHROOM: 25,
-          BROWN_MUSHROOM: 26,
-          DANDELION: 27,
-          POPPY: 28,
-          FIRE: 29,
-          GLASS: 30
-        };
-        // Texture file mapping (must match available texture files)
-        var TEXTURE_FILES = {
-          1: 'textures/grass.png',
-          2: 'textures/dirt.png',
-          3: 'textures/stone.png',
-          4: 'textures/wood.png',
-          5: 'textures/leaves.png',
-          6: 'textures/planks.png',
-          7: 'textures/cobblestone.png',
-          8: 'textures/coal_ore.png',
-          9: 'textures/iron_ore.png',
-          10: 'textures/gold_ore.png',
-          11: 'textures/diamond_ore.png',
-          12: 'textures/mossy_cobblestone.png',
-          13: 'textures/oak_stairs_left.png',
-          14: 'textures/oak_stairs_right.png',
-          15: 'textures/oak_fence.png',
-          16: 'textures/oak_slab.png',
-          17: 'textures/stone_slab.png',
-          18: 'textures/cobble_slab.png',
-          19: 'textures/coal_block.png',
-          20: 'textures/iron_block.png',
-          21: 'textures/gold_block.png',
-          22: 'textures/diamond_block.png',
-          23: 'textures/beacon.png',
-          24: 'textures/beam.png',
-          25: 'textures/red_mushroom.png',
-          26: 'textures/brown_mushroom.png',
-          27: 'textures/dandelion.png',
-          28: 'textures/poppy.png',
-          29: 'textures/fire.png',
-          30: 'textures/glass.png',
-        };
-        var textures = {};
-        var texturesLoaded = 0;
-        var totalTextures = 30; // number of entries in TEXTURE_FILES
-        // Flat list of all blocks shown in the grid (order determines grid)
-        var ALL_BLOCKS = [
-          BLOCKS.GRASS,
-          BLOCKS.DIRT,
-          BLOCKS.STONE,
-          BLOCKS.STONE_SLAB,
-          BLOCKS.LEAVES,
-          BLOCKS.WOOD,
-          BLOCKS.PLANKS,
-          BLOCKS.OAK_STAIRS_LEFT,
-          BLOCKS.OAK_STAIRS_RIGHT,
-          BLOCKS.OAK_SLAB,
-          BLOCKS.OAK_FENCE,
-          BLOCKS.COBBLESTONE,
-          BLOCKS.MOSSY_COBBLESTONE,
-          BLOCKS.COBBLE_SLAB,
-          BLOCKS.COAL_ORE,
-          BLOCKS.COAL_BLOCK,
-          BLOCKS.IRON_ORE,
-          BLOCKS.IRON_BLOCK,
-          BLOCKS.GOLD_ORE,
-          BLOCKS.GOLD_BLOCK,
-          BLOCKS.DIAMOND_ORE,
-          BLOCKS.DIAMOND_BLOCK,
-          BLOCKS.BEACON,
-          BLOCKS.FIRE,
-          BLOCKS.RED_MUSHROOM,
-          BLOCKS.BROWN_MUSHROOM,
-          BLOCKS.DANDELION,
-          BLOCKS.POPPY,
-          BLOCKS.GLASS
+      function cleanOrphanFire() {
+        var FLAMMABLE = [
+          BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+          BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
         ];
-        // World & player
-        var world = [],
-          player = {
-            x: 60 * BLOCK_SIZE,
-            y: 20 * BLOCK_SIZE,
-            width: 12,
-            height: 24,
-            vx: 0,
-            vy: 0,
-            onGround: false
-          };
-        var camera = {
-          x: 0,
-          y: 0
-        };
-        var keys = {
-          left: false,
-          right: false,
-          jump: false,
-          jumpPressed: false
-        };
-        var mode = 'mine',
-          selectedBlock = ALL_BLOCKS[0],
-          selectedSlot = 0;
-        // UI elements (DOM)
-        var inventoryPanel = document.getElementById('inventory-panel');
-        var inventoryBtn = document.getElementById('inventoryBtn');
-        var closeInventoryBtn = document.getElementById('closeInventory');
-        var selectedBlockIcon = document.getElementById('selectedBlockIcon');
-        // Draw selected block icon (24x24)
-        function updateSelectedBlockIcon() {
-          if (!selectedBlockIcon) return;
-          var iconCtx = selectedBlockIcon.getContext('2d');
-          iconCtx.clearRect(0, 0, 24, 24);
-          if (textures[selectedBlock]) {
-            try {
-              iconCtx.drawImage(textures[selectedBlock], 0, 0, 24, 24);
-            } catch (e) {
-              iconCtx.fillStyle = '#555';
-              iconCtx.fillRect(0, 0, 24, 24);
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            if (world[x][y] === BLOCKS.FIRE) {
+              var below = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
+              if (FLAMMABLE.indexOf(below) === -1) {
+                world[x][y] = BLOCKS.AIR;
+              }
             }
-          } else {
+          }
+        }
+      }
+
+      function spreadFire() {
+        var FLAMMABLE = [
+          BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+          BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+        ];
+        var fires = [];
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            if (world[x][y] === BLOCKS.FIRE) {
+              fires.push({ x: x, y: y });
+            }
+          }
+        }
+
+        for (var i = 0; i < fires.length; i++) {
+          var fx = fires[i].x, fy = fires[i].y;
+          // Create and shuffle a fresh neighbor list for EACH fire
+          var neighbors = [[-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+          for (var s = neighbors.length - 1; s > 0; s--) {
+            var r = Math.floor(Math.random() * (s + 1));
+            var temp = neighbors[s];
+            neighbors[s] = neighbors[r];
+            neighbors[r] = temp;
+          }
+
+          for (var n = 0; n < neighbors.length; n++) {
+            var nx = fx + neighbors[n][0];
+            var ny = fy + neighbors[n][1];
+            if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue;
+            // 40% chance per neighbor
+            if (Math.random() > 0.4) continue;
+            // Target must be AIR
+            if (world[nx][ny] !== BLOCKS.AIR) continue;
+            // Block below target must be flammable
+            var below = (ny + 1 < WORLD_HEIGHT) ? world[nx][ny + 1] : BLOCKS.AIR;
+            if (FLAMMABLE.indexOf(below) !== -1) {
+              world[nx][ny] = BLOCKS.FIRE;
+            }
+          }
+        }
+      }
+
+      setInterval(spreadFire, 3000);
+      // Block definitions
+      var BLOCKS = {
+        AIR: 0,
+        GRASS: 1,
+        DIRT: 2,
+        STONE: 3,
+        WOOD: 4,
+        LEAVES: 5,
+        PLANKS: 6,
+        COBBLESTONE: 7,
+        COAL_ORE: 8,
+        IRON_ORE: 9,
+        GOLD_ORE: 10,
+        DIAMOND_ORE: 11,
+        MOSSY_COBBLESTONE: 12,
+        OAK_STAIRS_LEFT: 13,
+        OAK_STAIRS_RIGHT: 14,
+        OAK_FENCE: 15,
+        OAK_SLAB: 16,
+        STONE_SLAB: 17,
+        COBBLE_SLAB: 18,
+        COAL_BLOCK: 19,
+        IRON_BLOCK: 20,
+        GOLD_BLOCK: 21,
+        DIAMOND_BLOCK: 22,
+        BEACON: 23,
+        BEAM: 24,
+        RED_MUSHROOM: 25,
+        BROWN_MUSHROOM: 26,
+        DANDELION: 27,
+        POPPY: 28,
+        FIRE: 29,
+        GLASS: 30
+      };
+      // Texture file mapping (must match available texture files)
+      var TEXTURE_FILES = {
+        1: 'textures/grass.png',
+        2: 'textures/dirt.png',
+        3: 'textures/stone.png',
+        4: 'textures/wood.png',
+        5: 'textures/leaves.png',
+        6: 'textures/planks.png',
+        7: 'textures/cobblestone.png',
+        8: 'textures/coal_ore.png',
+        9: 'textures/iron_ore.png',
+        10: 'textures/gold_ore.png',
+        11: 'textures/diamond_ore.png',
+        12: 'textures/mossy_cobblestone.png',
+        13: 'textures/oak_stairs_left.png',
+        14: 'textures/oak_stairs_right.png',
+        15: 'textures/oak_fence.png',
+        16: 'textures/oak_slab.png',
+        17: 'textures/stone_slab.png',
+        18: 'textures/cobble_slab.png',
+        19: 'textures/coal_block.png',
+        20: 'textures/iron_block.png',
+        21: 'textures/gold_block.png',
+        22: 'textures/diamond_block.png',
+        23: 'textures/beacon.png',
+        24: 'textures/beam.png',
+        25: 'textures/red_mushroom.png',
+        26: 'textures/brown_mushroom.png',
+        27: 'textures/dandelion.png',
+        28: 'textures/poppy.png',
+        29: 'textures/fire.png',
+        30: 'textures/glass.png',
+      };
+      var textures = {};
+      var texturesLoaded = 0;
+      var totalTextures = 30; // number of entries in TEXTURE_FILES
+      // Flat list of all blocks shown in the grid (order determines grid)
+      var ALL_BLOCKS = [
+        BLOCKS.GRASS,
+        BLOCKS.DIRT,
+        BLOCKS.STONE,
+        BLOCKS.STONE_SLAB,
+        BLOCKS.LEAVES,
+        BLOCKS.WOOD,
+        BLOCKS.PLANKS,
+        BLOCKS.OAK_STAIRS_LEFT,
+        BLOCKS.OAK_STAIRS_RIGHT,
+        BLOCKS.OAK_SLAB,
+        BLOCKS.OAK_FENCE,
+        BLOCKS.COBBLESTONE,
+        BLOCKS.MOSSY_COBBLESTONE,
+        BLOCKS.COBBLE_SLAB,
+        BLOCKS.COAL_ORE,
+        BLOCKS.COAL_BLOCK,
+        BLOCKS.IRON_ORE,
+        BLOCKS.IRON_BLOCK,
+        BLOCKS.GOLD_ORE,
+        BLOCKS.GOLD_BLOCK,
+        BLOCKS.DIAMOND_ORE,
+        BLOCKS.DIAMOND_BLOCK,
+        BLOCKS.BEACON,
+        BLOCKS.FIRE,
+        BLOCKS.RED_MUSHROOM,
+        BLOCKS.BROWN_MUSHROOM,
+        BLOCKS.DANDELION,
+        BLOCKS.POPPY,
+        BLOCKS.GLASS
+      ];
+      // World & player
+      var world = [],
+        player = {
+          x: 60 * BLOCK_SIZE,
+          y: 20 * BLOCK_SIZE,
+          width: 12,
+          height: 24,
+          vx: 0,
+          vy: 0,
+          onGround: false
+        };
+      var camera = {
+        x: 0,
+        y: 0
+      };
+      var keys = {
+        left: false,
+        right: false,
+        jump: false,
+        jumpPressed: false
+      };
+      var mode = 'mine',
+        selectedBlock = ALL_BLOCKS[0],
+        selectedSlot = 0;
+      // UI elements (DOM)
+      var inventoryPanel = document.getElementById('inventory-panel');
+      var inventoryBtn = document.getElementById('inventoryBtn');
+      var closeInventoryBtn = document.getElementById('closeInventory');
+      var selectedBlockIcon = document.getElementById('selectedBlockIcon');
+      // Draw selected block icon (24x24)
+      function updateSelectedBlockIcon() {
+        if (!selectedBlockIcon) return;
+        var iconCtx = selectedBlockIcon.getContext('2d');
+        iconCtx.clearRect(0, 0, 24, 24);
+        if (textures[selectedBlock]) {
+          try {
+            iconCtx.drawImage(textures[selectedBlock], 0, 0, 24, 24);
+          } catch (e) {
             iconCtx.fillStyle = '#555';
             iconCtx.fillRect(0, 0, 24, 24);
           }
+        } else {
+          iconCtx.fillStyle = '#555';
+          iconCtx.fillRect(0, 0, 24, 24);
         }
-        // Load textures
-        function loadTextures() {
-          for (var blockType in TEXTURE_FILES) {
-            (function(type) {
-              var img = new Image();
-              img.src = TEXTURE_FILES[type];
-              img.onload = function() {
-                textures[type] = this;
-                texturesLoaded++;
-                if (texturesLoaded === totalTextures) {
-                  createInventory();
-                  updateSelectedBlockIcon();
-                  gameLoop();
-                }
-              };
-              img.onerror = function() {
-                console.error('Failed to load texture: ' + TEXTURE_FILES[type]);
-                textures[type] = null;
-                texturesLoaded++;
-                if (texturesLoaded === totalTextures) {
-                  createInventory();
-                  updateSelectedBlockIcon();
-                  gameLoop();
-                }
-              };
-            })(blockType);
-          }
+      }
+      // Load textures
+      function loadTextures() {
+        for (var blockType in TEXTURE_FILES) {
+          (function (type) {
+            var img = new Image();
+            img.src = TEXTURE_FILES[type];
+            img.onload = function () {
+              textures[type] = this;
+              texturesLoaded++;
+              if (texturesLoaded === totalTextures) {
+                createInventory();
+                updateSelectedBlockIcon();
+                gameLoop();
+              }
+            };
+            img.onerror = function () {
+              console.error('Failed to load texture: ' + TEXTURE_FILES[type]);
+              textures[type] = null;
+              texturesLoaded++;
+              if (texturesLoaded === totalTextures) {
+                createInventory();
+                updateSelectedBlockIcon();
+                gameLoop();
+              }
+            };
+          })(blockType);
         }
+      }
 
-        function saveWorld() {
-          var BLOCK_NAMES = {};
-          for (var key in BLOCKS) {
-            BLOCK_NAMES[BLOCKS[key]] = key;
-          }
-          var existing = localStorage.getItem('mc2d_world');
-          if (existing) {
-            if (!confirm('A saved world already exists. Overwrite it?')) return;
-          }
-          var parts = [];
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              var name = BLOCK_NAMES[world[x][y]] || 'AIR';
-              parts.push(x + '.' + y + ':' + name);
-            }
-          }
-          var output = parts.join(',');
-          localStorage.setItem('mc2d_world', output);
-          alert('World saved!');
+      function saveWorld() {
+        var BLOCK_NAMES = {};
+        for (var key in BLOCKS) {
+          BLOCK_NAMES[BLOCKS[key]] = key;
         }
+        var existing = localStorage.getItem('mc2d_world');
+        if (existing) {
+          if (!confirm('A saved world already exists. Overwrite it?')) return;
+        }
+        var parts = [];
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            var name = BLOCK_NAMES[world[x][y]] || 'AIR';
+            parts.push(x + '.' + y + ':' + name);
+          }
+        }
+        var output = parts.join(',');
+        localStorage.setItem('mc2d_world', output);
+        alert('World saved!');
+      }
 
-        function loadWorld() {
-          var data = localStorage.getItem('mc2d_world');
-          if (!data) {
-            alert('No saved world found!');
-            return;
-          }
-          if (!confirm('Replace current world with saved world?')) return;
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              world[x][y] = BLOCKS.AIR;
-            }
-          }
-          var entries = data.split(',');
-          for (var i = 0; i < entries.length; i++) {
-            var entry = entries[i].trim();
-            if (!entry) continue;
-            var dotIdx = entry.indexOf('.');
-            var colonIdx = entry.indexOf(':');
-            if (dotIdx === -1 || colonIdx === -1) continue;
-            var x = parseInt(entry.substring(0, dotIdx), 10);
-            var y = parseInt(entry.substring(dotIdx + 1, colonIdx), 10);
-            var name = entry.substring(colonIdx + 1);
-            if (BLOCKS[name] !== undefined) {
-              world[x][y] = BLOCKS[name];
-            }
-          }
-          alert('World loaded!');
+      function loadWorld() {
+        var data = localStorage.getItem('mc2d_world');
+        if (!data) {
+          alert('No saved world found!');
+          return;
         }
+        if (!confirm('Replace current world with saved world?')) return;
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            world[x][y] = BLOCKS.AIR;
+          }
+        }
+        var entries = data.split(',');
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i].trim();
+          if (!entry) continue;
+          var dotIdx = entry.indexOf('.');
+          var colonIdx = entry.indexOf(':');
+          if (dotIdx === -1 || colonIdx === -1) continue;
+          var x = parseInt(entry.substring(0, dotIdx), 10);
+          var y = parseInt(entry.substring(dotIdx + 1, colonIdx), 10);
+          var name = entry.substring(colonIdx + 1);
+          if (BLOCKS[name] !== undefined) {
+            world[x][y] = BLOCKS[name];
+          }
+        }
+        checkAllBeacons();
+        updatePlayerStats();
+        alert('World loaded!');
+      }
 
-        function resetSave() {
-          if (!confirm('Delete saved world from storage?')) return;
-          localStorage.removeItem('mc2d_world');
-          alert('Save deleted!');
-        }
-        document.getElementById('saveBtn').addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          saveWorld();
-        });
-        document.getElementById('loadBtn').addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          loadWorld();
-        });
-        document.getElementById('resetBtn').addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          resetSave();
-        });
-        // World generation
-        function initWorld() {
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            world[x] = [];
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              world[x][y] = BLOCKS.AIR;
-            }
+      function resetSave() {
+        if (!confirm('Delete saved world from storage?')) return;
+        localStorage.removeItem('mc2d_world');
+        alert('Save deleted!');
+      }
+      document.getElementById('saveBtn').addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        saveWorld();
+      });
+      document.getElementById('loadBtn').addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        loadWorld();
+      });
+      document.getElementById('resetBtn').addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        resetSave();
+      });
+      // World generation
+      function initWorld() {
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          world[x] = [];
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            world[x][y] = BLOCKS.AIR;
           }
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
-            for (var y = height; y < WORLD_HEIGHT; y++) {
-              if (y === height) {
-                world[x][y] = BLOCKS.GRASS;
-              } else if (y < height + 4) {
-                world[x][y] = BLOCKS.DIRT;
-              } else {
-                world[x][y] = BLOCKS.STONE;
-                var depth = y - (height + 4);
-                if (depth > 2 && Math.random() < 0.08) {
-                  world[x][y] = BLOCKS.COAL_ORE;
-                }
-                if (depth > 8 && Math.random() < 0.04) {
-                  world[x][y] = BLOCKS.IRON_ORE;
-                }
-                if (depth > 15 && Math.random() < 0.02) {
-                  world[x][y] = BLOCKS.GOLD_ORE;
-                }
-                if (depth > 20 && Math.random() < 0.01) {
-                  world[x][y] = BLOCKS.DIAMOND_ORE;
-                }
+        }
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
+          for (var y = height; y < WORLD_HEIGHT; y++) {
+            if (y === height) {
+              world[x][y] = BLOCKS.GRASS;
+            } else if (y < height + 4) {
+              world[x][y] = BLOCKS.DIRT;
+            } else {
+              world[x][y] = BLOCKS.STONE;
+              var depth = y - (height + 4);
+              if (depth > 2 && Math.random() < 0.08) {
+                world[x][y] = BLOCKS.COAL_ORE;
+              }
+              if (depth > 8 && Math.random() < 0.04) {
+                world[x][y] = BLOCKS.IRON_ORE;
+              }
+              if (depth > 15 && Math.random() < 0.02) {
+                world[x][y] = BLOCKS.GOLD_ORE;
+              }
+              if (depth > 20 && Math.random() < 0.01) {
+                world[x][y] = BLOCKS.DIAMOND_ORE;
               }
             }
-            if (Math.random() < 0.08 && x < WORLD_WIDTH - 4 && x > 3) {
-              var th = 5 + Math.floor(Math.random() * 4);
-              for (var ty = 0; ty < th; ty++) {
-                if (height - ty - 1 >= 0) {
-                  world[x][height - ty - 1] = BLOCKS.WOOD;
-                }
+          }
+          if (Math.random() < 0.08 && x < WORLD_WIDTH - 4 && x > 3) {
+            var th = 5 + Math.floor(Math.random() * 4);
+            for (var ty = 0; ty < th; ty++) {
+              if (height - ty - 1 >= 0) {
+                world[x][height - ty - 1] = BLOCKS.WOOD;
               }
-              for (var lx = -2; lx <= 2; lx++) {
-                for (var ly = -2; ly <= 1; ly++) {
-                  var tx = x + lx;
-                  var ty = height - th + ly;
-                  if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
-                    if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) {
-                      world[tx][ty] = BLOCKS.LEAVES;
-                    }
+            }
+            for (var lx = -2; lx <= 2; lx++) {
+              for (var ly = -2; ly <= 1; ly++) {
+                var tx = x + lx;
+                var ty = height - th + ly;
+                if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+                  if ((Math.abs(lx) + Math.abs(ly) < 4) && world[tx][ty] === BLOCKS.AIR) {
+                    world[tx][ty] = BLOCKS.LEAVES;
                   }
                 }
               }
             }
           }
-          // Generate flowers and mushrooms on grass
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
-            // Only place on grass blocks
-            if (height > 0 && height < WORLD_HEIGHT && world[x][height] === BLOCKS.GRASS) {
-              var rand = Math.random();
-              // Red mushrooms (rare, 2%)
-              if (rand < 0.02 && world[x][height - 1] === BLOCKS.AIR) {
-                world[x][height - 1] = BLOCKS.RED_MUSHROOM;
-              }
-              // Brown mushrooms (rare, 2%)
-              else if (rand < 0.04 && world[x][height - 1] === BLOCKS.AIR) {
-                world[x][height - 1] = BLOCKS.BROWN_MUSHROOM;
-              }
-              // Dandelion (common, 6%)
-              else if (rand < 0.10 && world[x][height - 1] === BLOCKS.AIR) {
-                world[x][height - 1] = BLOCKS.DANDELION;
-              }
-              // Poppy (common, 6%)
-              else if (rand < 0.16 && world[x][height - 1] === BLOCKS.AIR) {
-                world[x][height - 1] = BLOCKS.POPPY;
-              }
+        }
+        // Generate flowers and mushrooms on grass
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          var height = Math.floor(WORLD_HEIGHT / 2 + Math.sin(x * 0.08) * 6 + Math.cos(x * 0.04) * 4);
+          // Only place on grass blocks
+          if (height > 0 && height < WORLD_HEIGHT && world[x][height] === BLOCKS.GRASS) {
+            var rand = Math.random();
+            // Red mushrooms (rare, 2%)
+            if (rand < 0.02 && world[x][height - 1] === BLOCKS.AIR) {
+              world[x][height - 1] = BLOCKS.RED_MUSHROOM;
+            }
+            // Brown mushrooms (rare, 2%)
+            else if (rand < 0.04 && world[x][height - 1] === BLOCKS.AIR) {
+              world[x][height - 1] = BLOCKS.BROWN_MUSHROOM;
+            }
+            // Dandelion (common, 6%)
+            else if (rand < 0.10 && world[x][height - 1] === BLOCKS.AIR) {
+              world[x][height - 1] = BLOCKS.DANDELION;
+            }
+            // Poppy (common, 6%)
+            else if (rand < 0.16 && world[x][height - 1] === BLOCKS.AIR) {
+              world[x][height - 1] = BLOCKS.POPPY;
             }
           }
         }
-        // small helper to avoid potential global typo errors
-        function WORLDWidthSafe() {
-          return WORLD_WIDTH;
-        }
-        // Drawing
-        function drawBlock(x, y, t) {
-          if (t === BLOCKS.AIR) return;
-          var sx = x * BLOCK_SIZE - camera.x;
-          var sy = y * BLOCK_SIZE - camera.y;
-          if (textures[t]) {
-            // Fence: auto-crop width based on left/right neighbors so it "connects"
-            if (t === BLOCKS.OAK_FENCE) {
-              var leftT = x > 0 ? world[x - 1][y] : BLOCKS.AIR;
-              var rightT = x < WORLD_WIDTH - 1 ? world[x + 1][y] : BLOCKS.AIR;
-              var connectLeft = !isPassableBlock(leftT);
-              var connectRight = !isPassableBlock(rightT);
+      }
+      // small helper to avoid potential global typo errors
+      function WORLDWidthSafe() {
+        return WORLD_WIDTH;
+      }
+      // Drawing
+      function drawBlock(x, y, t) {
+        if (t === BLOCKS.AIR) return;
+        var sx = x * BLOCK_SIZE - camera.x;
+        var sy = y * BLOCK_SIZE - camera.y;
+        if (textures[t]) {
+          // Fence: auto-crop width based on left/right neighbors so it "connects"
+          if (t === BLOCKS.OAK_FENCE) {
+            var leftT = x > 0 ? world[x - 1][y] : BLOCKS.AIR;
+            var rightT = x < WORLD_WIDTH - 1 ? world[x + 1][y] : BLOCKS.AIR;
+            var connectLeft = !isPassableBlock(leftT);
+            var connectRight = !isPassableBlock(rightT);
 
-              // Default fence body thickness = 50% of block width, centered.
-              // If connected on a side, extend to that edge (75% total width).
-              var bodyWFrac = 0.5;
-              var bodyXFrac = 0.25;
-              if (connectLeft && connectRight) {
-                bodyWFrac = 1;
-                bodyXFrac = 0;
-              } else if (connectLeft && !connectRight) {
-                bodyWFrac = 0.75;
-                bodyXFrac = 0;
-              } else if (!connectLeft && connectRight) {
-                bodyWFrac = 0.75;
-                bodyXFrac = 0.25;
-              }
-
-              var img = textures[t];
-              var srcX = Math.floor(img.width * bodyXFrac);
-              var srcW = Math.max(1, Math.floor(img.width * bodyWFrac));
-              var dstX = sx + bodyXFrac * BLOCK_SIZE;
-              var dstW = bodyWFrac * BLOCK_SIZE;
-
-              ctx.drawImage(img, srcX, 0, srcW, img.height, dstX, sy, dstW, BLOCK_SIZE);
-            } else {
-              ctx.drawImage(textures[t], sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+            // Default fence body thickness = 50% of block width, centered.
+            // If connected on a side, extend to that edge (75% total width).
+            var bodyWFrac = 0.5;
+            var bodyXFrac = 0.25;
+            if (connectLeft && connectRight) {
+              bodyWFrac = 1;
+              bodyXFrac = 0;
+            } else if (connectLeft && !connectRight) {
+              bodyWFrac = 0.75;
+              bodyXFrac = 0;
+            } else if (!connectLeft && connectRight) {
+              bodyWFrac = 0.75;
+              bodyXFrac = 0.25;
             }
+
+            var img = textures[t];
+            var srcX = Math.floor(img.width * bodyXFrac);
+            var srcW = Math.max(1, Math.floor(img.width * bodyWFrac));
+            var dstX = sx + bodyXFrac * BLOCK_SIZE;
+            var dstW = bodyWFrac * BLOCK_SIZE;
+
+            ctx.drawImage(img, srcX, 0, srcW, img.height, dstX, sy, dstW, BLOCK_SIZE);
           } else {
-            // fallback: simple colored block if texture missing
-            ctx.fillStyle = '#666';
-            ctx.fillRect(sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+            ctx.drawImage(textures[t], sx, sy, BLOCK_SIZE, BLOCK_SIZE);
           }
+        } else {
+          // fallback: simple colored block if texture missing
+          ctx.fillStyle = '#666';
+          ctx.fillRect(sx, sy, BLOCK_SIZE, BLOCK_SIZE);
+        }
+      }
+
+      function isPassableBlock(t) {
+        return (
+          t === BLOCKS.AIR ||
+          t === BLOCKS.BEAM ||
+          t === BLOCKS.RED_MUSHROOM ||
+          t === BLOCKS.BROWN_MUSHROOM ||
+          t === BLOCKS.DANDELION ||
+          t === BLOCKS.POPPY ||
+          t === BLOCKS.FIRE
+        );
+      }
+
+      function aabbIntersects(ax, ay, aw, ah, bx, by, bw, bh) {
+        return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+      }
+
+      function getSolidRectsForBlock(t, bx, by, outRects) {
+        var baseX = bx * BLOCK_SIZE;
+        var baseY = by * BLOCK_SIZE;
+
+        // Full blocks (default)
+        if (
+          t !== BLOCKS.OAK_SLAB &&
+          t !== BLOCKS.STONE_SLAB &&
+          t !== BLOCKS.COBBLE_SLAB &&
+          t !== BLOCKS.OAK_STAIRS_LEFT &&
+          t !== BLOCKS.OAK_STAIRS_RIGHT
+        ) {
+          outRects.push({ x: baseX, y: baseY, w: BLOCK_SIZE, h: BLOCK_SIZE });
+          return;
         }
 
-        function isPassableBlock(t) {
-          return (
-            t === BLOCKS.AIR ||
-            t === BLOCKS.BEAM ||
-            t === BLOCKS.RED_MUSHROOM ||
-            t === BLOCKS.BROWN_MUSHROOM ||
-            t === BLOCKS.DANDELION ||
-            t === BLOCKS.POPPY ||
-            t === BLOCKS.FIRE
-          );
+        // Bottom slabs: solid bottom half
+        if (t === BLOCKS.OAK_SLAB || t === BLOCKS.STONE_SLAB || t === BLOCKS.COBBLE_SLAB) {
+          outRects.push({ x: baseX, y: baseY + BLOCK_SIZE / 2, w: BLOCK_SIZE, h: BLOCK_SIZE / 2 });
+          return;
         }
 
-        function aabbIntersects(ax, ay, aw, ah, bx, by, bw, bh) {
-          return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+        // Stairs: approximate as 4 "step" slices (ES5 + cheap)
+        var slices = 4;
+        var sliceW = BLOCK_SIZE / slices;
+        var i, height, rx, ry, rh;
+
+        if (t === BLOCKS.OAK_STAIRS_RIGHT) {
+          // Rise to the right
+          for (i = 0; i < slices; i++) {
+            height = ((i + 1) / slices) * BLOCK_SIZE;
+            rx = baseX + i * sliceW;
+            ry = baseY + (BLOCK_SIZE - height);
+            rh = height;
+            outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
+          }
+          return;
         }
 
-        function getSolidRectsForBlock(t, bx, by, outRects) {
-          var baseX = bx * BLOCK_SIZE;
-          var baseY = by * BLOCK_SIZE;
-
-          // Full blocks (default)
-          if (
-            t !== BLOCKS.OAK_SLAB &&
-            t !== BLOCKS.STONE_SLAB &&
-            t !== BLOCKS.COBBLE_SLAB &&
-            t !== BLOCKS.OAK_STAIRS_LEFT &&
-            t !== BLOCKS.OAK_STAIRS_RIGHT
-          ) {
-            outRects.push({ x: baseX, y: baseY, w: BLOCK_SIZE, h: BLOCK_SIZE });
-            return;
-          }
-
-          // Bottom slabs: solid bottom half
-          if (t === BLOCKS.OAK_SLAB || t === BLOCKS.STONE_SLAB || t === BLOCKS.COBBLE_SLAB) {
-            outRects.push({ x: baseX, y: baseY + BLOCK_SIZE / 2, w: BLOCK_SIZE, h: BLOCK_SIZE / 2 });
-            return;
-          }
-
-          // Stairs: approximate as 4 "step" slices (ES5 + cheap)
-          var slices = 4;
-          var sliceW = BLOCK_SIZE / slices;
-          var i, height, rx, ry, rh;
-
-          if (t === BLOCKS.OAK_STAIRS_RIGHT) {
-            // Rise to the right
-            for (i = 0; i < slices; i++) {
-              height = ((i + 1) / slices) * BLOCK_SIZE;
-              rx = baseX + i * sliceW;
-              ry = baseY + (BLOCK_SIZE - height);
-              rh = height;
-              outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
-            }
-            return;
-          }
-
-          if (t === BLOCKS.OAK_STAIRS_LEFT) {
-            // Rise to the left
-            for (i = 0; i < slices; i++) {
-              height = ((i + 1) / slices) * BLOCK_SIZE;
-              rx = baseX + (slices - 1 - i) * sliceW;
-              ry = baseY + (BLOCK_SIZE - height);
-              rh = height;
-              outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
-            }
+        if (t === BLOCKS.OAK_STAIRS_LEFT) {
+          // Rise to the left
+          for (i = 0; i < slices; i++) {
+            height = ((i + 1) / slices) * BLOCK_SIZE;
+            rx = baseX + (slices - 1 - i) * sliceW;
+            ry = baseY + (BLOCK_SIZE - height);
+            rh = height;
+            outRects.push({ x: rx, y: ry, w: sliceW, h: rh });
           }
         }
+      }
 
-        function collidesAt(x, y, w, h) {
-          var left = Math.floor(x / BLOCK_SIZE);
-          var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
-          var top = Math.floor(y / BLOCK_SIZE);
-          var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
+      function collidesAt(x, y, w, h) {
+        var left = Math.floor(x / BLOCK_SIZE);
+        var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
+        var top = Math.floor(y / BLOCK_SIZE);
+        var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
 
-          var rects = [];
-          for (var bx = left; bx <= right; bx++) {
-            for (var by = top; by <= bottom; by++) {
-              if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                var t = world[bx][by];
-                if (!isPassableBlock(t)) {
-                  getSolidRectsForBlock(t, bx, by, rects);
-                }
-              } else if (by >= WORLD_HEIGHT) {
-                return true; // below world = solid
+        var rects = [];
+        for (var bx = left; bx <= right; bx++) {
+          for (var by = top; by <= bottom; by++) {
+            if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+              var t = world[bx][by];
+              if (!isPassableBlock(t)) {
+                getSolidRectsForBlock(t, bx, by, rects);
               }
+            } else if (by >= WORLD_HEIGHT) {
+              return true; // below world = solid
             }
           }
+        }
 
+        for (var i = 0; i < rects.length; i++) {
+          var r = rects[i];
+          if (aabbIntersects(x, y, w, h, r.x, r.y, r.w, r.h)) return true;
+        }
+        return false;
+      }
+
+      function collectSolidRectsNear(x, y, w, h) {
+        var left = Math.floor(x / BLOCK_SIZE);
+        var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
+        var top = Math.floor(y / BLOCK_SIZE);
+        var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
+
+        var rects = [];
+        for (var bx = left; bx <= right; bx++) {
+          for (var by = top; by <= bottom; by++) {
+            if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
+              var t = world[bx][by];
+              if (!isPassableBlock(t)) {
+                getSolidRectsForBlock(t, bx, by, rects);
+              }
+            } else if (by >= WORLD_HEIGHT) {
+              // treat below world as solid "floor"
+              rects.push({ x: bx * BLOCK_SIZE, y: WORLD_HEIGHT * BLOCK_SIZE, w: BLOCK_SIZE, h: BLOCK_SIZE });
+            }
+          }
+        }
+        return rects;
+      }
+
+      function updatePlayer() {
+        if (keys.left) {
+          player.vx = -MOVE_SPEED;
+        } else if (keys.right) {
+          player.vx = MOVE_SPEED;
+        } else {
+          player.vx = 0;
+        }
+        if (keys.jump && player.onGround && !keys.jumpPressed) {
+          player.vy = JUMP_POWER;
+          player.onGround = false;
+          keys.jumpPressed = true;
+        }
+        if (!keys.jump) {
+          keys.jumpPressed = false;
+        }
+        if (!player.onGround) {
+          player.vy += GRAVITY;
+          if (player.vy > MAX_FALL_SPEED) {
+            player.vy = MAX_FALL_SPEED;
+          }
+        } else if (player.vy > 0) {
+          player.vy = 0;
+        }
+        // Horizontal move (+ optional step-up onto slabs/stairs)
+        var oldX = player.x;
+        var oldY = player.y;
+        player.x += player.vx;
+
+        if (collidesAt(player.x, player.y, player.width, player.height)) {
+          // Try "step up" so you can walk onto slabs/stairs smoothly.
+          // iPod-era friendly: small loop, no fancy math.
+          var maxStep = Math.floor(BLOCK_SIZE / 2); // enough for half slabs
+          var stepped = false;
+          for (var step = 1; step <= maxStep; step++) {
+            if (!collidesAt(player.x, player.y - step, player.width, player.height)) {
+              player.y = player.y - step;
+              stepped = true;
+              break;
+            }
+          }
+          if (!stepped) {
+            player.x = oldX;
+            player.y = oldY;
+          }
+        }
+
+        // Vertical move + resolution
+        player.y += player.vy;
+
+        var rects = collectSolidRectsNear(player.x, player.y, player.width, player.height);
+        var hit = false;
+        var bestFix = 0;
+
+        if (player.vy > 0) {
+          // Falling: snap to the top of the collided shape (prevents ground jitter)
           for (var i = 0; i < rects.length; i++) {
             var r = rects[i];
-            if (aabbIntersects(x, y, w, h, r.x, r.y, r.w, r.h)) return true;
-          }
-          return false;
-        }
-
-        function collectSolidRectsNear(x, y, w, h) {
-          var left = Math.floor(x / BLOCK_SIZE);
-          var right = Math.floor((x + w - 0.001) / BLOCK_SIZE);
-          var top = Math.floor(y / BLOCK_SIZE);
-          var bottom = Math.floor((y + h - 0.001) / BLOCK_SIZE);
-
-          var rects = [];
-          for (var bx = left; bx <= right; bx++) {
-            for (var by = top; by <= bottom; by++) {
-              if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT) {
-                var t = world[bx][by];
-                if (!isPassableBlock(t)) {
-                  getSolidRectsForBlock(t, bx, by, rects);
-                }
-              } else if (by >= WORLD_HEIGHT) {
-                // treat below world as solid "floor"
-                rects.push({ x: bx * BLOCK_SIZE, y: WORLD_HEIGHT * BLOCK_SIZE, w: BLOCK_SIZE, h: BLOCK_SIZE });
+            if (!aabbIntersects(player.x, player.y, player.width, player.height, r.x, r.y, r.w, r.h)) continue;
+            // Only consider surfaces below our feet (landing)
+            if (oldY + player.height <= r.y + 0.001) {
+              var fixUp = (player.y + player.height) - r.y;
+              if (fixUp > bestFix) {
+                bestFix = fixUp;
+                hit = true;
               }
             }
           }
-          return rects;
-        }
-
-        function updatePlayer() {
-          if (keys.left) {
-            player.vx = -MOVE_SPEED;
-          } else if (keys.right) {
-            player.vx = MOVE_SPEED;
+          if (hit) {
+            player.y -= bestFix;
+            player.vy = 0;
+            player.onGround = true;
           } else {
-            player.vx = 0;
-          }
-          if (keys.jump && player.onGround && !keys.jumpPressed) {
-            player.vy = JUMP_POWER;
             player.onGround = false;
-            keys.jumpPressed = true;
           }
-          if (!keys.jump) {
-            keys.jumpPressed = false;
-          }
-          if (!player.onGround) {
-            player.vy += GRAVITY;
-            if (player.vy > MAX_FALL_SPEED) {
-              player.vy = MAX_FALL_SPEED;
+        } else if (player.vy < 0) {
+          // Jumping: snap to the bottom of the collided shape
+          for (var j = 0; j < rects.length; j++) {
+            var r2 = rects[j];
+            if (!aabbIntersects(player.x, player.y, player.width, player.height, r2.x, r2.y, r2.w, r2.h)) continue;
+            // Only consider ceilings above our head
+            if (oldY >= r2.y + r2.h - 0.001) {
+              var fixDown = (r2.y + r2.h) - player.y;
+              if (fixDown > bestFix) {
+                bestFix = fixDown;
+                hit = true;
+              }
             }
-          } else if (player.vy > 0) {
+          }
+          if (hit) {
+            player.y += bestFix;
             player.vy = 0;
           }
-          // Horizontal move (+ optional step-up onto slabs/stairs)
-          var oldX = player.x;
-          var oldY = player.y;
-          player.x += player.vx;
+          player.onGround = false;
+        } else {
+          // No vertical motion: keep onGround stable
+          player.onGround = collidesAt(player.x, player.y + 1, player.width, player.height);
+        }
+      }
 
-          if (collidesAt(player.x, player.y, player.width, player.height)) {
-            // Try "step up" so you can walk onto slabs/stairs smoothly.
-            // iPod-era friendly: small loop, no fancy math.
-            var maxStep = Math.floor(BLOCK_SIZE / 2); // enough for half slabs
-            var stepped = false;
-            for (var step = 1; step <= maxStep; step++) {
-              if (!collidesAt(player.x, player.y - step, player.width, player.height)) {
-                player.y = player.y - step;
-                stepped = true;
-                break;
-              }
-            }
-            if (!stepped) {
-              player.x = oldX;
-              player.y = oldY;
-            }
-          }
+      function updateCamera() {
+        var tx = player.x - canvas.width / 2 + player.width / 2;
+        var ty = player.y - canvas.height / 2 + player.height / 2;
+        tx = Math.max(0, Math.min(tx, WORLD_WIDTH * BLOCK_SIZE - canvas.width));
+        ty = Math.max(0, Math.min(ty, WORLD_HEIGHT * BLOCK_SIZE - canvas.height));
+        camera.x += (tx - camera.x) * 0.1;
+        camera.y += (ty - camera.y) * 0.1;
+      }
 
-          // Vertical move + resolution
-          player.y += player.vy;
+      function drawPlayer() {
+        var screenX = Math.floor(player.x - camera.x);
+        var screenY = Math.floor(player.y - camera.y);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(screenX - 2, screenY + player.height, player.width + 4, 2);
+        ctx.fillStyle = '#3A7BC8';
+        ctx.fillRect(screenX + 1, screenY + 9, player.width - 2, 13);
+        ctx.fillStyle = '#2C5FA0';
+        ctx.fillRect(screenX + player.width - 3, screenY + 9, 2, 13);
+        ctx.fillStyle = '#F5D7B8';
+        ctx.fillRect(screenX + 2, screenY, player.width - 4, 9);
+        ctx.fillStyle = '#D4B798';
+        ctx.fillRect(screenX + player.width - 4, screenY, 2, 9);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(screenX + 4, screenY + 3, 2, 2);
+        ctx.fillRect(screenX + 8, screenY + 3, 2, 2);
+        ctx.fillStyle = '#1A3E6E';
+        ctx.fillRect(screenX + 2, screenY + 22, 4, 4);
+        ctx.fillRect(screenX + 8, screenY + 22, 4, 4);
+        ctx.fillStyle = '#3A7BC8';
+        ctx.fillRect(screenX - 1, screenY + 10, 2, 9);
+        ctx.fillRect(screenX + player.width - 1, screenY + 10, 2, 9);
+      }
 
-          var rects = collectSolidRectsNear(player.x, player.y, player.width, player.height);
-          var hit = false;
-          var bestFix = 0;
-
-          if (player.vy > 0) {
-            // Falling: snap to the top of the collided shape (prevents ground jitter)
-            for (var i = 0; i < rects.length; i++) {
-              var r = rects[i];
-              if (!aabbIntersects(player.x, player.y, player.width, player.height, r.x, r.y, r.w, r.h)) continue;
-              // Only consider surfaces below our feet (landing)
-              if (oldY + player.height <= r.y + 0.001) {
-                var fixUp = (player.y + player.height) - r.y;
-                if (fixUp > bestFix) {
-                  bestFix = fixUp;
-                  hit = true;
-                }
-              }
-            }
-            if (hit) {
-              player.y -= bestFix;
-              player.vy = 0;
-              player.onGround = true;
-            } else {
-              player.onGround = false;
-            }
-          } else if (player.vy < 0) {
-            // Jumping: snap to the bottom of the collided shape
-            for (var j = 0; j < rects.length; j++) {
-              var r2 = rects[j];
-              if (!aabbIntersects(player.x, player.y, player.width, player.height, r2.x, r2.y, r2.w, r2.h)) continue;
-              // Only consider ceilings above our head
-              if (oldY >= r2.y + r2.h - 0.001) {
-                var fixDown = (r2.y + r2.h) - player.y;
-                if (fixDown > bestFix) {
-                  bestFix = fixDown;
-                  hit = true;
-                }
-              }
-            }
-            if (hit) {
-              player.y += bestFix;
-              player.vy = 0;
-            }
-            player.onGround = false;
-          } else {
-            // No vertical motion: keep onGround stable
-            player.onGround = collidesAt(player.x, player.y + 1, player.width, player.height);
+      function render() {
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1),
+          endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1),
+          startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1),
+          endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
+        for (var x = startX; x < endX; x++) {
+          for (var y = startY; y < endY; y++) {
+            drawBlock(x, y, world[x][y]);
           }
         }
+        drawPlayer();
+      }
 
-        function updateCamera() {
-          var tx = player.x - canvas.width / 2 + player.width / 2;
-          var ty = player.y - canvas.height / 2 + player.height / 2;
-          tx = Math.max(0, Math.min(tx, WORLD_WIDTH * BLOCK_SIZE - canvas.width));
-          ty = Math.max(0, Math.min(ty, WORLD_HEIGHT * BLOCK_SIZE - canvas.height));
-          camera.x += (tx - camera.x) * 0.1;
-          camera.y += (ty - camera.y) * 0.1;
-        }
+      function gameLoop() {
+        updatePlayer();
+        updateCamera();
+        render();
+        setTimeout(gameLoop, 16);
+      }
 
-        function drawPlayer() {
-          var screenX = Math.floor(player.x - camera.x);
-          var screenY = Math.floor(player.y - camera.y);
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-          ctx.fillRect(screenX - 2, screenY + player.height, player.width + 4, 2);
-          ctx.fillStyle = '#3A7BC8';
-          ctx.fillRect(screenX + 1, screenY + 9, player.width - 2, 13);
-          ctx.fillStyle = '#2C5FA0';
-          ctx.fillRect(screenX + player.width - 3, screenY + 9, 2, 13);
-          ctx.fillStyle = '#F5D7B8';
-          ctx.fillRect(screenX + 2, screenY, player.width - 4, 9);
-          ctx.fillStyle = '#D4B798';
-          ctx.fillRect(screenX + player.width - 4, screenY, 2, 9);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(screenX + 4, screenY + 3, 2, 2);
-          ctx.fillRect(screenX + 8, screenY + 3, 2, 2);
-          ctx.fillStyle = '#1A3E6E';
-          ctx.fillRect(screenX + 2, screenY + 22, 4, 4);
-          ctx.fillRect(screenX + 8, screenY + 22, 4, 4);
-          ctx.fillStyle = '#3A7BC8';
-          ctx.fillRect(screenX - 1, screenY + 10, 2, 9);
-          ctx.fillRect(screenX + player.width - 1, screenY + 10, 2, 9);
-        }
+      function isInReach(wx, wy) {
+        var px = player.x + player.width / 2,
+          py = player.y + player.height / 2,
+          bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2,
+          by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
+        return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH;
+      }
 
-        function render() {
-          ctx.fillStyle = '#87CEEB';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          var startX = Math.max(0, Math.floor(camera.x / BLOCK_SIZE) - 1),
-            endX = Math.min(WORLD_WIDTH, Math.ceil((camera.x + canvas.width) / BLOCK_SIZE) + 1),
-            startY = Math.max(0, Math.floor(camera.y / BLOCK_SIZE) - 1),
-            endY = Math.min(WORLD_HEIGHT, Math.ceil((camera.y + canvas.height) / BLOCK_SIZE) + 1);
-          for (var x = startX; x < endX; x++) {
-            for (var y = startY; y < endY; y++) {
-              drawBlock(x, y, world[x][y]);
-            }
-          }
-          drawPlayer();
-        }
-
-        function gameLoop() {
-          updatePlayer();
-          updateCamera();
-          render();
-          setTimeout(gameLoop, 16);
-        }
-
-        function isInReach(wx, wy) {
-          var px = player.x + player.width / 2,
-            py = player.y + player.height / 2,
-            bx = wx * BLOCK_SIZE + BLOCK_SIZE / 2,
-            by = wy * BLOCK_SIZE + BLOCK_SIZE / 2;
-          return Math.abs(px - bx) < BLOCK_SIZE * MAX_REACH && Math.abs(py - by) < BLOCK_SIZE * MAX_REACH;
-        }
-
-        function handleTouch(x, y) {
-          var wx = Math.floor((x + camera.x) / BLOCK_SIZE),
-            wy = Math.floor((y + camera.y) / BLOCK_SIZE);
-          if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
-            if (mode === 'mine') {
-              if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
-                // Check if mining a beacon - remove all beam blocks above it
-                if (world[wx][wy] === BLOCKS.BEACON) {
-                  for (var beamY = wy - 1; beamY >= 0; beamY--) {
-                    if (world[wx][beamY] === BLOCKS.BEAM) {
-                      world[wx][beamY] = BLOCKS.AIR;
-                    }
+      function handleTouch(x, y) {
+        var wx = Math.floor((x + camera.x) / BLOCK_SIZE),
+          wy = Math.floor((y + camera.y) / BLOCK_SIZE);
+        if (wx >= 0 && wx < WORLD_WIDTH && wy >= 0 && wy < WORLD_HEIGHT && isInReach(wx, wy)) {
+          if (mode === 'mine') {
+            if (world[wx][wy] !== BLOCKS.AIR && world[wx][wy] !== BLOCKS.BEAM) {
+              // Check if mining a beacon - remove all beam blocks above it
+              if (world[wx][wy] === BLOCKS.BEACON) {
+                for (var beamY = wy - 1; beamY >= 0; beamY--) {
+                  if (world[wx][beamY] === BLOCKS.BEAM) {
+                    world[wx][beamY] = BLOCKS.AIR;
                   }
                 }
-                // Store block type before mining
-                var minedBlock = world[wx][wy];
-                world[wx][wy] = BLOCKS.AIR;
-                // Clean up orphaned fire after any block is mined
-                cleanOrphanFire();
-                // If mined a base block, recheck all beacons
-                if (minedBlock === BLOCKS.IRON_BLOCK || minedBlock === BLOCKS.GOLD_BLOCK || minedBlock === BLOCKS.DIAMOND_BLOCK) {
+              }
+              // Store block type before mining
+              var minedBlock = world[wx][wy];
+              world[wx][wy] = BLOCKS.AIR;
+              // Clean up orphaned fire after any block is mined
+              cleanOrphanFire();
+              // If mined a base block, recheck all beacons
+              if (minedBlock === BLOCKS.IRON_BLOCK || minedBlock === BLOCKS.GOLD_BLOCK || minedBlock === BLOCKS.DIAMOND_BLOCK) {
+                checkAllBeacons();
+              }
+              updatePlayerStats();
+            }
+          } else {
+            if (world[wx][wy] === BLOCKS.AIR && selectedBlock !== BLOCKS.BEAM) {
+              // Fire requires a flammable block directly below
+              if (selectedBlock === BLOCKS.FIRE) {
+                var below = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
+                var FLAMMABLE_CHECK = [
+                  BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
+                  BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
+                ];
+                if (FLAMMABLE_CHECK.indexOf(below) === -1) return;
+              }
+              var px = Math.floor(player.x / BLOCK_SIZE),
+                py = Math.floor(player.y / BLOCK_SIZE);
+              var pw = Math.ceil(player.width / BLOCK_SIZE),
+                ph = Math.ceil(player.height / BLOCK_SIZE);
+              if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
+                world[wx][wy] = selectedBlock;
+                // Check if beacon was placed
+                if (selectedBlock === BLOCKS.BEACON) {
+                  checkBeaconActivation(wx, wy);
+                }
+                // Check if a base block (iron/gold/diamond) was placed - recheck all beacons
+                if (selectedBlock === BLOCKS.IRON_BLOCK || selectedBlock === BLOCKS.GOLD_BLOCK || selectedBlock === BLOCKS.DIAMOND_BLOCK) {
                   checkAllBeacons();
                 }
                 updatePlayerStats();
               }
-            } else {
-              if (world[wx][wy] === BLOCKS.AIR && selectedBlock !== BLOCKS.BEAM) {
-                // Fire requires a flammable block directly below
-                if (selectedBlock === BLOCKS.FIRE) {
-                  var below = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
-                  var FLAMMABLE_CHECK = [
-                    BLOCKS.DIRT, BLOCKS.GRASS, BLOCKS.LEAVES,
-                    BLOCKS.PLANKS, BLOCKS.WOOD, BLOCKS.STONE, BLOCKS.COBBLESTONE
-                  ];
-                  if (FLAMMABLE_CHECK.indexOf(below) === -1) return;
-                }
-                var px = Math.floor(player.x / BLOCK_SIZE),
-                  py = Math.floor(player.y / BLOCK_SIZE);
-                var pw = Math.ceil(player.width / BLOCK_SIZE),
-                  ph = Math.ceil(player.height / BLOCK_SIZE);
-                if (wx < px || wx >= px + pw || wy < py || wy >= py + ph) {
-                  world[wx][wy] = selectedBlock;
-                  // Check if beacon was placed
-                  if (selectedBlock === BLOCKS.BEACON) {
-                    checkBeaconActivation(wx, wy);
-                  }
-                  // Check if a base block (iron/gold/diamond) was placed - recheck all beacons
-                  if (selectedBlock === BLOCKS.IRON_BLOCK || selectedBlock === BLOCKS.GOLD_BLOCK || selectedBlock === BLOCKS.DIAMOND_BLOCK) {
-                    checkAllBeacons();
-                  }
-                  updatePlayerStats();
-                }
-              }
             }
           }
         }
+      }
 
-        function checkBeaconActivation(wx, wy) {
-          // Check if a beacon was just placed
-          if (world[wx][wy] === BLOCKS.BEACON) {
-            // Check blocks underneath: center, left, and right
-            var centerBlock = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
-            var leftBlock = (wx - 1 >= 0 && wy + 1 < WORLD_HEIGHT) ? world[wx - 1][wy + 1] : BLOCKS.AIR;
-            var rightBlock = (wx + 1 < WORLD_WIDTH && wy + 1 < WORLD_HEIGHT) ? world[wx + 1][wy + 1] : BLOCKS.AIR;
-            // Check if all three blocks are iron, gold, or diamond blocks (can be mixed)
-            var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
-            var centerValid = validBlocks.indexOf(centerBlock) !== -1;
-            var leftValid = validBlocks.indexOf(leftBlock) !== -1;
-            var rightValid = validBlocks.indexOf(rightBlock) !== -1;
-            if (centerValid && leftValid && rightValid) {
-              // Activate beacon - place beam all the way to top
-              for (var beamY = wy - 1; beamY >= 0; beamY--) {
-                world[wx][beamY] = BLOCKS.BEAM;
-              }
+      function checkBeaconActivation(wx, wy) {
+        // Check if a beacon was just placed
+        if (world[wx][wy] === BLOCKS.BEACON) {
+          // Check blocks underneath: center, left, and right
+          var centerBlock = (wy + 1 < WORLD_HEIGHT) ? world[wx][wy + 1] : BLOCKS.AIR;
+          var leftBlock = (wx - 1 >= 0 && wy + 1 < WORLD_HEIGHT) ? world[wx - 1][wy + 1] : BLOCKS.AIR;
+          var rightBlock = (wx + 1 < WORLD_WIDTH && wy + 1 < WORLD_HEIGHT) ? world[wx + 1][wy + 1] : BLOCKS.AIR;
+          // Check if all three blocks are iron, gold, or diamond blocks (can be mixed)
+          var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
+          var centerValid = validBlocks.indexOf(centerBlock) !== -1;
+          var leftValid = validBlocks.indexOf(leftBlock) !== -1;
+          var rightValid = validBlocks.indexOf(rightBlock) !== -1;
+          if (centerValid && leftValid && rightValid) {
+            // Activate beacon - place beam all the way to top
+            for (var beamY = wy - 1; beamY >= 0; beamY--) {
+              world[wx][beamY] = BLOCKS.BEAM;
             }
           }
         }
+      }
 
-        function checkAllBeacons() {
-          // Scan entire world for beacons and check each one
-          for (var x = 0; x < WORLD_WIDTH; x++) {
-            for (var y = 0; y < WORLD_HEIGHT; y++) {
-              if (world[x][y] === BLOCKS.BEACON) {
-                // Check blocks underneath
-                var centerBlock = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
-                var leftBlock = (x - 1 >= 0 && y + 1 < WORLD_HEIGHT) ? world[x - 1][y + 1] : BLOCKS.AIR;
-                var rightBlock = (x + 1 < WORLD_WIDTH && y + 1 < WORLD_HEIGHT) ? world[x + 1][y + 1] : BLOCKS.AIR;
-                var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
-                var centerValid = validBlocks.indexOf(centerBlock) !== -1;
-                var leftValid = validBlocks.indexOf(leftBlock) !== -1;
-                var rightValid = validBlocks.indexOf(rightBlock) !== -1;
-                if (centerValid && leftValid && rightValid) {
-                  // Activate beacon - place beam all the way to top
-                  for (var beamY = y - 1; beamY >= 0; beamY--) {
-                    world[x][beamY] = BLOCKS.BEAM;
-                  }
-                } else {
-                  // Deactivate beacon - remove all beams above
-                  for (var beamY = y - 1; beamY >= 0; beamY--) {
-                    if (world[x][beamY] === BLOCKS.BEAM) {
-                      world[x][beamY] = BLOCKS.AIR;
-                    }
+      function checkAllBeacons() {
+        // Scan entire world for beacons and check each one
+        for (var x = 0; x < WORLD_WIDTH; x++) {
+          for (var y = 0; y < WORLD_HEIGHT; y++) {
+            if (world[x][y] === BLOCKS.BEACON) {
+              // Check blocks underneath
+              var centerBlock = (y + 1 < WORLD_HEIGHT) ? world[x][y + 1] : BLOCKS.AIR;
+              var leftBlock = (x - 1 >= 0 && y + 1 < WORLD_HEIGHT) ? world[x - 1][y + 1] : BLOCKS.AIR;
+              var rightBlock = (x + 1 < WORLD_WIDTH && y + 1 < WORLD_HEIGHT) ? world[x + 1][y + 1] : BLOCKS.AIR;
+              var validBlocks = [BLOCKS.IRON_BLOCK, BLOCKS.GOLD_BLOCK, BLOCKS.DIAMOND_BLOCK];
+              var centerValid = validBlocks.indexOf(centerBlock) !== -1;
+              var leftValid = validBlocks.indexOf(leftBlock) !== -1;
+              var rightValid = validBlocks.indexOf(rightBlock) !== -1;
+              if (centerValid && leftValid && rightValid) {
+                // Activate beacon - place beam all the way to top
+                for (var beamY = y - 1; beamY >= 0; beamY--) {
+                  world[x][beamY] = BLOCKS.BEAM;
+                }
+              } else {
+                // Deactivate beacon - remove all beams above
+                for (var beamY = y - 1; beamY >= 0; beamY--) {
+                  if (world[x][beamY] === BLOCKS.BEAM) {
+                    world[x][beamY] = BLOCKS.AIR;
                   }
                 }
               }
             }
           }
         }
-        // Touch handlers for canvas
-        var isTouching = false;
-        canvas.addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          isTouching = true;
+      }
+      // Touch handlers for canvas
+      var isTouching = false;
+      canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        isTouching = true;
+        handleTouch(e.touches[0].clientX, e.touches[0].clientY);
+      });
+      canvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        if (isTouching) {
           handleTouch(e.touches[0].clientX, e.touches[0].clientY);
-        });
-        canvas.addEventListener('touchmove', function(e) {
-          e.preventDefault();
-          if (isTouching) {
-            handleTouch(e.touches[0].clientX, e.touches[0].clientY);
-          }
-        });
-        canvas.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          isTouching = false;
-        });
-        // Buttons events
-        function addButtonEvents(id, key) {
-          var btn = document.getElementById(id);
-          btn.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            keys[key] = true;
-          });
-          btn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            keys[key] = false;
-          });
         }
-        addButtonEvents('leftBtn', 'left');
-        addButtonEvents('rightBtn', 'right');
-        addButtonEvents('jumpBtn', 'jump');
-        // Mode toggle
-        var modeBtn = document.getElementById('mode-indicator');
-        modeBtn.addEventListener('touchstart', function(e) {
+      });
+      canvas.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        isTouching = false;
+      });
+      // Buttons events
+      function addButtonEvents(id, key) {
+        var btn = document.getElementById(id);
+        btn.addEventListener('touchstart', function (e) {
           e.preventDefault();
-          mode = mode === 'mine' ? 'place' : 'mine';
-          this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
-          this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
+          keys[key] = true;
         });
-        // Inventory panel open/close
-        inventoryBtn.addEventListener('touchstart', function(e) {
+        btn.addEventListener('touchend', function (e) {
           e.preventDefault();
-          inventoryPanel.style.display = 'block';
+          keys[key] = false;
         });
-        closeInventoryBtn.addEventListener('touchstart', function(e) {
+      }
+      addButtonEvents('leftBtn', 'left');
+      addButtonEvents('rightBtn', 'right');
+      addButtonEvents('jumpBtn', 'jump');
+      // Mode toggle
+      var modeBtn = document.getElementById('mode-indicator');
+      modeBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        mode = mode === 'mine' ? 'place' : 'mine';
+        this.textContent = mode === 'mine' ? 'MINE' : 'PLACE';
+        this.className = mode === 'mine' ? 'mine-mode' : 'place-mode';
+      });
+      // Inventory panel open/close
+      inventoryBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        inventoryPanel.style.display = 'block';
+      });
+      closeInventoryBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        inventoryPanel.style.display = 'none';
+      });
+      // Create grid inventory (shows all blocks)
+      function createInventory() {
+        var invDiv = document.getElementById('inventory');
+        invDiv.innerHTML = '';
+        for (var i = 0; i < ALL_BLOCKS.length; i++) {
+          var bt = ALL_BLOCKS[i];
+          var slot = document.createElement('div');
+          slot.className = 'inv-slot';
+          slot.setAttribute('data-block', bt);
+          var c = document.createElement('canvas');
+          c.width = 48;
+          c.height = 48;
+          var cctx = c.getContext('2d');
+          if (textures[bt]) {
+            cctx.drawImage(textures[bt], 0, 0, 48, 48);
+          } else {
+            // fallback tile if texture missing
+            cctx.fillStyle = '#555';
+            cctx.fillRect(0, 0, 48, 48);
+          }
+          slot.appendChild(c);
+          invDiv.appendChild(slot);
+        }
+        // Single touch handler for grid slots
+        invDiv.addEventListener('touchstart', function (e) {
           e.preventDefault();
+          var el = e.target;
+          while (el && !el.classList.contains('inv-slot')) {
+            el = el.parentNode;
+          }
+          if (!el) return;
+          var bt = parseInt(el.getAttribute('data-block'), 10);
+          selectedBlock = bt;
+          var slots = invDiv.getElementsByClassName('inv-slot');
+          for (var s = 0; s < slots.length; s++) {
+            slots[s].className = 'inv-slot';
+          }
+          el.className += ' selected';
+          // update the small icon next to INV
+          updateSelectedBlockIcon();
+          // close inventory after select
           inventoryPanel.style.display = 'none';
         });
-        // Create grid inventory (shows all blocks)
-        function createInventory() {
-          var invDiv = document.getElementById('inventory');
-          invDiv.innerHTML = '';
-          for (var i = 0; i < ALL_BLOCKS.length; i++) {
-            var bt = ALL_BLOCKS[i];
-            var slot = document.createElement('div');
-            slot.className = 'inv-slot';
-            slot.setAttribute('data-block', bt);
-            var c = document.createElement('canvas');
-            c.width = 48;
-            c.height = 48;
-            var cctx = c.getContext('2d');
-            if (textures[bt]) {
-              cctx.drawImage(textures[bt], 0, 0, 48, 48);
-            } else {
-              // fallback tile if texture missing
-              cctx.fillStyle = '#555';
-              cctx.fillRect(0, 0, 48, 48);
-            }
-            slot.appendChild(c);
-            invDiv.appendChild(slot);
-          }
-          // Single touch handler for grid slots
-          invDiv.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            var el = e.target;
-            while (el && !el.classList.contains('inv-slot')) {
-              el = el.parentNode;
-            }
-            if (!el) return;
-            var bt = parseInt(el.getAttribute('data-block'), 10);
-            selectedBlock = bt;
-            var slots = invDiv.getElementsByClassName('inv-slot');
-            for (var s = 0; s < slots.length; s++) {
-              slots[s].className = 'inv-slot';
-            }
-            el.className += ' selected';
-            // update the small icon next to INV
-            updateSelectedBlockIcon();
-            // close inventory after select
-            inventoryPanel.style.display = 'none';
-          });
-        }
-        // Start
-        window.addEventListener('resize', resizeCanvas);
-        initWorld();
-        selectedBlock = ALL_BLOCKS[0];
-        loadTextures();
-      })();
-    </script>
-  </body>
+      }
+      // Start
+      window.addEventListener('resize', resizeCanvas);
+      initWorld();
+      checkAllBeacons();
+      updatePlayerStats();
+      selectedBlock = ALL_BLOCKS[0];
+      loadTextures();
+    })();
+  </script>
+</body>
+
 </html>
